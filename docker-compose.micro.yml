@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   web:
     build:
@@ -11,7 +9,7 @@ services:
       - FLASK_ENV=production
       - DATABASE_URL=postgresql://focuspad_user:${DB_PASSWORD}@db:5432/focuspad
       - FOCUSPAD_SECRET_KEY=${SECRET_KEY}
-      - FOCUSPAD_MASTER_KEY=${MASTER_KEY}
+      - FOCUSPAD_MASTER_KEY=${FOCUSPAD_MASTER_KEY}
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
