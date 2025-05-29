@@ -71,8 +71,9 @@ if command -v curl &> /dev/null; then
     PUBLIC_IP=$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4 2>/dev/null || echo "")
     if [ ! -z "$PUBLIC_IP" ]; then
         echo "🌐 Detected EC2 Public IP: $PUBLIC_IP"
-        sed -i "s|BASE_URL=http://your-ec2-ip-or-domain|BASE_URL=http://$PUBLIC_IP|g" .env.production
-        echo "✅ Updated BASE_URL to http://$PUBLIC_IP"
+        # Use the production domain name instead of IP
+        sed -i "s|BASE_URL=http://your-ec2-ip-or-domain|BASE_URL=https://thefocuspad.com|g" .env.production
+        echo "✅ Updated BASE_URL to https://thefocuspad.com"
     else
         echo "⚠️  Could not detect EC2 public IP. Please set BASE_URL manually."
     fi

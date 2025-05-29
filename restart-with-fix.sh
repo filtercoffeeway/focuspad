@@ -77,7 +77,7 @@ if curl -f http://localhost/health > /dev/null 2>&1; then
     echo "✅ Health endpoint is working!"
     echo "🎉 Deployment fixed successfully!"
     echo ""
-    echo "📱 Access your app at: http://$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4 2>/dev/null || echo 'your-ec2-ip')"
+    echo "📱 Access your app at: https://thefocuspad.com"
 else
     echo "⚠️  Health endpoint still not responding"
     echo "📋 Latest logs:"

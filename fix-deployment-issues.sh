@@ -93,7 +93,7 @@ GOOGLE_CLIENT_SECRET=your-google-client-secret
 OPENAI_API_KEY=sk-your-openai-api-key-here
 
 # Application URL
-BASE_URL=http://$PUBLIC_IP
+BASE_URL=https://thefocuspad.com
 
 # JWT Configuration
 JWT_SECRET_KEY=$JWT_SECRET_KEY
@@ -312,7 +312,7 @@ echo ""
 
 if [ "$HEALTH_OK" = true ]; then
     echo "🎉 Deployment appears to be working!"
-    echo "📱 Access your app at: http://$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4 2>/dev/null || echo 'your-ec2-ip')"
+    echo "📱 Access your app at: https://thefocuspad.com"
 else
     echo "⚠️  Deployment needs manual intervention"
     echo "Please check the logs and run the troubleshooting commands above"
