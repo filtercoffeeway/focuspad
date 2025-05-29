@@ -1,0 +1,105 @@
+<!-- BACKUP OF CARD-BASED DASHBOARD DESIGN -->
+<!-- Created on: $(date) -->
+<!-- This file contains the original card-based implementation for categories -->
+<!-- Use this file to restore the cards design if needed -->
+
+<!-- To restore: copy contents to focuspad/app/templates/dashboard.html -->
+
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FocusPad Dashboard</title>
+    <style>
+        /* Card-based Categories Design */
+        .categories-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .category-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+            transition: box-shadow 0.2s ease, background-color 0.3s ease, border-color 0.3s ease;
+        }
+
+        .category-card:hover {
+            box-shadow: 0 4px 6px -1px var(--shadow);
+        }
+
+        .category-header {
+            padding: 16px 16px 8px 16px;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .category-name {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .category-content {
+            padding: 16px;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        .category-content p {
+            margin: 0 0 12px 0;
+        }
+
+        .category-content p:last-child {
+            margin-bottom: 0;
+        }
+
+        .category-content ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+
+        .category-content li {
+            margin-bottom: 4px;
+        }
+
+        .category-content strong {
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        .category-content em {
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        /* Contenteditable styling for cards */
+        .editable-category {
+            cursor: text;
+            min-height: 40px;
+        }
+
+        .editable-category:focus {
+            outline: 2px solid var(--accent-border);
+            outline-offset: -2px;
+            background: var(--accent-bg);
+        }
+
+        .editable-category:empty:before {
+            content: attr(data-placeholder);
+            color: var(--text-light);
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <!-- This is just a reference file -->
+    <!-- Copy the relevant CSS and JS sections to restore card functionality -->
+</body>
+</html> 

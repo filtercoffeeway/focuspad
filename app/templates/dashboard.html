@@ -474,6 +474,18 @@
             flex: 1;
         }
 
+        .detail-value.clickable {
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: background-color 0.2s ease;
+        }
+
+        .detail-value.clickable:hover {
+            background: var(--accent-bg);
+            border: 1px solid var(--border-color);
+        }
+
         .content-section {
             background: var(--hover-bg);
             border: 1px solid var(--border-color);
@@ -491,30 +503,221 @@
         }
 
         .categories-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
             margin-bottom: 24px;
         }
 
-        .category-card {
+        .category-item {
             background: var(--bg-secondary);
             border: 1px solid var(--border-color);
             border-radius: 8px;
-            overflow: hidden;
             transition: box-shadow 0.2s ease, background-color 0.3s ease, border-color 0.3s ease;
         }
 
-        .category-card:hover {
-            box-shadow: 0 4px 6px -1px var(--shadow);
+        .category-item:hover {
+            border-color: var(--accent-border);
+            box-shadow: 0 2px 4px -1px var(--shadow);
         }
 
         .category-header {
-            padding: 16px 16px 8px 16px;
+            padding: 16px 20px;
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            cursor: pointer;
             border-bottom: 1px solid var(--border-light);
         }
 
+        .category-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+        }
+
+        .category-icon {
+            font-size: 1.25rem;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--accent-bg);
+            border-radius: 6px;
+        }
+
+        .category-info {
+            flex: 1;
+        }
+
         .category-name {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 2px;
+        }
+
+        .category-count {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .category-actions {
+            display: flex;
+            gap: 8px;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .category-header:hover .category-actions {
+            opacity: 1;
+        }
+
+        .edit-btn, .add-btn {
+            background: var(--text-secondary);
+            color: var(--bg-secondary);
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .edit-btn:hover, .add-btn:hover {
+            background: var(--text-primary);
+            transform: translateY(-1px);
+        }
+
+        .category-content {
+            padding: 0;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease, padding 0.3s ease;
+        }
+
+        .category-item.expanded .category-content {
+            padding: 0 20px 16px 20px;
+            max-height: 500px;
+        }
+
+        .category-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .category-list-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            padding: 6px 0;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .category-list-item:last-child {
+            border-bottom: none;
+        }
+
+        .item-bullet {
+            color: var(--accent-border);
+            font-weight: bold;
+            margin-top: 2px;
+        }
+
+        .item-text {
+            flex: 1;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        .item-actions {
+            display: flex;
+            gap: 4px;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .category-list-item:hover .item-actions {
+            opacity: 1;
+        }
+
+        .edit-item-btn, .delete-item-btn {
+            background: transparent;
+            border: none;
+            padding: 2px 4px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            transition: background 0.2s ease;
+        }
+
+        .edit-item-btn:hover {
+            background: var(--accent-bg);
+        }
+
+        .delete-item-btn:hover {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+        }
+
+        .empty-category {
+            padding: 20px;
+            text-align: center;
+            color: var(--text-light);
+            font-style: italic;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .modal-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal {
+            background: var(--bg-primary);
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow: hidden;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            transform: scale(0.95);
+            transition: transform 0.3s ease;
+        }
+
+        .modal-overlay.show .modal {
+            transform: scale(1);
+        }
+
+        .modal-header {
+            padding: 20px 24px 16px 24px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
             font-size: 1.125rem;
             font-weight: 600;
             color: var(--text-secondary);
@@ -523,55 +726,245 @@
             gap: 8px;
         }
 
-        .category-content {
-            padding: 16px;
-            color: var(--text-muted);
-            line-height: 1.6;
-        }
-
-        .category-content p {
-            margin: 0 0 12px 0;
-        }
-
-        .category-content p:last-child {
-            margin-bottom: 0;
-        }
-
-        .category-content ul {
-            margin: 0;
-            padding-left: 20px;
-        }
-
-        .category-content li {
-            margin-bottom: 4px;
-        }
-
-        .category-content strong {
-            color: var(--text-secondary);
-            font-weight: 600;
-        }
-
-        .category-content em {
-            color: var(--text-muted);
-            font-style: italic;
-        }
-
-        .action-items-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-
-        .action-item {
-            display: flex;
-            align-items: flex-start;
-            gap: 8px;
-            margin-bottom: 8px;
-        }
-
-        .action-item input[type="checkbox"] {
-            margin-top: 2px;
+        .close-btn {
+            background: transparent;
+            border: none;
+            font-size: 1.5rem;
             cursor: pointer;
+            color: var(--text-muted);
+            padding: 4px;
+            border-radius: 4px;
+            transition: background 0.2s ease;
+        }
+
+        .close-btn:hover {
+            background: var(--hover-bg);
+        }
+
+        .modal-body {
+            padding: 20px 24px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .form-input, .form-textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 0.875rem;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            transition: border-color 0.2s ease;
+        }
+
+        .form-input:focus, .form-textarea:focus {
+            outline: none;
+            border-color: var(--accent-border);
+            box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.1);
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 100px;
+            font-family: inherit;
+        }
+
+        .modal-footer {
+            padding: 16px 24px 20px 24px;
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+
+        .btn-cancel, .btn-save {
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-cancel {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+
+        .btn-cancel:hover {
+            background: var(--hover-bg);
+        }
+
+        .btn-save {
+            background: var(--text-secondary);
+            border: 1px solid var(--text-secondary);
+            color: var(--bg-secondary);
+        }
+
+        .btn-save:hover {
+            background: var(--text-primary);
+            border-color: var(--text-primary);
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                position: absolute;
+                left: -100%;
+                transition: left 0.3s ease;
+                z-index: 50;
+            }
+
+            .sidebar.open {
+                left: 0;
+            }
+
+            .main-content {
+                width: 100%;
+            }
+
+            .header {
+                padding: 12px 16px;
+            }
+
+            .user-details {
+                display: none;
+            }
+
+            .categories-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .editable {
+            cursor: text;
+            transition: all 0.2s ease;
+            border-radius: 4px;
+            padding: 4px 8px;
+            margin: -4px -8px;
+            position: relative;
+        }
+
+        .editable:hover {
+            background: var(--accent-bg);
+            border: 1px solid var(--border-color);
+        }
+
+        .editable:hover::after {
+            content: " ✏️ Click to edit";
+            position: absolute;
+            left: 100%;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            white-space: nowrap;
+            margin-left: 8px;
+            opacity: 0.8;
+        }
+
+        .editable:focus {
+            outline: none;
+            background: var(--accent-bg);
+            border: 1px solid var(--accent-border);
+            box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.1);
+        }
+
+        .editable-title {
+            cursor: text;
+            transition: all 0.2s ease;
+            border-radius: 4px;
+            padding: 4px 8px;
+            margin: -4px -8px;
+            display: inline-block;
+            min-width: 200px;
+            position: relative;
+        }
+
+        .editable-title:hover {
+            background: var(--accent-bg);
+            border: 1px solid var(--border-color);
+        }
+
+        .editable-title:hover::after {
+            content: " ✏️ Click to edit";
+            position: absolute;
+            left: 100%;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            white-space: nowrap;
+            margin-left: 8px;
+            opacity: 0.8;
+        }
+
+        .editable-title:focus {
+            outline: none;
+            background: var(--accent-bg);
+            border: 1px solid var(--accent-border);
+            box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.1);
+        }
+
+        .editable-date {
+            cursor: text;
+            transition: all 0.2s ease;
+            border-radius: 4px;
+            padding: 4px 8px;
+            margin: -4px -8px;
+            display: inline-block;
+            min-width: 150px;
+        }
+
+        .editable-date:hover {
+            background: var(--accent-bg);
+            border: 1px solid var(--border-color);
+        }
+
+        .editable-category {
+            cursor: text;
+            transition: all 0.2s ease;
+            border-radius: 4px;
+            padding: 8px;
+            margin: -8px;
+            min-height: 40px;
+        }
+
+        .editable-category:hover {
+            background: var(--accent-bg);
+            border: 1px solid var(--border-color);
+        }
+
+        .editable-category:focus {
+            outline: none;
+            background: var(--accent-bg);
+            border: 1px solid var(--accent-border);
+            box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.1);
+        }
+
+        .edit-hint {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .editable:hover + .edit-hint,
+        .editable-title:hover + .edit-hint,
+        .editable-date:hover + .edit-hint,
+        .editable-category:hover + .edit-hint {
+            opacity: 1;
         }
 
         .input-area {
@@ -594,7 +987,7 @@
             outline: none;
             transition: border-color 0.2s ease;
             font-family: inherit;
-            background: var(--bg-secondary);
+            background: var(--bg-primary);
             color: var(--text-primary);
         }
 
@@ -674,128 +1067,6 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-
-        @media (max-width: 768px) {
-            .sidebar {
-                width: 100%;
-                position: absolute;
-                left: -100%;
-                transition: left 0.3s ease;
-                z-index: 50;
-            }
-
-            .sidebar.open {
-                left: 0;
-            }
-
-            .main-content {
-                width: 100%;
-            }
-
-            .header {
-                padding: 12px 16px;
-            }
-
-            .user-details {
-                display: none;
-            }
-
-            .categories-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .editable {
-            cursor: text;
-            transition: all 0.2s ease;
-            border-radius: 4px;
-            padding: 4px 8px;
-            margin: -4px -8px;
-        }
-
-        .editable:hover {
-            background: var(--accent-bg);
-            border: 1px solid var(--border-color);
-        }
-
-        .editable:focus {
-            outline: none;
-            background: var(--accent-bg);
-            border: 1px solid var(--accent-border);
-            box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.1);
-        }
-
-        .editable-title {
-            cursor: text;
-            transition: all 0.2s ease;
-            border-radius: 4px;
-            padding: 4px 8px;
-            margin: -4px -8px;
-            display: inline-block;
-            min-width: 200px;
-        }
-
-        .editable-title:hover {
-            background: var(--accent-bg);
-            border: 1px solid var(--border-color);
-        }
-
-        .editable-title:focus {
-            outline: none;
-            background: var(--accent-bg);
-            border: 1px solid var(--accent-border);
-            box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.1);
-        }
-
-        .editable-date {
-            cursor: text;
-            transition: all 0.2s ease;
-            border-radius: 4px;
-            padding: 4px 8px;
-            margin: -4px -8px;
-            display: inline-block;
-            min-width: 150px;
-        }
-
-        .editable-date:hover {
-            background: var(--accent-bg);
-            border: 1px solid var(--border-color);
-        }
-
-        .editable-category {
-            cursor: text;
-            transition: all 0.2s ease;
-            border-radius: 4px;
-            padding: 8px;
-            margin: -8px;
-            min-height: 40px;
-        }
-
-        .editable-category:hover {
-            background: var(--accent-bg);
-            border: 1px solid var(--border-color);
-        }
-
-        .editable-category:focus {
-            outline: none;
-            background: var(--accent-bg);
-            border: 1px solid var(--accent-border);
-            box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.1);
-        }
-
-        .edit-hint {
-            font-size: 0.75rem;
-            color: var(--text-muted);
-            opacity: 0;
-            transition: opacity 0.2s ease;
-        }
-
-        .editable:hover + .edit-hint,
-        .editable-title:hover + .edit-hint,
-        .editable-date:hover + .edit-hint,
-        .editable-category:hover + .edit-hint {
-            opacity: 1;
-        }
     </style>
 </head>
 <body>
@@ -871,10 +1142,10 @@
                 <textarea 
                     class="text-input" 
                     id="textInput" 
-                    placeholder="Select a note from the sidebar to start adding content..."
-                    rows="1"
+                    placeholder="Add content to your note..."
+                    rows="3"
                 ></textarea>
-                <button class="save-btn" id="saveBtn" onclick="saveContent()" disabled>Save</button>
+                <button class="save-btn" id="saveBtn" onclick="saveContent()">Save</button>
             </div>
         </div>
     </div>
@@ -1224,13 +1495,9 @@
                 <div class="note-details">
                     <div class="note-detail-item">
                         <label class="detail-label">📅 Date:</label>
-                        <span class="detail-value editable-date" 
-                              contenteditable="true"
-                              data-field="date"
-                              data-original="${getDateTimeLocalValue(currentNote.created_at)}"
-                              onblur="saveField(this, 'date')"
-                              onkeydown="handleEnterKey(event)">
+                        <span class="detail-value clickable" onclick="openDatePicker()" style="display: flex; align-items: center; gap: 8px;">
                             ${formatNoteDate(currentNote.created_at)}
+                            <span style="color: var(--text-muted); font-size: 0.75rem;">📅 Click to change</span>
                         </span>
                     </div>
                     <div class="note-detail-item">
@@ -1307,10 +1574,16 @@
         // Define preferred order without Summary
         const categoryOrder = ['Key Points', 'Action Items', 'Ideas', 'References'];
         
-        // Render categorized content based on the actual data structure
+        // Render categorized content using list-based design
         function renderCategorizedContent(categorizedContent) {
             if (!categorizedContent || Object.keys(categorizedContent).length === 0) {
-                return '<div class="category-card"><div class="category-content">No content yet. Start adding some content below!</div></div>';
+                return `
+                    <div class="category-item">
+                        <div class="empty-category">
+                            <p>No content yet. Start adding some content below!</p>
+                        </div>
+                    </div>
+                `;
             }
 
             // Sort categories by preferred order, then alphabetically
@@ -1318,348 +1591,269 @@
                 const indexA = categoryOrder.indexOf(categoryA);
                 const indexB = categoryOrder.indexOf(categoryB);
                 
-                // If both are in the preferred order, sort by their index
-                if (indexA !== -1 && indexB !== -1) {
-                    return indexA - indexB;
-                }
-                
-                // If only A is in preferred order, it comes first
-                if (indexA !== -1 && indexB === -1) {
-                    return -1;
-                }
-                
-                // If only B is in preferred order, it comes first
-                if (indexA === -1 && indexB !== -1) {
-                    return 1;
-                }
-                
-                // If neither is in preferred order, sort alphabetically
+                if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+                if (indexA !== -1 && indexB === -1) return -1;
+                if (indexA === -1 && indexB !== -1) return 1;
                 return categoryA.localeCompare(categoryB);
             });
 
             return sortedEntries.map(([category, categoryData]) => {
-                // Handle the actual API structure: {category_info: {...}, items: [...]}
                 let items = categoryData;
+                
+                // Handle API structure
                 if (categoryData && typeof categoryData === 'object' && categoryData.items) {
                     items = categoryData.items;
                 }
-                
-                let contentHtml = '';
-                
-                if (Array.isArray(items)) {
-                    // Special handling for Action Items with checkboxes
-                    if (category.toLowerCase().includes('action')) {
-                        contentHtml = `<ul class="action-items-list">` +
-                            items.map((item) => {
-                                const text = typeof item === 'string' ? item : 
-                                           item?.text || item?.content || String(item);
-                                return `
-                                    <li class="action-item">
-                                        <input type="checkbox" />
-                                        <span>${escapeHtml(text)}</span>
-                                    </li>
-                                `;
-                            }).join('') +
-                            `</ul>`;
-                    } else if (category === 'Key Points' || category === 'Ideas' || category === 'References') {
-                        // Render as bullet lists for Key Points, Ideas, and References
-                        contentHtml = `<ul>` +
-                            items.map((item) => {
-                                const text = typeof item === 'string' ? item : 
-                                           item?.text || item?.content || String(item);
-                                return `<li>${escapeHtml(text)}</li>`;
-                            }).join('') +
-                            `</ul>`;
-                    } else {
-                        // Handle other array content as regular paragraphs
-                        contentHtml = items.map((item) => {
-                            if (typeof item === 'string') {
-                                return `<p>${escapeHtml(item)}</p>`;
-                            } else if (item && typeof item === 'object') {
-                                // Handle content objects - look for common properties
-                                if (item.content) {
-                                    return `<p>${escapeHtml(item.content)}</p>`;
-                                } else if (item.text) {
-                                    return `<p>${escapeHtml(item.text)}</p>`;
-                                } else {
-                                    // If it's an object with other properties, show them
-                                    const objContent = Object.entries(item)
-                                        .filter(([key, value]) => typeof value === 'string' && value.trim())
-                                        .map(([key, value]) => `<strong>${escapeHtml(key)}:</strong> ${escapeHtml(value)}`)
-                                        .join('<br>');
-                                    return objContent ? `<p>${objContent}</p>` : '';
-                                }
-                            }
-                            return '';
-                        }).filter(item => item && item.trim()).join('');
-                    }
-                } else if (typeof items === 'object' && items !== null) {
-                    // Handle object with key-value pairs
-                    contentHtml = Object.entries(items)
-                        .filter(([key, value]) => {
-                            // Only include meaningful content
-                            return value !== null && value !== undefined && 
-                                   (typeof value === 'string' ? value.trim() : true);
-                        })
-                        .map(([key, value]) => {
-                            if (typeof value === 'string') {
-                                // Simple key-value pair
-                                return `<p><strong>${escapeHtml(key)}:</strong> ${escapeHtml(value)}</p>`;
-                            } else if (Array.isArray(value)) {
-                                // Key with array of values
-                                const arrayContent = value
-                                    .filter(item => typeof item === 'string' && item.trim())
-                                    .map(item => `<li>${escapeHtml(item)}</li>`)
-                                    .join('');
-                                return arrayContent ? `<p><strong>${escapeHtml(key)}:</strong></p><ul>${arrayContent}</ul>` : '';
-                            } else if (typeof value === 'object' && value !== null) {
-                                // Nested object - try to extract meaningful content
-                                if (value.content) {
-                                    return `<p><strong>${escapeHtml(key)}:</strong> ${escapeHtml(value.content)}</p>`;
-                                } else if (value.text) {
-                                    return `<p><strong>${escapeHtml(key)}:</strong> ${escapeHtml(value.text)}</p>`;
-                                }
-                                // Skip complex nested objects that we can't display meaningfully
-                                return '';
-                            }
-                            return '';
-                        }).join('');
-                } else if (typeof items === 'string') {
-                    // Handle simple string content
-                    contentHtml = `<p>${escapeHtml(items)}</p>`;
+
+                // Ensure items is an array
+                if (!Array.isArray(items)) {
+                    items = [];
                 }
 
-                if (!contentHtml || contentHtml.trim() === '') {
-                    contentHtml = '<p><em>No content in this category yet.</em></p>';
-                }
+                const itemCount = items.length;
+                const categoryIcon = getCategoryIcon(category);
+                
+                // Auto-expand categories that have content
+                const expandedClass = itemCount > 0 ? ' expanded' : '';
 
                 return `
-                    <div class="category-card">
-                        <div class="category-header">
-                            <h3 class="category-name">
-                                ${getCategoryIcon(category)}
-                                ${escapeHtml(category)}
-                            </h3>
+                    <div class="category-item${expandedClass}" id="category-${category.replace(/\s+/g, '-').toLowerCase()}">
+                        <div class="category-header" onclick="toggleCategory('${category}')">
+                            <div class="category-left">
+                                <div class="category-icon">${categoryIcon}</div>
+                                <div class="category-info">
+                                    <div class="category-name">${escapeHtml(category)}</div>
+                                    <div class="category-count">${itemCount} item${itemCount === 1 ? '' : 's'}</div>
+                                </div>
+                            </div>
+                            <div class="category-actions" onclick="event.stopPropagation()">
+                                <button class="add-btn" onclick="openAddItemModal('${category}')" title="Add item">+ Add</button>
+                                <button class="edit-btn" onclick="openEditCategoryModal('${category}')" title="Edit category">✏️ Edit</button>
+                            </div>
                         </div>
-                        <div class="category-content editable-category" 
-                             contenteditable="true"
-                             data-field="category"
-                             data-category="${category}"
-                             data-original="${escapeHtml(getCategoryEditText(items, category))}"
-                             onblur="saveField(this, 'category')"
-                             onfocus="handleCategoryFocus(this, '${category}')"
-                             onkeydown="handleCategoryKeydown(event)"
-                             data-placeholder="Click to add content to ${category}...">
-                            ${contentHtml}
+                        <div class="category-content">
+                            ${renderCategoryItems(items, category)}
                         </div>
                     </div>
                 `;
             }).join('');
         }
 
-        // Get icon for category
-        function getCategoryIcon(category) {
-            const icons = {
-                'General': '📝',
-                'Ideas': '💡',
-                'Tasks': '✅',
-                'Questions': '❓',
-                'Important': '⭐',
-                'Code': '💻',
-                'Research': '🔍',
-                'Meeting': '🤝',
-                'Personal': '👤'
-            };
-            return icons[category] || '📄';
-        }
-
-        // Get datetime-local input value from ISO string
-        function getDateTimeLocalValue(isoString) {
-            if (!isoString) return '';
-            const date = new Date(isoString);
-            // Format to YYYY-MM-DDTHH:MM for datetime-local input
-            const year = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const day = String(date.getDate()).padStart(2, '0');
-            const hours = String(date.getHours()).padStart(2, '0');
-            const minutes = String(date.getMinutes()).padStart(2, '0');
-            return `${year}-${month}-${day}T${hours}:${minutes}`;
-        }
-
-        // Get text content from category items for editing
-        function getCategoryEditText(items, category) {
-            if (!items) return '';
-            
-            if (Array.isArray(items)) {
-                return items.map(item => {
-                    if (typeof item === 'string') {
-                        return item;
-                    } else if (item && typeof item === 'object') {
-                        return item.text || item.content || String(item);
-                    }
-                    return '';
-                }).filter(text => text.trim()).join('\n');
-            } else if (typeof items === 'string') {
-                return items;
-            } else if (typeof items === 'object' && items !== null) {
-                return Object.entries(items)
-                    .filter(([key, value]) => typeof value === 'string' && value.trim())
-                    .map(([key, value]) => `${key}: ${value}`)
-                    .join('\n');
+        // Render items within a category
+        function renderCategoryItems(items, category) {
+            if (!items || items.length === 0) {
+                return `
+                    <div class="empty-category">
+                        <p>No items in ${category} yet.</p>
+                    </div>
+                `;
             }
-            
-            return '';
-        }
 
-        // === DIRECT EDITING FUNCTIONS ===
-
-        // Handle Enter key to save and blur
-        function handleEnterKey(event) {
-            if (event.key === 'Enter' && !event.shiftKey) {
-                event.preventDefault();
-                event.target.blur();
-            }
-        }
-
-        // Generic function to save any field
-        async function saveField(element, fieldType) {
-            const newValue = element.textContent.trim();
-            const originalValue = element.getAttribute('data-original');
-            
-            // Handle placeholder text
-            if (newValue.includes('Click to add content to') || newValue.includes('None specified')) {
-                if (fieldType === 'category' && newValue.includes('Click to add content to')) {
-                    // Empty category content
-                    element.textContent = '';
-                    return;
-                } else if (fieldType === 'attendees' && newValue === 'None specified') {
-                    // Default attendees text
-                    return;
+            const itemsHtml = items.map((item, index) => {
+                let text = '';
+                if (typeof item === 'string') {
+                    text = item;
+                } else if (item && typeof item === 'object') {
+                    text = item.text || item.content || JSON.stringify(item);
                 }
+
+                return `
+                    <div class="category-list-item">
+                        <span class="item-bullet">•</span>
+                        <span class="item-text">${escapeHtml(text)}</span>
+                        <div class="item-actions">
+                            <button class="edit-item-btn" onclick="openEditItemModal('${category}', ${index})" title="Edit">✏️</button>
+                            <button class="delete-item-btn" onclick="deleteItem('${category}', ${index})" title="Delete">🗑️</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            return `<div class="category-list">${itemsHtml}</div>`;
+        }
+
+        // Toggle category expansion
+        function toggleCategory(category) {
+            const categoryElement = document.getElementById(`category-${category.replace(/\s+/g, '-').toLowerCase()}`);
+            if (categoryElement) {
+                categoryElement.classList.toggle('expanded');
+            }
+        }
+
+        // Modal functions
+        function openAddItemModal(category) {
+            showModal('Add Item', `Add new item to ${category}`, '', (content) => {
+                addItemToCategory(category, content);
+            });
+        }
+
+        function openEditItemModal(category, itemIndex) {
+            const categoryData = currentNote.content[category];
+            const items = Array.isArray(categoryData) ? categoryData : (categoryData?.items || []);
+            const item = items[itemIndex];
+            const text = typeof item === 'string' ? item : (item?.text || item?.content || '');
+
+            showModal('Edit Item', `Edit item in ${category}`, text, (content) => {
+                editItemInCategory(category, itemIndex, content);
+            });
+        }
+
+        function openEditCategoryModal(category) {
+            const categoryData = currentNote.content[category];
+            const items = Array.isArray(categoryData) ? categoryData : (categoryData?.items || []);
+            const text = items.map(item => 
+                typeof item === 'string' ? item : (item?.text || item?.content || '')
+            ).join('\n');
+
+            showModal('Edit Category', `Edit all items in ${category}`, text, (content) => {
+                updateCategory(category, content);
+            }, true);
+        }
+
+        // Generic modal function
+        function showModal(title, subtitle, initialContent, onSave, isTextarea = false) {
+            const modalHtml = `
+                <div class="modal-overlay" id="editModal" onclick="closeModal(event)">
+                    <div class="modal" onclick="event.stopPropagation()">
+                        <div class="modal-header">
+                            <div class="modal-title">
+                                ${title}
+                                <div style="font-size: 0.75rem; font-weight: normal; color: var(--text-muted);">${subtitle}</div>
+                            </div>
+                            <button class="close-btn" onclick="closeModal()">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label class="form-label">Content</label>
+                                ${isTextarea ? 
+                                    `<textarea class="form-textarea" id="modalContent" placeholder="Enter content (one item per line)">${escapeHtml(initialContent)}</textarea>` :
+                                    `<input type="text" class="form-input" id="modalContent" placeholder="Enter content" value="${escapeHtml(initialContent)}">`
+                                }
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+                            <button class="btn-save" onclick="saveModalContent()">Save</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            
+            // Store the save callback
+            window.currentModalSave = onSave;
+            
+            // Show modal with animation
+            requestAnimationFrame(() => {
+                document.getElementById('editModal').classList.add('show');
+                document.getElementById('modalContent').focus();
+            });
+        }
+
+        function closeModal(event) {
+            if (event && event.target !== event.currentTarget) return;
+            
+            const modal = document.getElementById('editModal');
+            if (modal) {
+                modal.classList.remove('show');
+                setTimeout(() => {
+                    modal.remove();
+                    window.currentModalSave = null;
+                }, 300);
+            }
+        }
+
+        function saveModalContent() {
+            const content = document.getElementById('modalContent').value.trim();
+            if (content && window.currentModalSave) {
+                window.currentModalSave(content);
+            }
+            closeModal();
+        }
+
+        // Category manipulation functions
+        async function addItemToCategory(category, content) {
+            if (!content.trim()) return;
+
+            const updatedContent = { ...currentNote.content };
+            if (!updatedContent[category]) {
+                updatedContent[category] = { items: [] };
             }
             
-            // If no change, don't save
-            if (newValue === originalValue || (newValue === 'None specified' && originalValue === '')) {
-                return;
+            const items = updatedContent[category].items || [];
+            items.push(content.trim());
+            updatedContent[category].items = items;
+
+            await updateNoteContent(updatedContent);
+        }
+
+        async function editItemInCategory(category, itemIndex, newContent) {
+            if (!newContent.trim()) return;
+
+            const updatedContent = { ...currentNote.content };
+            const items = updatedContent[category]?.items || [];
+            
+            if (itemIndex >= 0 && itemIndex < items.length) {
+                items[itemIndex] = newContent.trim();
+                await updateNoteContent(updatedContent);
             }
+        }
 
-            // Show saving indicator and disable editing temporarily
-            const originalHtml = element.innerHTML;
-            element.style.opacity = '0.7';
-            element.contentEditable = 'false'; // Prevent focus events during save
+        async function deleteItem(category, itemIndex) {
+            if (!confirm('Are you sure you want to delete this item?')) return;
 
+            const updatedContent = { ...currentNote.content };
+            const items = updatedContent[category]?.items || [];
+            
+            if (itemIndex >= 0 && itemIndex < items.length) {
+                items.splice(itemIndex, 1);
+                await updateNoteContent(updatedContent);
+            }
+        }
+
+        async function updateCategory(category, content) {
+            const updatedContent = { ...currentNote.content };
+            
+            const items = content.split('\n')
+                .map(line => line.trim())
+                .filter(line => line.length > 0);
+
+            if (!updatedContent[category]) {
+                updatedContent[category] = { items: [] };
+            }
+            
+            updatedContent[category].items = items;
+            await updateNoteContent(updatedContent);
+        }
+
+        // Update note content via API
+        async function updateNoteContent(updatedContent) {
             try {
-                let updateData = {};
-                
-                if (fieldType === 'title') {
-                    if (!newValue) {
-                        alert('Title cannot be empty');
-                        element.innerHTML = originalHtml;
-                        element.style.opacity = '1';
-                        element.contentEditable = 'true';
-                        return;
-                    }
-                    updateData.title = newValue;
-                } else if (fieldType === 'date') {
-                    // For date editing, we'll need special handling
-                    // For now, let's skip date editing as it's complex with contenteditable
-                    element.innerHTML = originalHtml;
-                    element.style.opacity = '1';
-                    element.contentEditable = 'true';
-                    alert('Date editing coming soon. Use a proper date picker.');
-                    return;
-                } else if (fieldType === 'attendees') {
-                    updateData.attendees = newValue === 'None specified' ? null : newValue;
-                } else if (fieldType === 'category') {
-                    const category = element.getAttribute('data-category');
-                    
-                    // Parse the content into items, handling line breaks and removing visual indicators
-                    const rawText = newValue;
-                    const items = rawText.split('\n')
-                        .filter(line => line.trim())
-                        .map(line => {
-                            // Remove visual indicators (bullets and checkboxes)
-                            let cleanLine = line.trim();
-                            if (cleanLine.startsWith('• ')) {
-                                cleanLine = cleanLine.substring(2);
-                            } else if (cleanLine.startsWith('☐ ')) {
-                                cleanLine = cleanLine.substring(2);
-                            } else if (cleanLine.startsWith('☑ ')) {
-                                cleanLine = cleanLine.substring(2);
-                            }
-                            return cleanLine.trim();
-                        })
-                        .filter(line => line.length > 0);
-                    
-                    // Update the note's content structure
-                    const updatedContent = { ...currentNote.content };
-                    if (!updatedContent[category]) {
-                        updatedContent[category] = { items: [] };
-                    }
-                    
-                    // Update the items for this category
-                    if (updatedContent[category].items) {
-                        updatedContent[category].items = items;
-                    } else {
-                        updatedContent[category] = { items: items };
-                    }
-
-                    updateData.content = JSON.stringify(updatedContent);
-                }
-
                 const response = await fetch(`/api/notes/${currentNote.id}`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${accessToken}`
                     },
-                    body: JSON.stringify(updateData)
+                    body: JSON.stringify({
+                        content: JSON.stringify(updatedContent)
+                    })
                 });
 
                 if (handleTokenExpiration(response)) return;
 
                 if (response.ok) {
-                    const responseData = await response.json();
-                    
-                    // Update local note object and immediately restore content
-                    if (fieldType === 'title') {
-                        currentNote.title = newValue;
-                        loadNotes(); // Refresh sidebar
-                        
-                        // Immediately restore the saved content
-                        element.textContent = newValue;
-                        element.style.opacity = '1';
-                        element.contentEditable = 'true';
-                        element.setAttribute('data-original', newValue);
-                    } else if (fieldType === 'attendees') {
-                        currentNote.attendees = newValue === 'None specified' ? null : newValue;
-                        
-                        // Immediately restore the saved content
-                        element.textContent = newValue === 'None specified' ? 'None specified' : newValue;
-                        element.style.opacity = '1';
-                        element.contentEditable = 'true';
-                        element.setAttribute('data-original', newValue === 'None specified' ? '' : newValue);
-                    } else if (fieldType === 'category') {
-                        currentNote.content = JSON.parse(updateData.content);
-                        // Re-render the entire note to show proper formatting
-                        renderNoteDisplay();
-                        return; // Don't continue with the rest as we've re-rendered
-                    }
-                    
-                    console.log(`${fieldType} updated successfully`);
+                    currentNote.content = updatedContent;
+                    renderNoteDisplay();
+                    loadNotes(); // Refresh sidebar
                 } else {
-                    const errorData = await response.json();
-                    alert('Failed to save: ' + (errorData.error || 'Unknown error'));
-                    element.innerHTML = originalHtml;
-                    element.style.opacity = '1';
-                    element.contentEditable = 'true';
+                    console.error('Failed to update note content');
+                    alert('Failed to save changes. Please try again.');
                 }
             } catch (error) {
-                console.error('Error saving field:', error);
-                alert('Error saving. Please try again.');
-                element.innerHTML = originalHtml;
-                element.style.opacity = '1';
-                element.contentEditable = 'true';
+                console.error('Error updating note content:', error);
+                alert('Error saving changes. Please check your connection.');
             }
         }
 
@@ -1922,82 +2116,212 @@
         };
 
         // Handle special keydown events for categories
-        function handleCategoryKeydown(event) {
-            // Allow Enter for new lines in category content
-            if (event.key === 'Enter' && !event.ctrlKey && !event.metaKey) {
-                // Let Enter create new lines normally in categories
-                return true;
+        function handleEnterKey(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                event.target.blur();
             }
-            
-            // Call the general handler for other keys
-            return handleEnterKey(event);
         }
 
-        // Handle category focus to set up editing state
-        function handleCategoryFocus(element, category) {
-            // Skip if element is not editable (e.g., during save operation)
-            if (element.contentEditable === 'false') {
+        // Generic function to save any field (title, attendees, date)
+        async function saveField(element, fieldType) {
+            const newValue = element.textContent ? element.textContent.trim() : element.value;
+            const originalValue = element.getAttribute('data-original');
+            
+            // Handle placeholder text for attendees
+            if (fieldType === 'attendees' && newValue === 'None specified') {
                 return;
             }
             
-            const currentHtml = element.innerHTML.trim();
-            
-            // If it's empty or placeholder text, don't do anything
-            if (!currentHtml || currentHtml.includes('Click to add content to') || currentHtml.includes('No content in this category yet') || currentHtml.includes('Saving...')) {
-                element.innerHTML = '';
+            // If no change, don't save
+            if (newValue === originalValue || (newValue === 'None specified' && originalValue === '')) {
                 return;
             }
-            
-            // Convert HTML content to editable text with visual indicators
-            let editableText = '';
-            
-            // Check if the content contains HTML lists
-            if (currentHtml.includes('<ul>') || currentHtml.includes('<li>')) {
-                // Extract text from HTML lists
-                const tempDiv = document.createElement('div');
-                tempDiv.innerHTML = currentHtml;
-                
-                const listItems = tempDiv.querySelectorAll('li');
-                const textItems = [];
-                
-                listItems.forEach(li => {
-                    let text = li.textContent.trim();
-                    if (text) {
-                        // Add appropriate visual indicator based on category
-                        if (category.toLowerCase().includes('action')) {
-                            textItems.push(`☐ ${text}`);
-                        } else if (category === 'Key Points' || category === 'Ideas' || category === 'References') {
-                            textItems.push(`• ${text}`);
-                        } else {
-                            textItems.push(text);
-                        }
-                    }
-                });
-                
-                editableText = textItems.join('\n');
+
+            // Show saving indicator
+            const originalHtml = element.innerHTML || element.value;
+            if (element.contentEditable) {
+                element.style.opacity = '0.7';
+                element.contentEditable = 'false';
             } else {
-                // Extract plain text content
-                const tempDiv = document.createElement('div');
-                tempDiv.innerHTML = currentHtml;
-                editableText = tempDiv.textContent.trim();
+                element.style.opacity = '0.7';
+                element.disabled = true;
             }
-            
-            // Set the text content for editing
-            element.textContent = editableText;
-            element.setAttribute('data-original', editableText.split('\n')
-                .map(line => {
-                    let cleanLine = line.trim();
-                    if (cleanLine.startsWith('• ')) {
-                        cleanLine = cleanLine.substring(2);
-                    } else if (cleanLine.startsWith('☐ ')) {
-                        cleanLine = cleanLine.substring(2);
-                    } else if (cleanLine.startsWith('☑ ')) {
-                        cleanLine = cleanLine.substring(2);
+
+            try {
+                let updateData = {};
+                
+                if (fieldType === 'title') {
+                    if (!newValue) {
+                        alert('Title cannot be empty');
+                        restoreElement(element, originalHtml);
+                        return;
                     }
-                    return cleanLine.trim();
-                })
-                .filter(line => line.length > 0)
-                .join('\n'));
+                    updateData.title = newValue;
+                } else if (fieldType === 'date') {
+                    // Handle date field - expect ISO date format
+                    if (newValue) {
+                        updateData.created_at = newValue;
+                    }
+                } else if (fieldType === 'attendees') {
+                    updateData.attendees = newValue === 'None specified' ? null : newValue;
+                }
+
+                const response = await fetch(`/api/notes/${currentNote.id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${accessToken}`
+                    },
+                    body: JSON.stringify(updateData)
+                });
+
+                if (handleTokenExpiration(response)) return;
+
+                if (response.ok) {
+                    // Update local note object
+                    if (fieldType === 'title') {
+                        currentNote.title = newValue;
+                        loadNotes(); // Refresh sidebar
+                    } else if (fieldType === 'attendees') {
+                        currentNote.attendees = newValue === 'None specified' ? null : newValue;
+                    } else if (fieldType === 'date') {
+                        currentNote.created_at = newValue;
+                    }
+                    
+                    // Restore element
+                    restoreElement(element, newValue, true);
+                    element.setAttribute('data-original', newValue === 'None specified' ? '' : newValue);
+                    
+                    console.log(`${fieldType} updated successfully`);
+                } else {
+                    const errorData = await response.json().catch(() => ({}));
+                    alert('Failed to save: ' + (errorData.error || 'Unknown error'));
+                    restoreElement(element, originalHtml);
+                }
+            } catch (error) {
+                console.error('Error saving field:', error);
+                alert('Error saving. Please try again.');
+                restoreElement(element, originalHtml);
+            }
+        }
+
+        // Helper function to restore element state
+        function restoreElement(element, content, isSuccess = false) {
+            if (element.contentEditable && element.contentEditable !== 'inherit') {
+                element.innerHTML = isSuccess ? escapeHtml(content) : content;
+                element.style.opacity = '1';
+                element.contentEditable = 'true';
+            } else {
+                element.value = content;
+                element.style.opacity = '1';
+                element.disabled = false;
+            }
+        }
+
+        // Open date picker modal
+        function openDatePicker() {
+            const currentDate = currentNote.created_at ? 
+                currentNote.created_at.split('T')[0] : 
+                new Date().toISOString().split('T')[0];
+
+            const modalHtml = `
+                <div class="modal-overlay" id="dateModal" onclick="closeDateModal(event)">
+                    <div class="modal" onclick="event.stopPropagation()">
+                        <div class="modal-header">
+                            <div class="modal-title">
+                                📅 Set Note Date
+                                <div style="font-size: 0.75rem; font-weight: normal; color: var(--text-muted);">Choose the date for this note</div>
+                            </div>
+                            <button class="close-btn" onclick="closeDateModal()">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label class="form-label">Date</label>
+                                <input type="date" class="form-input" id="dateInput" value="${currentDate}">
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn-cancel" onclick="closeDateModal()">Cancel</button>
+                            <button class="btn-save" onclick="saveDateChange()">Save</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            
+            // Show modal with animation
+            requestAnimationFrame(() => {
+                document.getElementById('dateModal').classList.add('show');
+                document.getElementById('dateInput').focus();
+            });
+        }
+
+        function closeDateModal(event) {
+            if (event && event.target !== event.currentTarget) return;
+            
+            const modal = document.getElementById('dateModal');
+            if (modal) {
+                modal.classList.remove('show');
+                setTimeout(() => {
+                    modal.remove();
+                }, 300);
+            }
+        }
+
+        async function saveDateChange() {
+            const dateInput = document.getElementById('dateInput');
+            const newDate = dateInput.value;
+            
+            if (!newDate) {
+                alert('Please select a date');
+                return;
+            }
+
+            // Convert to ISO format
+            const isoDate = new Date(newDate + 'T00:00:00').toISOString();
+            
+            try {
+                const response = await fetch(`/api/notes/${currentNote.id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${accessToken}`
+                    },
+                    body: JSON.stringify({ created_at: isoDate })
+                });
+
+                if (handleTokenExpiration(response)) return;
+
+                if (response.ok) {
+                    currentNote.created_at = isoDate;
+                    renderNoteDisplay(); // Refresh display to show new date
+                    closeDateModal();
+                } else {
+                    const errorData = await response.json().catch(() => ({}));
+                    alert('Failed to save date: ' + (errorData.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error saving date:', error);
+                alert('Error saving date. Please try again.');
+            }
+        }
+
+        // Get icon for category
+        function getCategoryIcon(category) {
+            const icons = {
+                'General': '📝',
+                'Ideas': '💡',
+                'Tasks': '✅',
+                'Questions': '❓',
+                'Important': '⭐',
+                'Code': '💻',
+                'Research': '🔍',
+                'Meeting': '🤝',
+                'Personal': '👤'
+            };
+            return icons[category] || '📄';
         }
     </script>
 </body>
