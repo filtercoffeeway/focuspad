@@ -45,7 +45,7 @@ def create_app(config_name=None):
     oauth.init_app(app)
     
     # Import models to ensure they are registered with SQLAlchemy
-    from app.models import User
+    from app.models import User, Template, Note, Content
     
     # Initialize OAuth providers and error handlers
     from app.utils import init_oauth_providers, register_error_handlers

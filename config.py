@@ -25,7 +25,7 @@ class Config:
     
     # JWT Configuration
     JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY') or 'jwt-secret-key-change-in-production'
-    JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=1)
+    JWT_ACCESS_TOKEN_EXPIRES = timedelta(days=30)
     JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=30)
     
     # Google OAuth Configuration
@@ -46,16 +46,44 @@ class DevelopmentConfig(Config):
     DEBUG = True
     TESTING = False
     
-    # Development database fallback to SQLite if PostgreSQL not available
     @classmethod
     def init_app(cls, app):
         Config.init_app(app)
         
-        # Test PostgreSQL connection, fallback to SQLite
+        # Check if we should use SQLite for local development
         database_url = os.environ.get('DATABASE_URL')
-        if not database_url or not database_url.startswith('postgresql'):
+        use_sqlite = False
+        
+        if not database_url:
+            use_sqlite = True
+        elif database_url.startswith('postgresql') and 'db:' in database_url:
+            # This is Docker PostgreSQL URL but we're running locally
+            use_sqlite = True
+        elif database_url.startswith('postgresql'):
+            # Test PostgreSQL connection
+            try:
+                import psycopg2
+                # Try to connect to PostgreSQL
+                conn_params = {
+                    'host': 'localhost',
+                    'port': 5432,
+                    'database': 'focuspad',
+                    'user': 'focuspad_user',
+                    'password': 'focuspad_password'
+                }
+                conn = psycopg2.connect(**conn_params)
+                conn.close()
+                print("✅ PostgreSQL connection successful")
+            except Exception as e:
+                print(f"⚠️  PostgreSQL connection failed: {e}")
+                use_sqlite = True
+        
+        if use_sqlite:
             app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///focuspad_dev.db'
-            print("⚠️  Using SQLite for development. Set DATABASE_URL for PostgreSQL.")
+            print("📦 Using SQLite for local development")
+            print("💡 To use PostgreSQL: set up local PostgreSQL or use Docker")
+        else:
+            print("🐘 Using PostgreSQL for development")
 
 class TestingConfig(Config):
     """Testing configuration."""

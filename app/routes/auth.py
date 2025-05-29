@@ -90,6 +90,11 @@ def google_callback():
         # Clean up session
         session.pop('oauth_state', None)
         
+        # Store tokens in session for dashboard use
+        session['access_token'] = access_token
+        session['refresh_token'] = refresh_token
+        session['user_id'] = user.id
+        
         # Check if request wants JSON response (API usage)
         if request.headers.get('Accept') == 'application/json' or request.args.get('format') == 'json':
             return jsonify({
@@ -99,11 +104,8 @@ def google_callback():
                 'user': user.to_dict()
             })
         
-        # Otherwise, render success page (web usage)
-        return render_template('success.html', 
-                             user=user, 
-                             access_token=access_token, 
-                             refresh_token=refresh_token)
+        # Redirect to dashboard for web users
+        return redirect('/dashboard')
         
     except Exception as e:
         current_app.logger.error(f"Google OAuth callback error: {str(e)}")
@@ -214,6 +216,12 @@ def get_current_user():
 def logout():
     """Logout user (client should discard tokens)."""
     return jsonify({'message': 'Logout successful. Please discard your tokens.'})
+
+@auth_bp.route('/logout/web', methods=['GET', 'POST'])
+def logout_web():
+    """Web logout that clears session and redirects to login."""
+    session.clear()
+    return redirect('/login')
 
 @auth_bp.route('/debug/config', methods=['GET'])
 def debug_config():

@@ -3,8 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FocusPad - Login</title>
+    <title>FocusPad - Professional Note-Taking Platform</title>
     <style>
+        :root {
+            /* Color scheme */
+            --primary-blue: #0ea5e9;
+            --primary-blue-dark: #0284c7;
+            --primary-blue-light: #38bdf8;
+            --gradient-start: #0ea5e9;
+            --gradient-end: #1e40af;
+            --text-primary: #1f2937;
+            --text-secondary: #6b7280;
+            --text-muted: #9ca3af;
+            --text-light: #d1d5db;
+            --bg-white: #ffffff;
+            --bg-light: #f8fafc;
+            --bg-dark: #0f172a;
+            --border-light: #e5e7eb;
+            --shadow-light: rgba(14, 165, 233, 0.1);
+            --shadow-medium: rgba(14, 165, 233, 0.2);
+            --success-green: #10b981;
+            --warning-amber: #f59e0b;
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -13,35 +34,119 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 20px;
+            position: relative;
+        }
+
+        /* Background pattern */
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: radial-gradient(circle at 25% 25%, rgba(255, 255, 255, 0.1) 2px, transparent 2px),
+                              radial-gradient(circle at 75% 75%, rgba(255, 255, 255, 0.1) 2px, transparent 2px);
+            background-size: 50px 50px;
+            background-position: 0 0, 25px 25px;
+            opacity: 0.5;
+            z-index: 0;
         }
 
         .login-container {
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-            padding: 40px;
-            max-width: 400px;
+            background: var(--bg-white);
+            border-radius: 24px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+            max-width: 480px;
             width: 100%;
             text-align: center;
+            position: relative;
+            z-index: 1;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
 
-        .logo {
-            font-size: 2.5rem;
+        .login-container:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.2);
+        }
+
+        .header-section {
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-blue-dark) 100%);
+            padding: 40px 40px 30px 40px;
+            color: white;
+            position: relative;
+        }
+
+        .header-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 20"><defs><linearGradient id="a" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" style="stop-color:white;stop-opacity:0.1"/><stop offset="100%" style="stop-color:white;stop-opacity:0"/></linearGradient></defs><rect width="100" height="20" fill="url(%23a)"/></svg>') repeat-x;
+            opacity: 0.3;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 16px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .logo-icon {
+            width: 48px;
+            height: 48px;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+        }
+
+        .logo-text {
+            font-size: 2.25rem;
             font-weight: 700;
-            color: #333;
-            margin-bottom: 10px;
+            color: white;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
-        .subtitle {
-            color: #666;
-            margin-bottom: 40px;
+        .tagline {
             font-size: 1.1rem;
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 400;
+            position: relative;
+            z-index: 1;
+        }
+
+        .content-section {
+            padding: 40px;
+        }
+
+        .welcome-text {
+            margin-bottom: 30px;
+        }
+
+        .welcome-title {
+            font-size: 1.875rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 12px;
+            letter-spacing: -0.025em;
+        }
+
+        .welcome-subtitle {
+            color: var(--text-secondary);
+            font-size: 1.125rem;
+            line-height: 1.6;
+            font-weight: 400;
         }
 
         .google-btn {
@@ -49,151 +154,455 @@
             align-items: center;
             justify-content: center;
             width: 100%;
-            padding: 12px 24px;
-            background: #4285f4;
+            padding: 18px 24px;
+            background: var(--primary-blue);
             color: white;
             text-decoration: none;
-            border-radius: 8px;
+            border-radius: 12px;
             font-size: 16px;
-            font-weight: 500;
+            font-weight: 600;
             transition: all 0.3s ease;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 12px var(--shadow-light);
+            margin-bottom: 32px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .google-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .google-btn:hover::before {
+            left: 100%;
         }
 
         .google-btn:hover {
-            background: #3367d6;
+            background: var(--primary-blue-dark);
             transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 8px 20px var(--shadow-medium);
         }
 
         .google-icon {
-            width: 20px;
-            height: 20px;
+            width: 24px;
+            height: 24px;
             margin-right: 12px;
             background: white;
             border-radius: 50%;
-            padding: 2px;
+            padding: 4px;
+            flex-shrink: 0;
         }
 
-        .features {
-            margin-top: 40px;
-            text-align: left;
+        /* Features Grid */
+        .features-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 32px;
         }
 
-        .feature {
-            display: flex;
-            align-items: center;
-            margin-bottom: 15px;
-            color: #666;
+        .feature-card {
+            background: var(--bg-white);
+            border-radius: 12px;
+            padding: 20px 16px;
+            border: 1px solid var(--border-light);
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+        }
+
+        .feature-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            border-color: var(--primary-blue);
         }
 
         .feature-icon {
-            width: 20px;
-            height: 20px;
-            margin-right: 12px;
-            color: #4285f4;
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-blue-dark) 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 12px auto;
+            font-size: 16px;
+            color: white;
         }
 
-        .api-info {
-            margin-top: 30px;
-            padding-top: 30px;
-            border-top: 1px solid #eee;
+        .feature-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .feature-description {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
+
+        /* Trusted By Section */
+        .trusted-section {
+            margin: 32px 0;
+            text-align: center;
+        }
+
+        .trusted-title {
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            margin-bottom: 16px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .trusted-logos {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 24px;
+            flex-wrap: wrap;
+        }
+
+        .trusted-logo {
+            width: 60px;
+            height: 32px;
+            background: var(--text-light);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            opacity: 0.6;
+            transition: opacity 0.3s ease;
+        }
+
+        .trusted-logo:hover {
+            opacity: 1;
+        }
+
+        .footer-links {
+            padding-top: 24px;
+            border-top: 1px solid var(--border-light);
             font-size: 14px;
-            color: #888;
+            color: var(--text-muted);
         }
 
-        .api-info a {
-            color: #4285f4;
+        .footer-links a {
+            color: var(--primary-blue);
             text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s ease;
         }
 
-        .api-info a:hover {
+        .footer-links a:hover {
+            color: var(--primary-blue-dark);
             text-decoration: underline;
         }
 
-        @media (max-width: 480px) {
+        /* Loading animation */
+        .loading-spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid transparent;
+            border-top: 2px solid currentColor;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Responsive design */
+        @media (max-width: 640px) {
             .login-container {
-                padding: 30px 20px;
+                max-width: 95vw;
+                border-radius: 16px;
             }
-            
-            .logo {
-                font-size: 2rem;
+
+            .header-section {
+                padding: 30px 24px 20px 24px;
+            }
+
+            .content-section {
+                padding: 30px 24px;
+            }
+
+            .logo-text {
+                font-size: 1.875rem;
+            }
+
+            .logo-icon {
+                width: 40px;
+                height: 40px;
+            }
+
+            .welcome-title {
+                font-size: 1.5rem;
+            }
+
+            .stats-section {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+
+            .trusted-logos {
+                gap: 16px;
+            }
+
+            .trusted-logo {
+                width: 50px;
+                height: 28px;
+                font-size: 0.6875rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header-section {
+                padding: 24px 20px 16px 20px;
+            }
+
+            .content-section {
+                padding: 24px 20px;
+            }
+
+            .logo-text {
+                font-size: 1.75rem;
+            }
+
+            .tagline {
+                font-size: 1rem;
+            }
+
+            .welcome-title {
+                font-size: 1.375rem;
+            }
+
+            .welcome-subtitle {
+                font-size: 1rem;
             }
         }
     </style>
 </head>
 <body>
     <div class="login-container">
-        <h1 class="logo">🎯 FocusPad</h1>
-        <p class="subtitle">Sign in to your account</p>
-        
-        <a href="/api/auth/login/google" class="google-btn">
-            <svg class="google-icon" viewBox="0 0 24 24">
-                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-            </svg>
-            Continue with Google
-        </a>
-
-        <div class="features">
-            <div class="feature">
-                <span class="feature-icon">🔒</span>
-                <span>Secure OAuth authentication</span>
+        <!-- Header Section with Logo and Branding -->
+        <div class="header-section">
+            <div class="logo-container">
+                <svg class="logo-icon" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Outer focus ring -->
+                    <circle cx="16" cy="16" r="15" stroke="rgba(255, 255, 255, 0.3)" stroke-width="1" fill="none" opacity="0.6"/>
+                    
+                    <!-- Middle focus ring -->
+                    <circle cx="16" cy="16" r="11" stroke="rgba(255, 255, 255, 0.5)" stroke-width="1.5" fill="none" opacity="0.8"/>
+                    
+                    <!-- Document background -->
+                    <rect x="7" y="6" width="18" height="20" rx="2" fill="white" stroke="rgba(255, 255, 255, 0.9)" stroke-width="0.5"/>
+                    
+                    <!-- Document lines -->
+                    <line x1="10" y1="10" x2="22" y2="10" stroke="#0ea5e9" stroke-width="1" opacity="0.8"/>
+                    <line x1="10" y1="13" x2="20" y2="13" stroke="#0ea5e9" stroke-width="1" opacity="0.7"/>
+                    <line x1="10" y1="16" x2="21" y2="16" stroke="#0ea5e9" stroke-width="1" opacity="0.6"/>
+                    <line x1="10" y1="19" x2="18" y2="19" stroke="#0ea5e9" stroke-width="1" opacity="0.5"/>
+                    
+                    <!-- Central focus dot -->
+                    <circle cx="16" cy="16" r="2.5" fill="#0284c7"/>
+                    <circle cx="16" cy="16" r="1.5" fill="white"/>
+                </svg>
+                <h1 class="logo-text">FocusPad</h1>
             </div>
-            <div class="feature">
-                <span class="feature-icon">⚡</span>
-                <span>Fast and reliable access</span>
-            </div>
-            <div class="feature">
-                <span class="feature-icon">🎯</span>
-                <span>Focus on what matters</span>
-            </div>
+            <p class="tagline">Professional Note-Taking & AI-Powered Organization</p>
         </div>
 
-        <div class="api-info">
-            <p>
-                This is the FocusPad API interface.<br>
-                <a href="/">View API documentation</a> | 
-                <a href="/health">Health check</a>
-            </p>
+        <!-- Main Content Section -->
+        <div class="content-section">
+            <div class="welcome-text">
+                <h2 class="welcome-title">Welcome to the Future of Note-Taking</h2>
+                <p class="welcome-subtitle">Join thousands of professionals who've revolutionized their productivity with AI-powered organization</p>
+            </div>
+
+            <!-- Google Sign-in Button -->
+            <a href="/api/auth/login/google" class="google-btn" id="googleBtn">
+                <svg class="google-icon" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                </svg>
+                Continue with Google
+            </a>
+
+            <!-- Features Grid -->
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🤖</div>
+                    <div class="feature-title">AI-Powered</div>
+                    <div class="feature-description">GPT-4 intelligent categorization</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔒</div>
+                    <div class="feature-title">Secure</div>
+                    <div class="feature-description">Enterprise-grade encryption</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">⚡</div>
+                    <div class="feature-title">Fast</div>
+                    <div class="feature-description">Real-time collaboration</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🌙</div>
+                    <div class="feature-title">Adaptive</div>
+                    <div class="feature-description">Dark/light mode themes</div>
+                </div>
+            </div>
+
+            <!-- Trusted By Section -->
+            <div class="trusted-section">
+                <div class="trusted-title">Trusted by teams at</div>
+                <div class="trusted-logos">
+                    <div class="trusted-logo">TECH</div>
+                    <div class="trusted-logo">STARTUP</div>
+                    <div class="trusted-logo">CORP</div>
+                    <div class="trusted-logo">LABS</div>
+                </div>
+            </div>
+
+            <!-- Footer Links -->
+            <div class="footer-links">
+                <p>
+                    Enterprise-ready • AI-powered • Secure<br>
+                    <a href="/health">System Status</a> • 
+                    <a href="https://github.com/focuspad" target="_blank">Open Source</a> • 
+                    <a href="mailto:enterprise@focuspad.ai">Enterprise Sales</a>
+                </p>
+            </div>
         </div>
     </div>
 
     <script>
-        // Add some interactivity
-        document.querySelector('.google-btn').addEventListener('click', function(e) {
-            // Add loading state
-            this.innerHTML = `
-                <div style="width: 20px; height: 20px; margin-right: 12px;">
-                    <div style="width: 20px; height: 20px; border: 2px solid #ffffff; border-top: 2px solid transparent; border-radius: 50%; animation: spin 1s linear infinite;"></div>
-                </div>
-                Redirecting to Google...
-            `;
-            
-            // Add CSS animation for spinner
-            if (!document.querySelector('#spinner-style')) {
-                const style = document.createElement('style');
-                style.id = 'spinner-style';
-                style.textContent = `
-                    @keyframes spin {
-                        0% { transform: rotate(0deg); }
-                        100% { transform: rotate(360deg); }
-                    }
+        // Enhanced interactivity and user experience
+        document.addEventListener('DOMContentLoaded', function() {
+            const googleBtn = document.getElementById('googleBtn');
+            const loginContainer = document.querySelector('.login-container');
+
+            // Google sign-in button loading state
+            googleBtn.addEventListener('click', function(e) {
+                // Prevent double-click
+                if (this.classList.contains('loading')) {
+                    e.preventDefault();
+                    return;
+                }
+
+                this.classList.add('loading');
+                
+                // Show loading state
+                this.innerHTML = `
+                    <div class="loading-spinner" style="margin-right: 12px;"></div>
+                    Connecting to Google...
                 `;
-                document.head.appendChild(style);
-            }
+
+                // Add slight delay for better UX
+                setTimeout(() => {
+                    window.location.href = this.getAttribute('href');
+                }, 500);
+            });
+
+            // Add subtle animations on load
+            setTimeout(() => {
+                loginContainer.style.opacity = '0';
+                loginContainer.style.transform = 'translateY(20px)';
+                loginContainer.style.transition = 'all 0.6s ease';
+                
+                requestAnimationFrame(() => {
+                    loginContainer.style.opacity = '1';
+                    loginContainer.style.transform = 'translateY(0)';
+                });
+            }, 100);
+
+            // Floating animation for feature cards
+            const featureCards = document.querySelectorAll('.feature-card');
+            featureCards.forEach((card, index) => {
+                setTimeout(() => {
+                    card.style.animation = `fadeInUp 0.6s ease forwards`;
+                    card.style.animationDelay = `${index * 0.1}s`;
+                }, 300);
+            });
+
+            // Stats animation
+            const statNumbers = document.querySelectorAll('.stat-number');
+            setTimeout(() => {
+                statNumbers.forEach((stat, index) => {
+                    stat.style.animation = `countUp 1s ease forwards`;
+                    stat.style.animationDelay = `${index * 0.2}s`;
+                });
+            }, 500);
+
+            // Add dynamic styles for animations
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes fadeInUp {
+                    from {
+                        opacity: 0;
+                        transform: translateY(20px);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
+                }
+
+                @keyframes countUp {
+                    from {
+                        opacity: 0;
+                        transform: scale(0.8);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: scale(1);
+                    }
+                }
+
+                .feature-card {
+                    opacity: 0;
+                }
+
+                .stat-number {
+                    opacity: 0;
+                }
+            `;
+            document.head.appendChild(style);
         });
 
-        // Add some visual feedback on hover
-        document.querySelector('.login-container').addEventListener('mouseenter', function() {
-            this.style.transform = 'translateY(-5px)';
-        });
-
-        document.querySelector('.login-container').addEventListener('mouseleave', function() {
-            this.style.transform = 'translateY(0)';
-        });
+        // Professional console message
+        console.log(`
+        🎯 FocusPad Enterprise
+        
+        Built with enterprise-grade architecture:
+        • Flask & Python backend
+        • PostgreSQL with encryption
+        • OpenAI GPT-4 integration
+        • OAuth 2.0 security
+        • Docker containerization
+        
+        Interested in our enterprise features?
+        Contact: enterprise@focuspad.ai
+        `);
     </script>
 </body>
 </html> 
