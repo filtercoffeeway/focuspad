@@ -1,0 +1,20 @@
+# Flask Configuration
+SECRET_KEY=your-secret-key-here
+JWT_SECRET_KEY=your-jwt-secret-key-here
+FLASK_ENV=development
+
+# Database Configuration (SQLite for development, PostgreSQL for production)
+DATABASE_URL=sqlite:///focuspad.db
+# For PostgreSQL: postgresql://username:password@localhost:5432/focuspad
+
+# Google OAuth Configuration
+# Get these from: https://console.developers.google.com/
+GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+
+# CORS Configuration (comma-separated origins)
+CORS_ORIGINS=http://localhost:3000,http://localhost:8080
+
+# Server Configuration
+HOST=0.0.0.0
+PORT=5000 
