@@ -7,6 +7,10 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from app import db
 from app.models import Note, Template
 from app.utils.ai_service import ai_service
+from app.utils.encryption_service import encryption_service
+import json
+import re
+from datetime import datetime
 
 # Create notes blueprint
 notes_bp = Blueprint('notes', __name__)
@@ -21,9 +25,23 @@ def get_notes():
         
         notes = Note.get_user_notes(current_user_id, include_archived=include_archived)
         
+        # Decrypt and return notes (work with fresh copies to avoid session issues)
+        decrypted_notes = []
+        for note in notes:
+            try:
+                # Get fresh copy to avoid session conflicts
+                fresh_note = Note.query.get(note.id)
+                # Decrypt each note before returning
+                fresh_note.decrypt_sensitive_data(current_user_id)
+                decrypted_notes.append(fresh_note.to_dict(include_content=False))
+            except Exception as e:
+                current_app.logger.error(f"Failed to decrypt note {note.id}: {e}")
+                # Fallback to returning unencrypted data if decryption fails
+                decrypted_notes.append(note.to_dict(include_content=False))
+        
         return jsonify({
-            'notes': [note.to_dict(include_content=False) for note in notes],
-            'count': len(notes)
+            'notes': decrypted_notes,
+            'count': len(decrypted_notes)
         })
         
     except Exception as e:
@@ -56,7 +74,7 @@ def create_note():
             if not template.is_system and template.user_id != current_user_id:
                 return jsonify({'error': 'Access denied to template'}), 403
         
-        # Create note
+        # Create note (this automatically commits to database)
         note = Note.create_note(
             title=title,
             user_id=current_user_id,
@@ -65,9 +83,25 @@ def create_note():
             attendees=attendees
         )
         
+        # Encrypt sensitive data after creation
+        try:
+            note.encrypt_sensitive_data(current_user_id)
+            db.session.commit()
+            current_app.logger.info(f"Note {note.id} encrypted and saved for user {current_user_id}")
+        except Exception as e:
+            current_app.logger.error(f"Failed to encrypt note {note.id}: {e}")
+            # Note was already created, encryption failure is not critical
+        
+        # Get fresh copy of note for response to avoid session issues
+        fresh_note = Note.query.get(note.id)
+        try:
+            fresh_note.decrypt_sensitive_data(current_user_id)
+        except Exception as e:
+            current_app.logger.error(f"Failed to decrypt note {note.id} for response: {e}")
+        
         return jsonify({
             'message': 'Note created successfully',
-            'note': note.to_dict()
+            'note': fresh_note.to_dict()
         }), 201
         
     except Exception as e:
@@ -88,7 +122,15 @@ def get_note(note_id):
         if note.user_id != current_user_id:
             return jsonify({'error': 'Access denied'}), 403
         
-        return jsonify({'note': note.to_dict()})
+        # Get fresh copy and decrypt sensitive data before returning
+        fresh_note = Note.query.get(note_id)
+        try:
+            fresh_note.decrypt_sensitive_data(current_user_id)
+        except Exception as e:
+            current_app.logger.error(f"Failed to decrypt note {note_id}: {e}")
+            # Continue with potentially encrypted data if decryption fails
+        
+        return jsonify({'note': fresh_note.to_dict()})
         
     except Exception as e:
         current_app.logger.error(f"Get note error: {str(e)}")
@@ -112,6 +154,12 @@ def update_note(note_id):
         if not data:
             return jsonify({'error': 'No data provided'}), 400
         
+        # Decrypt current data first
+        try:
+            note.decrypt_sensitive_data(current_user_id)
+        except Exception as e:
+            current_app.logger.error(f"Failed to decrypt note {note_id} for update: {e}")
+        
         # Update fields
         if 'title' in data:
             note.title = data['title']
@@ -124,7 +172,6 @@ def update_note(note_id):
         if 'created_at' in data:
             # Allow updating the created_at timestamp
             try:
-                from datetime import datetime
                 if isinstance(data['created_at'], str):
                     note.created_at = datetime.fromisoformat(data['created_at'].replace('Z', '+00:00'))
                 else:
@@ -138,7 +185,18 @@ def update_note(note_id):
             else:
                 note.set_content(data['content'])
         
-        db.session.commit()
+        # Encrypt updated data
+        try:
+            note.encrypt_sensitive_data(current_user_id)
+            db.session.commit()
+            current_app.logger.info(f"Note {note.id} updated and encrypted for user {current_user_id}")
+        except Exception as e:
+            current_app.logger.error(f"Failed to encrypt updated note {note.id}: {e}")
+            # Save without encryption if it fails
+            db.session.commit()
+        
+        # Decrypt for response
+        note.decrypt_sensitive_data(current_user_id)
         
         return jsonify({
             'message': 'Note updated successfully',
@@ -194,6 +252,12 @@ def add_content(note_id):
         if not text:
             return jsonify({'error': 'Text content cannot be empty'}), 400
         
+        # Decrypt note data first
+        try:
+            note.decrypt_sensitive_data(current_user_id)
+        except Exception as e:
+            current_app.logger.error(f"Failed to decrypt note {note_id} for content addition: {e}")
+        
         # Get manual category if specified
         manual_category = data.get('category')
         
@@ -242,7 +306,18 @@ def add_content(note_id):
         else:
             note.raw_content = text
         
-        db.session.commit()
+        # Encrypt the updated data
+        try:
+            note.encrypt_sensitive_data(current_user_id)
+            db.session.commit()
+            current_app.logger.info(f"Note {note.id} content updated and encrypted for user {current_user_id}")
+        except Exception as e:
+            current_app.logger.error(f"Failed to encrypt updated note {note.id}: {e}")
+            # Save without encryption if it fails
+            db.session.commit()
+        
+        # Decrypt for response
+        note.decrypt_sensitive_data(current_user_id)
         
         return jsonify({
             'message': 'Content added successfully',
@@ -271,10 +346,27 @@ def remove_content(note_id, category):
         if not data or 'content_id' not in data:
             return jsonify({'error': 'Content ID is required'}), 400
         
+        # Decrypt note data first
+        try:
+            note.decrypt_sensitive_data(current_user_id)
+        except Exception as e:
+            current_app.logger.error(f"Failed to decrypt note {note_id} for content removal: {e}")
+        
         content_id = data['content_id']
         note.remove_content_from_category(category, content_id)
         
-        db.session.commit()
+        # Encrypt the updated data
+        try:
+            note.encrypt_sensitive_data(current_user_id)
+            db.session.commit()
+            current_app.logger.info(f"Note {note.id} content removed and encrypted for user {current_user_id}")
+        except Exception as e:
+            current_app.logger.error(f"Failed to encrypt updated note {note.id}: {e}")
+            # Save without encryption if it fails
+            db.session.commit()
+        
+        # Decrypt for response
+        note.decrypt_sensitive_data(current_user_id)
         
         return jsonify({
             'message': 'Content removed successfully',
@@ -298,6 +390,12 @@ def suggest_title(note_id):
         
         if note.user_id != current_user_id:
             return jsonify({'error': 'Access denied'}), 403
+        
+        # Decrypt note data first
+        try:
+            note.decrypt_sensitive_data(current_user_id)
+        except Exception as e:
+            current_app.logger.error(f"Failed to decrypt note {note_id} for title suggestion: {e}")
         
         if not note.raw_content:
             return jsonify({'error': 'No content available for title suggestion'}), 400
@@ -332,6 +430,12 @@ def recategorize_note(note_id):
         if note.user_id != current_user_id:
             return jsonify({'error': 'Access denied'}), 403
         
+        # Decrypt note data first
+        try:
+            note.decrypt_sensitive_data(current_user_id)
+        except Exception as e:
+            current_app.logger.error(f"Failed to decrypt note {note_id} for recategorization: {e}")
+        
         if not note.raw_content:
             return jsonify({'error': 'No content available for recategorization'}), 400
         
@@ -349,7 +453,18 @@ def recategorize_note(note_id):
                     if content_item.strip():
                         note.add_content_to_category(category_name, content_item.strip())
             
-            db.session.commit()
+            # Encrypt the updated data
+            try:
+                note.encrypt_sensitive_data(current_user_id)
+                db.session.commit()
+                current_app.logger.info(f"Note {note.id} recategorized and encrypted for user {current_user_id}")
+            except Exception as e:
+                current_app.logger.error(f"Failed to encrypt recategorized note {note.id}: {e}")
+                # Save without encryption if it fails
+                db.session.commit()
+            
+            # Decrypt for response
+            note.decrypt_sensitive_data(current_user_id)
             
             return jsonify({
                 'message': 'Note recategorized successfully',
@@ -362,4 +477,167 @@ def recategorize_note(note_id):
         
     except Exception as e:
         current_app.logger.error(f"Recategorize note error: {str(e)}")
-        return jsonify({'error': 'Failed to recategorize note'}), 500 
+        return jsonify({'error': 'Failed to recategorize note'}), 500
+
+@notes_bp.route('/search', methods=['GET'])
+@jwt_required()
+def search_notes():
+    """Search for text across all user notes."""
+    try:
+        current_user_id = get_jwt_identity()
+        query = request.args.get('q', '').strip()
+        include_archived = request.args.get('include_archived', 'false').lower() == 'true'
+        
+        current_app.logger.info(f"Search request - User: {current_user_id}, Query: '{query}', Include archived: {include_archived}")
+        
+        if not query:
+            return jsonify({'error': 'Search query is required'}), 400
+        
+        if len(query) < 2:
+            return jsonify({'error': 'Search query must be at least 2 characters'}), 400
+        
+        # Get all user notes
+        notes = Note.get_user_notes(current_user_id, include_archived=include_archived)
+        current_app.logger.info(f"Found {len(notes)} notes for user {current_user_id}")
+        
+        search_results = []
+        query_lower = query.lower()
+        
+        for note in notes:
+            try:
+                # Get fresh copy and decrypt for searching
+                fresh_note = Note.query.get(note.id)
+                if not fresh_note:
+                    current_app.logger.warning(f"Could not find note {note.id}")
+                    continue
+                    
+                fresh_note.decrypt_sensitive_data(current_user_id)
+                
+                # Search in various fields
+                matches = []
+                
+                # Search in title
+                if fresh_note.title and query_lower in fresh_note.title.lower():
+                    matches.append({
+                        'field': 'title',
+                        'text': fresh_note.title,
+                        'highlight': _highlight_text(fresh_note.title, query)
+                    })
+                
+                # Search in description
+                if fresh_note.description and query_lower in fresh_note.description.lower():
+                    matches.append({
+                        'field': 'description', 
+                        'text': fresh_note.description,
+                        'highlight': _highlight_text(fresh_note.description, query)
+                    })
+                
+                # Search in raw content
+                if fresh_note.raw_content and query_lower in fresh_note.raw_content.lower():
+                    matches.append({
+                        'field': 'raw_content',
+                        'text': fresh_note.raw_content,
+                        'highlight': _highlight_text(fresh_note.raw_content, query)
+                    })
+                
+                # Search in categorized content
+                content_dict = fresh_note.get_content()
+                for category_name, items in content_dict.items():
+                    if isinstance(items, list):
+                        for item in items:
+                            if isinstance(item, dict) and 'text' in item:
+                                if query_lower in item['text'].lower():
+                                    matches.append({
+                                        'field': 'content',
+                                        'category': category_name,
+                                        'text': item['text'],
+                                        'highlight': _highlight_text(item['text'], query),
+                                        'item_id': item.get('id'),
+                                        'timestamp': item.get('timestamp')
+                                    })
+                
+                # Search in attendees
+                if fresh_note.attendees and query_lower in fresh_note.attendees.lower():
+                    matches.append({
+                        'field': 'attendees',
+                        'text': fresh_note.attendees,
+                        'highlight': _highlight_text(fresh_note.attendees, query)
+                    })
+                
+                # If any matches found, add to results
+                if matches:
+                    search_results.append({
+                        'note': {
+                            'id': fresh_note.id,
+                            'title': fresh_note.title,
+                            'description': fresh_note.description,
+                            'created_at': fresh_note.created_at.isoformat() + 'Z' if fresh_note.created_at else None,
+                            'updated_at': fresh_note.updated_at.isoformat() + 'Z' if fresh_note.updated_at else None,
+                            'is_archived': fresh_note.is_archived,
+                            'template_name': fresh_note.template.name if fresh_note.template else None
+                        },
+                        'matches': matches,
+                        'match_count': len(matches)
+                    })
+                    
+            except Exception as e:
+                current_app.logger.error(f"Error searching note {note.id}: {e}")
+                continue
+        
+        # Sort results by relevance (number of matches, then by update date)
+        search_results.sort(key=lambda x: (
+            -x['match_count'], 
+            -(datetime.fromisoformat(x['note']['updated_at'].replace('Z', '+00:00')).timestamp() if x['note']['updated_at'] else 0)
+        ))
+        
+        current_app.logger.info(f"Search completed - {len(search_results)} results found")
+        
+        return jsonify({
+            'query': query,
+            'results': search_results,
+            'total_results': len(search_results),
+            'total_matches': sum(result['match_count'] for result in search_results)
+        })
+        
+    except Exception as e:
+        current_app.logger.error(f"Search error: {str(e)}")
+        return jsonify({'error': 'Search failed'}), 500
+
+def _highlight_text(text, query, max_length=200):
+    """Highlight search query in text and return a snippet."""
+    if not text or not query:
+        return text[:max_length] if text else ""
+    
+    # Convert to string if not already
+    text = str(text)
+    query = str(query)
+    
+    text_lower = text.lower()
+    query_lower = query.lower()
+    
+    # Find the position of the query
+    pos = text_lower.find(query_lower)
+    if pos == -1:
+        return text[:max_length]
+    
+    # Calculate snippet boundaries
+    start = max(0, pos - 50)
+    end = min(len(text), pos + len(query) + 150)
+    
+    # Extract snippet
+    snippet = text[start:end]
+    
+    # Add ellipsis if needed
+    if start > 0:
+        snippet = "..." + snippet
+    if end < len(text):
+        snippet = snippet + "..."
+    
+    # Highlight the query (case-insensitive)
+    try:
+        pattern = re.compile(re.escape(query), re.IGNORECASE)
+        highlighted = pattern.sub(f'<mark>{query}</mark>', snippet)
+        return highlighted
+    except Exception as e:
+        current_app.logger.error(f"Error highlighting text: {e}")
+        return snippet  # Return unhighlighted snippet if highlighting fails 

@@ -3,7 +3,7 @@ Flask application factory for FocusPad API.
 """
 
 import os
-from flask import Flask
+from flask import Flask, jsonify
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
@@ -55,5 +55,26 @@ def create_app(config_name=None):
     # Register blueprints
     from app.routes import register_blueprints
     register_blueprints(app)
+    
+    # Health check endpoint
+    @app.route('/health')
+    def health_check():
+        """Health check endpoint for load balancers and monitoring."""
+        try:
+            # Test database connection
+            db.session.execute('SELECT 1')
+            return jsonify({
+                'status': 'healthy',
+                'service': 'focuspad',
+                'database': 'connected',
+                'version': '1.0.0'
+            }), 200
+        except Exception as e:
+            return jsonify({
+                'status': 'unhealthy',
+                'service': 'focuspad',
+                'database': 'disconnected',
+                'error': str(e)
+            }), 503
     
     return app 

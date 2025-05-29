@@ -198,6 +198,158 @@
             align-items: center;
         }
 
+        .search-container {
+            padding: 0 24px 16px 24px;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .search-box {
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 40px 12px 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            font-size: 0.875rem;
+            transition: all 0.2s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--accent-border);
+            background: var(--bg-secondary);
+            box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+        }
+
+        .search-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .search-icon {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+
+        .clear-search {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 0.875rem;
+            padding: 4px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .clear-search:hover {
+            background: var(--hover-bg);
+            color: var(--text-primary);
+        }
+
+        .search-results {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0;
+        }
+
+        .search-status {
+            padding: 16px 24px;
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            text-align: center;
+        }
+
+        .search-highlight {
+            background: #fef08a;
+            color: #854d0e;
+            padding: 1px 2px;
+            border-radius: 2px;
+        }
+
+        [data-theme="dark"] .search-highlight {
+            background: #365314;
+            color: #bef264;
+        }
+
+        .search-match {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+            padding: 4px 8px;
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+            border-left: 2px solid var(--accent-border);
+        }
+
+        .search-match-field {
+            font-weight: 600;
+            text-transform: capitalize;
+            margin-bottom: 2px;
+        }
+
+        .search-match-content {
+            line-height: 1.4;
+        }
+
+        .search-match mark {
+            background: var(--search-highlight);
+            color: inherit;
+            padding: 1px 2px;
+            border-radius: 2px;
+        }
+
+        .search-matches {
+            margin-top: 8px;
+        }
+
+        .search-result {
+            border-left: 3px solid var(--accent-border);
+        }
+
+        .search-result .search-match {
+            margin-top: 4px;
+            padding: 4px 8px;
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+            font-size: 0.75rem;
+        }
+
+        .search-match-field {
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 2px;
+            text-transform: capitalize;
+        }
+
+        .search-match-content {
+            line-height: 1.4;
+            color: var(--text-secondary);
+        }
+
+        .search-match-content mark {
+            background: #fef08a;
+            color: #854d0e;
+            padding: 1px 2px;
+            border-radius: 2px;
+        }
+
+        [data-theme="dark"] .search-match-content mark {
+            background: #365314;
+            color: #bef264;
+        }
+
         .sidebar-title {
             font-size: 1.125rem;
             font-weight: 600;
@@ -1119,12 +1271,20 @@
                 <div class="sidebar-title">Notes</div>
                 <button class="new-note-btn" onclick="createNewNote()">+ New</button>
             </div>
+            <div class="search-container">
+                <div class="search-box">
+                    <input type="text" class="search-input" id="searchInput" placeholder="Search notes...">
+                    <span class="search-icon" id="searchIcon">🔍</span>
+                    <button class="clear-search" id="clearSearchBtn" onclick="clearSearch()" style="display: none;">✖️</button>
+                </div>
+            </div>
             <div class="notes-list" id="notesList">
                 <div class="loading">
                     <div class="spinner"></div>
                     Loading notes...
                 </div>
             </div>
+            <div class="search-status" id="searchStatus" style="display: none;"></div>
         </div>
 
         <!-- Main Content -->
@@ -1182,6 +1342,9 @@
             
             // Initialize theme
             initializeTheme();
+            
+            // Initialize search
+            initializeSearch();
             
             loadNotes();
             
@@ -2322,6 +2485,161 @@
                 'Personal': '👤'
             };
             return icons[category] || '📄';
+        }
+
+        // Search functionality
+        let searchTimeout = null;
+        let isSearching = false;
+        let isSearchMode = false;
+
+        function initializeSearch() {
+            const searchInput = document.getElementById('searchInput');
+            const clearBtn = document.getElementById('clearSearchBtn');
+            const searchIcon = document.getElementById('searchIcon');
+            
+            // Add event listeners
+            searchInput.addEventListener('input', handleSearchInput);
+            searchInput.addEventListener('keydown', handleSearchKeydown);
+            
+            // Update clear button visibility
+            function updateClearButton() {
+                const hasText = searchInput.value.trim().length > 0;
+                clearBtn.style.display = hasText ? 'block' : 'none';
+                searchIcon.style.display = hasText ? 'none' : 'block';
+            }
+            
+            searchInput.addEventListener('input', updateClearButton);
+            updateClearButton();
+        }
+
+        function handleSearchInput(e) {
+            clearTimeout(searchTimeout);
+            const query = e.target.value.trim();
+            
+            if (query.length === 0) {
+                clearSearch();
+                return;
+            }
+            
+            if (query.length < 2) {
+                showSearchStatus('Type at least 2 characters to search...');
+                return;
+            }
+            
+            // Debounce search requests
+            searchTimeout = setTimeout(() => {
+                performSearch(query);
+            }, 300);
+        }
+
+        function handleSearchKeydown(e) {
+            if (e.key === 'Escape') {
+                clearSearch();
+            }
+        }
+
+        async function performSearch(query) {
+            if (isSearching) return;
+            
+            isSearching = true;
+            isSearchMode = true;
+            showSearchStatus('Searching...');
+            
+            try {
+                const response = await fetch(`/api/notes/search?q=${encodeURIComponent(query)}`, {
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`
+                    }
+                });
+                
+                if (handleTokenExpiration(response)) {
+                    isSearching = false;
+                    return;
+                }
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    renderSearchResults(data);
+                } else {
+                    const errorData = await response.json().catch(() => ({}));
+                    showSearchStatus('Search failed: ' + (errorData.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Search error:', error);
+                showSearchStatus('Search failed. Please try again.');
+            } finally {
+                isSearching = false;
+            }
+        }
+
+        function renderSearchResults(searchData) {
+            const notesList = document.getElementById('notesList');
+            const searchStatus = document.getElementById('searchStatus');
+            
+            if (searchData.total_results === 0) {
+                notesList.innerHTML = '<div class="search-status">No notes found matching your search.</div>';
+                showSearchStatus(`No results for "${searchData.query}"`);
+                return;
+            }
+            
+            // Build search results HTML
+            const resultsHTML = searchData.results.map(result => {
+                const note = result.note;
+                const matches = result.matches;
+                
+                return `
+                    <div class="note-item search-result" onclick="selectNote(${note.id})" data-note-id="${note.id}">
+                        <div class="note-header-row">
+                            <div class="note-title">${escapeHtml(note.title || 'Untitled Note')}</div>
+                            <div class="note-actions">
+                                <button class="delete-btn" onclick="deleteNote(${note.id}, event)" title="Delete note">🗑️</button>
+                            </div>
+                        </div>
+                        <div class="note-date">${formatDate(note.updated_at)}</div>
+                        <div class="search-matches">
+                            ${matches.map(match => `
+                                <div class="search-match">
+                                    <div class="search-match-field">${match.field}${match.category ? ` (${match.category})` : ''}:</div>
+                                    <div class="search-match-content">${match.highlight}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            notesList.innerHTML = resultsHTML;
+            showSearchStatus(`${searchData.total_results} note${searchData.total_results !== 1 ? 's' : ''} found with ${searchData.total_matches} match${searchData.total_matches !== 1 ? 'es' : ''}`);
+        }
+
+        function showSearchStatus(message) {
+            const searchStatus = document.getElementById('searchStatus');
+            searchStatus.textContent = message;
+            searchStatus.style.display = 'block';
+        }
+
+        function hideSearchStatus() {
+            const searchStatus = document.getElementById('searchStatus');
+            searchStatus.style.display = 'none';
+        }
+
+        function clearSearch() {
+            const searchInput = document.getElementById('searchInput');
+            const clearBtn = document.getElementById('clearSearchBtn');
+            const searchIcon = document.getElementById('searchIcon');
+            
+            searchInput.value = '';
+            clearBtn.style.display = 'none';
+            searchIcon.style.display = 'block';
+            
+            isSearchMode = false;
+            hideSearchStatus();
+            
+            // Clear any pending search
+            clearTimeout(searchTimeout);
+            
+            // Restore normal notes list
+            renderNotesList();
         }
     </script>
 </body>

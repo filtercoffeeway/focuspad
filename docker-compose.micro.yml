@@ -1,0 +1,77 @@
+version: '3.8'
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.micro
+    ports:
+      - "80:5000"
+    environment:
+      - FLASK_ENV=production
+      - DATABASE_URL=postgresql://focuspad_user:${DB_PASSWORD}@db:5432/focuspad
+      - FOCUSPAD_SECRET_KEY=${SECRET_KEY}
+      - FOCUSPAD_MASTER_KEY=${MASTER_KEY}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - BASE_URL=${BASE_URL:-http://localhost}
+    depends_on:
+      - db
+    restart: unless-stopped
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - focuspad-network
+    # Resource limits for t2.micro
+    mem_limit: 400m
+    mem_reservation: 200m
+    cpus: 0.8
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: focuspad
+      POSTGRES_USER: focuspad_user
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      # PostgreSQL optimizations for low memory
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    restart: unless-stopped
+    networks:
+      - focuspad-network
+    # PostgreSQL optimizations for t2.micro (1GB RAM total)
+    command: >
+      postgres
+      -c shared_buffers=64MB
+      -c effective_cache_size=256MB
+      -c maintenance_work_mem=16MB
+      -c checkpoint_completion_target=0.9
+      -c wal_buffers=2MB
+      -c default_statistics_target=50
+      -c random_page_cost=4
+      -c effective_io_concurrency=1
+      -c work_mem=512kB
+      -c min_wal_size=128MB
+      -c max_wal_size=256MB
+      -c max_connections=20
+      -c shared_preload_libraries=''
+      -c log_statement=none
+      -c log_min_duration_statement=1000
+      -c log_checkpoints=off
+      -c log_connections=off
+      -c log_disconnections=off
+      -c log_lock_waits=off
+    # Resource limits for t2.micro
+    mem_limit: 500m
+    mem_reservation: 256m
+    cpus: 0.5
+
+volumes:
+  postgres_data:
+
+networks:
+  focuspad-network:
+    driver: bridge 

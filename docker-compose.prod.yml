@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    ports:
+      - "80:5000"
+    environment:
+      - FLASK_ENV=production
+      - DATABASE_URL=postgresql://focuspad_user:${DB_PASSWORD}@db:5432/focuspad
+      - FOCUSPAD_SECRET_KEY=${SECRET_KEY}
+      - FOCUSPAD_MASTER_KEY=${MASTER_KEY}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - BASE_URL=${BASE_URL:-http://localhost}
+    depends_on:
+      - db
+    restart: unless-stopped
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - focuspad-network
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: focuspad
+      POSTGRES_USER: focuspad_user
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    restart: unless-stopped
+    networks:
+      - focuspad-network
+    ports:
+      - "5432:5432"
+
+volumes:
+  postgres_data:
+
+networks:
+  focuspad-network:
+    driver: bridge 

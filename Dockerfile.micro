@@ -8,7 +8,7 @@ ENV FLASK_ENV=production
 # Set work directory
 WORKDIR /app
 
-# Install system dependencies
+# Install only essential system dependencies
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         postgresql-client \
@@ -16,8 +16,6 @@ RUN apt-get update \
         python3-dev \
         libpq-dev \
         curl \
-        nginx \
-        supervisor \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
 
@@ -38,9 +36,9 @@ COPY --chown=appuser:appuser . .
 # Create necessary directories and set permissions
 RUN mkdir -p /app/logs /app/instance \
     && chown -R appuser:appuser /app \
-    && chmod +x /app/deploy.sh /app/setup-ssl.sh
+    && chmod +x /app/deploy-micro.sh 2>/dev/null || true
 
-# Remove development files and unnecessary files
+# Remove development files and unnecessary files to save space
 RUN rm -rf \
     /app/.git \
     /app/.gitignore \
@@ -50,6 +48,9 @@ RUN rm -rf \
     /app/*.backup \
     /app/*.bak \
     /app/dashboard_cards_backup.html \
+    /app/docker-compose.yml \
+    /app/deploy.sh \
+    /app/setup-ssl.sh \
     && find /app -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true \
     && find /app -name "*.pyc" -type f -delete
 
@@ -58,9 +59,9 @@ USER appuser
 # Expose port
 EXPOSE 5000
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
+# Health check - less frequent for t2.micro to save resources
+HEALTHCHECK --interval=60s --timeout=30s --start-period=15s --retries=2 \
     CMD curl -f http://localhost:5000/health || exit 1
 
-# Run the application with Gunicorn for production
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "4", "--worker-class", "sync", "--timeout", "120", "--keep-alive", "5", "--max-requests", "1000", "--max-requests-jitter", "100", "--access-logfile", "/app/logs/access.log", "--error-logfile", "/app/logs/error.log", "--log-level", "info", "run:app"] 
+# Optimized Gunicorn for t2.micro: 1 worker, longer timeout, minimal logging
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "1", "--worker-class", "sync", "--timeout", "180", "--keep-alive", "2", "--max-requests", "500", "--max-requests-jitter", "50", "--preload", "--access-logfile", "/app/logs/access.log", "--error-logfile", "/app/logs/error.log", "--log-level", "warning", "run:app"] 

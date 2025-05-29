@@ -5,6 +5,9 @@ Note model for FocusPad API.
 from datetime import datetime
 from app import db
 import json
+import logging
+
+logger = logging.getLogger(__name__)
 
 class Note(db.Model):
     """Note model for user notes."""
@@ -22,6 +25,26 @@ class Note(db.Model):
     is_archived = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    # Add these fields after the existing fields in the Note class
+    title_encrypted = db.Column(db.Text, nullable=True)
+    title_salt = db.Column(db.String(255), nullable=True) 
+    title_is_encrypted = db.Column(db.Boolean, default=False)
+
+    content_encrypted = db.Column(db.Text, nullable=True)
+    content_salt = db.Column(db.String(255), nullable=True)
+    content_is_encrypted = db.Column(db.Boolean, default=False)
+
+    raw_content_encrypted = db.Column(db.Text, nullable=True)
+    raw_content_salt = db.Column(db.String(255), nullable=True)
+    raw_content_is_encrypted = db.Column(db.Boolean, default=False)
+
+    attendees_encrypted = db.Column(db.Text, nullable=True)
+    attendees_salt = db.Column(db.String(255), nullable=True)
+    attendees_is_encrypted = db.Column(db.Boolean, default=False)
+
+    description_encrypted = db.Column(db.Text, nullable=True)
+    description_salt = db.Column(db.String(255), nullable=True)
+    description_is_encrypted = db.Column(db.Boolean, default=False)
     
     # Relationships
     contents = db.relationship('Content', backref='note', lazy='dynamic', cascade='all, delete-orphan')
@@ -181,6 +204,51 @@ class Note(db.Model):
             query = query.filter_by(is_archived=False)
         return query.order_by(cls.updated_at.desc()).all()
 
+    def encrypt_sensitive_data(self, user_id: int):
+        """Encrypt sensitive fields in this note."""
+        from app.utils.encryption_service import encryption_service
+        
+        fields_to_encrypt = {
+            'title': self.title,
+            'content': self.content,
+            'raw_content': self.raw_content,
+            'attendees': self.attendees,
+            'description': self.description
+        }
+        
+        for field, value in fields_to_encrypt.items():
+            if value:
+                if isinstance(value, (dict, list)):
+                    import json
+                    value = json.dumps(value)
+                
+                result = encryption_service.encrypt_text(value, user_id)
+                setattr(self, f'{field}_encrypted', result['encrypted_data'])
+                setattr(self, f'{field}_salt', result['salt'])
+                setattr(self, f'{field}_is_encrypted', result['is_encrypted'])
+
+    def decrypt_sensitive_data(self, user_id: int):
+        """Decrypt sensitive fields in this note."""
+        from app.utils.encryption_service import encryption_service
+        
+        fields_to_decrypt = ['title', 'content', 'raw_content', 'attendees', 'description']
+        
+        for field in fields_to_decrypt:
+            encrypted_field = getattr(self, f'{field}_encrypted', None)
+            salt_field = getattr(self, f'{field}_salt', None)
+            is_encrypted = getattr(self, f'{field}_is_encrypted', False)
+            
+            if encrypted_field and salt_field and is_encrypted:
+                try:
+                    decrypted = encryption_service.decrypt_text(encrypted_field, salt_field, user_id)
+                    setattr(self, field, decrypted)
+                except Exception as e:
+                    logger.error(f"Failed to decrypt {field}: {e}")
+
+    def to_dict_decrypted(self, user_id: int, include_content=True):
+        """Convert note to dict with decrypted data."""
+        self.decrypt_sensitive_data(user_id)
+        return self.to_dict(include_content=include_content)
 
 class Content(db.Model):
     """Individual content items within notes."""
