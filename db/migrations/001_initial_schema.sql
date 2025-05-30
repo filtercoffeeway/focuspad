@@ -1,8 +1,6 @@
--- FocusPad Development Database Initialization
--- This file is run when the database container starts for the first time
-
--- Ensure we're connected to the focuspad database
-\c focuspad;
+-- Migration 001: Initial Schema
+-- Created: 2025-05-30
+-- Description: Creates the complete initial database schema for FocusPad
 
 -- Create users table if it doesn't exist
 CREATE TABLE IF NOT EXISTS users (
@@ -118,7 +116,4 @@ SELECT
     null,
     CURRENT_TIMESTAMP,
     CURRENT_TIMESTAMP
-WHERE NOT EXISTS (SELECT 1 FROM templates WHERE is_default = true);
-
--- Log successful initialization
-\echo 'FocusPad development database initialized successfully!' 
+WHERE NOT EXISTS (SELECT 1 FROM templates WHERE is_default = true); 

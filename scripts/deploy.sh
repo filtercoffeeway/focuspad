@@ -149,38 +149,41 @@ sleep 15
 
 # Run database migrations
 echo "🗄️  Running database migrations..."
+docker-compose -f docker-compose.prod.yml --env-file .env.production exec web python3 /app/db/run_migrations.py
+
+# Verify database setup
+echo "🧪 Verifying database setup..."
 docker-compose -f docker-compose.prod.yml --env-file .env.production exec web python3 -c "
 import sys
 sys.path.insert(0, '/app')
 
 try:
     from app import create_app, db
-    from app.models import User, Note, Template, Content
     
-    print('🔧 Initializing database...')
+    print('🔧 Verifying database...')
     app = create_app()
     
     with app.app_context():
-        # Create all tables
-        db.create_all()
-        db.session.commit()
-        
-        # Verify tables were created
+        # Verify tables exist
         from sqlalchemy import text
         result = db.session.execute(text('SELECT table_name FROM information_schema.tables WHERE table_schema = \'public\''))
         tables = [row[0] for row in result.fetchall()]
+        
+        expected_tables = ['users', 'notes', 'templates', 'contents', 'schema_migrations', 'migration_state']
+        missing_tables = [table for table in expected_tables if table not in tables]
+        
+        if missing_tables:
+            print(f'❌ Missing tables: {missing_tables}')
+            exit(1)
         
         print('✅ Database tables verified:')
         for table in sorted(tables):
             print(f'   - {table}')
         
-        if 'users' in tables:
-            print('✅ Database migration completed successfully!')
-        else:
-            print('❌ Users table missing - migration may have failed')
+        print('✅ Database verification completed successfully!')
             
 except Exception as e:
-    print(f'❌ Database migration failed: {e}')
+    print(f'❌ Database verification failed: {e}')
     import traceback
     traceback.print_exc()
     exit(1)
