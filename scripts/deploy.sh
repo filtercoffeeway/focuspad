@@ -123,6 +123,15 @@ docker system prune -af --volumes 2>/dev/null || true
 echo "🏗️  Building application..."
 docker-compose -f docker-compose.prod.yml --env-file .env.prod build --no-cache
 
+# Create and set permissions for required directories
+echo "📁 Setting up directory structure..."
+mkdir -p logs/nginx backups/deployments backups/cleanup
+
+# Ensure proper permissions for directories that need writing
+chmod -R 755 logs/ backups/ 2>/dev/null || true
+
+echo "✅ Directory structure configured"
+
 # Start database first
 echo "🗄️  Starting database..."
 docker-compose -f docker-compose.prod.yml --env-file .env.prod up -d db

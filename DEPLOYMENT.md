@@ -186,6 +186,17 @@ ls -la scripts/init_prod.sql
 ./scripts/deploy.sh
 ```
 
+**Permission errors with logs directory**
+```bash
+# If you see: Error: '/app/logs/error.log' isn't writable [PermissionError(13, 'Permission denied')]
+# Run the permission fix script:
+./scripts/fix-permissions.sh
+
+# Or do a clean restart:
+./scripts/clean-docker-ec2.sh --force
+./scripts/deploy.sh
+```
+
 **Port 5000 in use (macOS AirPlay)**
 ```bash
 # Disable AirPlay Receiver in System Preferences → Sharing

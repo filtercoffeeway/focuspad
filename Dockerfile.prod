@@ -35,7 +35,7 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean
 
 # Create non-root user for security
-RUN groupadd -r focuspad && useradd -r -g focuspad focuspad
+RUN groupadd -r -g 1000 focuspad && useradd -r -u 1000 -g focuspad focuspad
 
 # Set production environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -71,9 +71,11 @@ RUN echo 'bind = "0.0.0.0:5000"' > /app/gunicorn.conf.py && \
     echo 'max_requests = 1000' >> /app/gunicorn.conf.py && \
     echo 'max_requests_jitter = 100' >> /app/gunicorn.conf.py && \
     echo 'preload_app = True' >> /app/gunicorn.conf.py && \
-    echo 'accesslog = "/app/logs/access.log"' >> /app/gunicorn.conf.py && \
-    echo 'errorlog = "/app/logs/error.log"' >> /app/gunicorn.conf.py && \
+    echo 'accesslog = "-"' >> /app/gunicorn.conf.py && \
+    echo 'errorlog = "-"' >> /app/gunicorn.conf.py && \
     echo 'loglevel = "info"' >> /app/gunicorn.conf.py && \
+    echo 'capture_output = True' >> /app/gunicorn.conf.py && \
+    echo 'enable_stdio_inheritance = True' >> /app/gunicorn.conf.py && \
     chown focuspad:focuspad /app/gunicorn.conf.py
 
 # Switch to non-root user
