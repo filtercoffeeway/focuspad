@@ -125,10 +125,22 @@ docker-compose -f docker-compose.prod.yml --env-file .env.prod build --no-cache
 
 # Create and set permissions for required directories
 echo "📁 Setting up directory structure..."
-mkdir -p logs/nginx backups/deployments backups/cleanup
+
+# Remove any existing problematic directories and recreate them
+if [ -d "logs" ]; then
+    echo "   Removing existing logs directory..."
+    sudo rm -rf logs/ 2>/dev/null || rm -rf logs/ 2>/dev/null || true
+fi
+
+# Create directories with proper permissions
+mkdir -p logs/nginx backups/deployments backups/cleanup 2>/dev/null || {
+    echo "   Using sudo for directory creation..."
+    sudo mkdir -p logs/nginx backups/deployments backups/cleanup
+    sudo chown -R $(id -u):$(id -g) logs/ backups/ 2>/dev/null || true
+}
 
 # Ensure proper permissions for directories that need writing
-chmod -R 755 logs/ backups/ 2>/dev/null || true
+chmod -R 755 logs/ backups/ 2>/dev/null || sudo chmod -R 755 logs/ backups/ 2>/dev/null || true
 
 echo "✅ Directory structure configured"
 
