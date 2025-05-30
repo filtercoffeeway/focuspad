@@ -154,11 +154,21 @@ Format your response as valid JSON only, no additional text.
                     categorized_content = json.loads(json_match.group())
                     return self._format_categorized_content(categorized_content)
                 else:
-                    current_app.logger.error(f"Failed to parse OpenAI response as JSON: {content}")
+                    # Log error safely (handle missing app context)
+                    error_msg = f"Failed to parse OpenAI response as JSON: {content}"
+                    try:
+                        current_app.logger.error(error_msg)
+                    except RuntimeError:
+                        print(f"AI Service Error: {error_msg}")
                     return self._fallback_categorization(text, categories)
                     
         except Exception as e:
-            current_app.logger.error(f"OpenAI API error: {str(e)}")
+            # Log error safely (handle missing app context)
+            error_msg = f"OpenAI API error: {str(e)}"
+            try:
+                current_app.logger.error(error_msg)
+            except RuntimeError:
+                print(f"AI Service Error: {error_msg}")
             return self._fallback_categorization(text, categories)
     
     def _format_categorized_content(self, categorized_content):
@@ -350,7 +360,12 @@ Respond with only the title, no additional text.
             return title[:100]  # Limit title length
             
         except Exception as e:
-            current_app.logger.error(f"OpenAI API error for title suggestion: {str(e)}")
+            # Log error safely (handle missing app context)
+            error_msg = f"OpenAI API error for title suggestion: {str(e)}"
+            try:
+                current_app.logger.error(error_msg)
+            except RuntimeError:
+                print(f"AI Service Error: {error_msg}")
             # Fallback: use first few words
             words = text.split()[:6]
             return " ".join(words) + ("..." if len(text.split()) > 6 else "")
