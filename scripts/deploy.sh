@@ -132,6 +132,12 @@ if [ -d "logs" ]; then
     sudo rm -rf logs/ 2>/dev/null || rm -rf logs/ 2>/dev/null || true
 fi
 
+# Remove existing nginx directory to avoid conflicts
+if [ -d "nginx" ]; then
+    echo "   Removing existing nginx directory..."
+    sudo rm -rf nginx/ 2>/dev/null || rm -rf nginx/ 2>/dev/null || true
+fi
+
 # Create directories with proper permissions
 mkdir -p logs/nginx backups/deployments backups/cleanup nginx/ssl 2>/dev/null || {
     echo "   Using sudo for directory creation..."
@@ -140,9 +146,8 @@ mkdir -p logs/nginx backups/deployments backups/cleanup nginx/ssl 2>/dev/null ||
 }
 
 # Create nginx configuration if it doesn't exist
-if [ ! -f "nginx/nginx.conf" ]; then
-    echo "   Creating nginx configuration..."
-    cat > nginx/nginx.conf << 'EOF'
+echo "   Creating nginx configuration..."
+cat > nginx/nginx.conf << 'EOF'
 events {
     worker_connections 1024;
 }
@@ -190,8 +195,7 @@ http {
     }
 }
 EOF
-    echo "   ✅ Created nginx.conf"
-fi
+echo "   ✅ Created nginx.conf"
 
 # Ensure proper permissions for directories that need writing
 chmod -R 755 logs/ backups/ nginx/ 2>/dev/null || sudo chmod -R 755 logs/ backups/ nginx/ 2>/dev/null || true
