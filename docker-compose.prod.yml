@@ -8,20 +8,6 @@ services:
     container_name: focuspad_web_prod
     ports:
       - "8080:5000"
-    environment:
-      - FLASK_ENV=production
-      - FLASK_DEBUG=0
-      - DATABASE_URL=postgresql://focuspad_user:${DB_PASSWORD}@db:5432/focuspad
-      - SECRET_KEY=${SECRET_KEY}
-      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
-      - FOCUSPAD_MASTER_KEY=${FOCUSPAD_MASTER_KEY}
-      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
-      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - BASE_URL=${BASE_URL:-https://thefocuspad.com}
-      - LOG_LEVEL=${LOG_LEVEL:-INFO}
-      - WORKERS=${WORKERS:-2}
-      - TIMEOUT=${TIMEOUT:-30}
     env_file:
       - .env.prod
     depends_on:
@@ -51,10 +37,11 @@ services:
   db:
     image: postgres:15-alpine
     container_name: focuspad_db_prod
+    env_file:
+      - .env.prod
     environment:
       POSTGRES_DB: focuspad
       POSTGRES_USER: focuspad_user
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256 --auth-local=scram-sha-256"
     volumes:
       - postgres_prod_data:/var/lib/postgresql/data
@@ -68,23 +55,6 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-    command: >
-      postgres
-      -c shared_buffers=128MB
-      -c effective_cache_size=512MB
-      -c maintenance_work_mem=32MB
-      -c checkpoint_completion_target=0.9
-      -c wal_buffers=4MB
-      -c default_statistics_target=100
-      -c random_page_cost=1.1
-      -c effective_io_concurrency=200
-      -c work_mem=4MB
-      -c min_wal_size=1GB
-      -c max_wal_size=4GB
-      -c max_worker_processes=4
-      -c max_parallel_workers_per_gather=2
-      -c max_parallel_workers=4
-      -c max_parallel_maintenance_workers=2
     deploy:
       resources:
         limits:

@@ -2677,20 +2677,20 @@
 
                     <div class="note-details">
                         <div class="note-detail-item">
-                            <label class="detail-label">📅 Date:</label>
+                            <label class="detail-label">📅 Date: </label>
                             <span class="detail-value clickable" onclick="openDatePicker()">
                                 ${formatNoteDate(currentNote.created_at)}
                             </span>
                         </div>
                         <div class="note-detail-item">
-                            <label class="detail-label">📝 Description:</label>
+                            <label class="detail-label">📝 Description: </label>
                             <span class="detail-value editable" 
                                   contenteditable="true"
                                   data-field="attendees"
                                   data-original="${escapeHtml(currentNote.attendees || '')}"
                                   onblur="saveField(this, 'attendees')"
                                   onkeydown="handleEnterKey(event)">
-                                ${currentNote.attendees ? escapeHtml(currentNote.attendees) : 'None specified'}
+                                ${currentNote.attendees ? escapeHtml(currentNote.attendees) : ''}
                             </span>
                         </div>
                     </div>
