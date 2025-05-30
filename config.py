@@ -15,6 +15,9 @@ class Config:
     # Flask Configuration
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production'
     
+    # Application URL Configuration
+    BASE_URL = os.environ.get('BASE_URL') or 'http://localhost:5000'
+    
     # Database Configuration - Default to PostgreSQL
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'postgresql://focuspad_user:focuspad_password@localhost:5432/focuspad'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
@@ -99,6 +102,9 @@ class ProductionConfig(Config):
     DEBUG = False
     TESTING = False
     
+    # Application URL Configuration for Production
+    BASE_URL = os.environ.get('BASE_URL') or 'https://thefocuspad.com'
+    
     @classmethod
     def init_app(cls, app):
         """Initialize production configuration."""
@@ -132,4 +138,19 @@ config = {
     'production': ProductionConfig,
     'docker': DockerConfig,
     'default': DevelopmentConfig
-} 
+}
+
+def get_config(config_name=None):
+    """
+    Get configuration class based on environment name.
+    
+    Args:
+        config_name (str): Configuration environment name
+        
+    Returns:
+        Config class: Configuration class for the specified environment
+    """
+    if config_name is None:
+        config_name = os.environ.get('FLASK_ENV', 'default')
+    
+    return config.get(config_name, config['default']) 

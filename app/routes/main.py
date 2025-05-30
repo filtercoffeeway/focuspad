@@ -41,8 +41,12 @@ def google_login():
     state = secrets.token_urlsafe(32)
     session['oauth_state'] = state
     
-    # Build redirect URI
-    redirect_uri = request.host_url.rstrip('/') + '/auth/callback/google'
+    # Build redirect URI - force HTTPS for production
+    base_url = current_app.config.get('BASE_URL') or request.host_url.rstrip('/')
+    if base_url.startswith('http://') and 'thefocuspad.com' in base_url:
+        base_url = base_url.replace('http://', 'https://')
+    
+    redirect_uri = f"{base_url}/auth/callback/google"
     print(f"Redirect URI: {redirect_uri}")
     
     # Log for debugging
