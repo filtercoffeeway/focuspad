@@ -4,6 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FocusPad - Home</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script>
+        // Check if libraries loaded and add fallback
+        window.addEventListener('load', function() {
+            console.log('Page loaded, checking PDF libraries...');
+            console.log('html2canvas available:', typeof html2canvas !== 'undefined');
+            console.log('jsPDF available:', typeof window.jspdf !== 'undefined');
+            console.log('window.jsPDF available:', typeof window.jsPDF !== 'undefined');
+            
+            // Try different ways jsPDF might be available
+            if (typeof window.jspdf === 'undefined' && typeof window.jsPDF !== 'undefined') {
+                console.log('Adjusting jsPDF reference...');
+                window.jspdf = { jsPDF: window.jsPDF };
+            }
+        });
+    </script>
     <style>
         :root {
             /* Light mode colors */
@@ -108,30 +125,52 @@
             gap: 16px;
         }
 
-        .theme-toggle {
-            background: var(--bg-tertiary);
-            color: var(--text-muted);
-            border: 1px solid var(--border-color);
-            padding: 8px 12px;
-            border-radius: 6px;
-            cursor: pointer;
+        /* Dark Mode Toggle Slider */
+        .theme-toggle-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .theme-toggle-label {
             font-size: 0.875rem;
+            color: var(--text-muted);
             font-weight: 500;
-            transition: all 0.2s ease;
-            display: flex;
-            align-items: center;
-            gap: 4px;
         }
 
-        .theme-toggle:hover {
-            background: var(--hover-bg);
-            border-color: var(--text-muted);
+        .theme-slider {
+            position: relative;
+            width: 44px;
+            height: 24px;
+            background: var(--border-color);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
         }
 
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 16px;
+        .theme-slider.dark {
+            background: var(--accent-border);
+        }
+
+        .theme-slider-knob {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .theme-slider.dark .theme-slider-knob {
+            transform: translateX(20px);
+        }
+
+        /* Profile Dropdown */
+        .profile-container {
+            position: relative;
         }
 
         .user-avatar {
@@ -157,21 +196,96 @@
             color: var(--text-muted);
         }
 
-        .logout-btn {
+        .profile-button {
+            display: flex;
+            align-items: center;
+            gap: 12px;
             background: var(--bg-tertiary);
-            color: var(--text-muted);
             border: 1px solid var(--border-color);
-            padding: 8px 16px;
-            border-radius: 6px;
+            border-radius: 8px;
+            padding: 8px 12px;
             cursor: pointer;
-            font-size: 0.875rem;
-            font-weight: 500;
             transition: all 0.2s ease;
         }
 
-        .logout-btn:hover {
+        .profile-button:hover {
             background: var(--hover-bg);
             border-color: var(--text-muted);
+        }
+
+        .profile-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 8px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+            min-width: 200px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-8px);
+            transition: all 0.2s ease;
+            z-index: 1000;
+        }
+
+        .profile-dropdown.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .profile-dropdown-header {
+            padding: 16px;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .profile-dropdown-name {
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+
+        .profile-dropdown-email {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        .profile-dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 16px;
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: background-color 0.2s ease;
+            cursor: pointer;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            font-size: 0.875rem;
+        }
+
+        .profile-dropdown-item:hover {
+            background: var(--hover-bg);
+            color: var(--text-secondary);
+        }
+
+        .profile-dropdown-item.logout {
+            color: #dc2626;
+            border-top: 1px solid var(--border-light);
+        }
+
+        .profile-dropdown-item.logout:hover {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+
+        [data-theme="dark"] .profile-dropdown-item.logout:hover {
+            background: #450a0a;
+            color: #f87171;
         }
 
         .main-container {
@@ -645,6 +759,8 @@
             padding: 16px;
             margin-bottom: 24px;
             transition: background-color 0.3s ease, border-color 0.3s ease;
+            cursor: pointer;
+            position: relative;
         }
 
         .content-section p {
@@ -652,15 +768,50 @@
             white-space: pre-wrap;
             line-height: 1.6;
             color: var(--text-muted);
+            max-height: 7.5em; /* Approximately 5 lines */
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .content-section.expanded p {
+            max-height: none;
+        }
+
+        .content-section:not(.expanded)::after {
+            content: "Click to expand...";
+            position: absolute;
+            bottom: 12px;
+            right: 16px;
+            background: var(--hover-bg);
+            color: var(--text-light);
+            font-size: 0.75rem;
+            padding: 4px 8px;
+            border-radius: 4px;
+            border: 1px solid var(--border-light);
+        }
+
+        .content-section.expanded::after {
+            content: "Click to collapse";
+            position: absolute;
+            bottom: 12px;
+            right: 16px;
+            background: var(--hover-bg);
+            color: var(--text-light);
+            font-size: 0.75rem;
+            padding: 4px 8px;
+            border-radius: 4px;
+            border: 1px solid var(--border-light);
         }
 
         .categories-grid {
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 12px; /* This might become margin-bottom for each .category-section */
             margin-bottom: 24px;
         }
 
+        /* OLD Card-based category styles - TO BE REMOVED or HEAVILY MODIFIED */
+        /*
         .category-item {
             background: var(--bg-secondary);
             border: 1px solid var(--border-color);
@@ -727,7 +878,7 @@
             opacity: 1;
         }
 
-        .edit-btn, .add-btn {
+        .edit-btn, .add-btn { // These might be reused or restyled as -inline versions
             background: var(--text-secondary);
             color: var(--bg-secondary);
             border: none;
@@ -744,52 +895,116 @@
             transform: translateY(-1px);
         }
 
-        .category-content {
+        .category-content { // No longer used for expand/collapse
             padding: 0;
             max-height: 0;
             overflow: hidden;
             transition: max-height 0.3s ease, padding 0.3s ease;
         }
 
-        .category-item.expanded .category-content {
+        .category-item.expanded .category-content { // No longer used
             padding: 0 20px 16px 20px;
-            max-height: 500px;
+            max-height: 500px; 
+        }
+        */
+
+        /* NEW Markdown-like Category Styles */
+        .category-section {
+            margin-bottom: 24px; /* Space between category sections */
+            padding: 12px 0; /* Add some top/bottom padding */
+            border-bottom: 1px solid var(--border-light); /* Separator line */
+        }
+        .category-section:last-child {
+            border-bottom: none;
         }
 
-        .category-list {
+        .category-heading-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .category-heading { /* Targets the H3 */
+            font-size: 1.25rem; /* Adjust as needed, e.g., h2 could be 1.5rem */
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin: 0; /* Remove default h3 margin */
+            flex-grow: 1; /* Allow heading to take space */
+        }
+        
+        .category-heading .category-icon-inline { /* If we keep icons in the H3 */
+            margin-right: 8px;
+            font-size: 1.1em; /* Slightly larger than heading text */
+        }
+
+        .category-item-count {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-weight: normal;
+        }
+
+        .category-actions-inline {
+            display: flex;
+            gap: 8px;
+        }
+
+        .add-btn-inline, .edit-btn-inline {
+            background: transparent;
+            color: var(--text-muted);
+            border: 1px solid var(--border-light);
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .add-btn-inline:hover, .edit-btn-inline:hover {
+            background: var(--hover-bg);
+            color: var(--text-primary);
+            border-color: var(--border-color);
+        }
+        
+        .category-items-list {
+            padding-left: 5px; /* Indent items slightly under the heading */
+        }
+
+        .category-list { /* From renderCategoryItems */
             list-style: none;
             padding: 0;
             margin: 0;
         }
 
-        .category-list-item {
+        .category-list-item { /* From renderCategoryItems */
             display: flex;
             align-items: flex-start;
             gap: 8px;
-            padding: 6px 0;
-            border-bottom: 1px solid var(--border-light);
+            padding: 6px 0; /* Slightly reduced padding */
+            /* border-bottom: 1px solid var(--border-light); */ /* Removing border between items for cleaner look */
         }
 
         .category-list-item:last-child {
-            border-bottom: none;
+            /* border-bottom: none; */
         }
 
-        .item-bullet {
+        .item-bullet { /* From renderCategoryItems */
             color: var(--accent-border);
             font-weight: bold;
-            margin-top: 2px;
+            margin-top: 2px; /* Align with text */
         }
 
-        .item-text {
+        .item-text { /* From renderCategoryItems */
             flex: 1;
             color: var(--text-muted);
-            line-height: 1.4;
+            line-height: 1.5; /* Increased for readability */
         }
 
-        .item-actions {
+        .item-actions { /* From renderCategoryItems */
             display: flex;
             gap: 4px;
-            opacity: 0;
+            opacity: 0; /* Keep hover effect for item actions */
             transition: opacity 0.2s ease;
         }
 
@@ -797,7 +1012,7 @@
             opacity: 1;
         }
 
-        .edit-item-btn, .delete-item-btn {
+        .edit-item-btn, .delete-item-btn { /* From renderCategoryItems - styles might need adjustment */
             background: transparent;
             border: none;
             padding: 2px 4px;
@@ -815,12 +1030,14 @@
             background: rgba(239, 68, 68, 0.1);
             color: #ef4444;
         }
-
-        .empty-category {
-            padding: 20px;
-            text-align: center;
+        
+        .empty-category-section p, /* Updated from .empty-category */
+        .empty-category p { /* Keep style for items list if empty */
+            padding: 10px 0; /* Reduced padding */
+            text-align: left; /* Align with items */
             color: var(--text-light);
             font-style: italic;
+            font-size: 0.9rem;
         }
 
         /* Modal Styles */
@@ -1513,6 +1730,112 @@
         .welcome-banner-close:hover {
             background: rgba(255, 255, 255, 0.3);
         }
+
+        /* Styles for PDF Download Button and Note Actions Bar */
+        .note-header { /* Modified to accommodate new button bar */
+            margin-bottom: 12px; /* Adjusted margin */
+            position: relative; 
+        }
+
+        .note-header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 16px;
+            margin-bottom: 8px;
+        }
+
+        .note-title-display {
+            flex: 1; /* Allow title to take available space */
+            margin: 0; /* Remove default h1 margin since we're controlling spacing with parent */
+        }
+
+        .note-actions-bar {
+            display: flex;
+            gap: 8px;
+            flex-shrink: 0; /* Prevent the actions from shrinking */
+        }
+
+        .note-action-btn {
+            background: var(--accent-bg);
+            color: var(--accent-border);
+            border: 1px solid var(--accent-border);
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+
+        .note-action-btn:hover {
+            background: var(--accent-border);
+            color: var(--bg-secondary);
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(14, 165, 233, 0.2);
+        }
+
+        .note-action-btn:active {
+            transform: translateY(0);
+        }
+
+        .note-action-btn:disabled {
+            background: var(--bg-tertiary);
+            color: var(--text-light);
+            border-color: var(--border-light);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        /* Print-specific styles */
+        @media print {
+            body, .main-container, .main-content, .note-display, #noteContentForPdf {
+                overflow: visible !important;
+                height: auto !important;
+                background-color: white !important; /* Ensure white background for PDF */
+            }
+            .sidebar, .header, .input-area, .note-actions-bar, .category-actions-inline, .item-actions, .editable:hover::after, .editable-title:hover::after, .theme-toggle, .logout-btn, .new-note-btn, .search-container {
+                display: none !important;
+            }
+            .note-display {
+                padding: 0 !important;
+                margin: 0 !important;
+                box-shadow: none !important;
+                border: none !important;
+            }
+            #noteContentForPdf {
+                padding: 20pt !important; /* Use points for PDF consistency */
+                color: black !important; /* Ensure text is black */
+            }
+            .note-title-display, .category-heading, .item-text, .detail-value, .detail-label, .note-meta {
+                color: black !important; /* Ensure all text content is black for PDF */
+            }
+            .category-section {
+                border-bottom: 1px solid #ccc !important; 
+                padding: 10pt 0 !important;
+                page-break-inside: avoid;
+            }
+            .category-heading {
+                font-size: 14pt !important; /* Use points for PDF */
+            }
+            .item-text {
+                font-size: 10pt !important;
+            }
+            .note-meta {
+                font-size: 9pt !important;
+            }
+            /* Ensure links are styled appropriately for PDF if any exist */
+            a {
+                color: #0000ee !important; /* Standard link blue */
+                text-decoration: underline !important;
+            }
+        }
+
     </style>
 </head>
 <body>
@@ -1542,20 +1865,33 @@
             <span class="logo-text">FocusPad</span>
         </div>
         <div class="header-controls">
-            <button class="theme-toggle" onclick="toggleTheme()" id="themeToggle">
-                🌙 Dark
-            </button>
-            <button class="theme-toggle" onclick="restartTutorial()" title="Restart Tutorial" style="margin-left: 8px;">
+            <div class="theme-toggle-container">
+                <span class="theme-toggle-label">Dark Mode</span>
+                <div class="theme-slider" onclick="toggleTheme()" id="themeSlider">
+                    <div class="theme-slider-knob"></div>
+                </div>
+            </div>
+            <button class="theme-toggle" onclick="restartTutorial()" title="Restart Tutorial" style="margin-left: 8px; background: var(--bg-tertiary); color: var(--text-muted); border: 1px solid var(--border-color); padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 0.875rem; font-weight: 500; transition: all 0.2s ease;">
                 🎓 Tutorial
             </button>
-            <div class="user-info">
-                <img src="{{ user.picture }}" alt="Profile Picture" class="user-avatar" 
-                     onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzUiIGhlaWdodD0iMzUiIHZpZXdCb3g9IjAgMCAzNSAzNSIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMTcuNSIgY3k9IjE3LjUiIHI9IjE3LjUiIGZpbGw9IiM0Mjg1RjQiLz4KPHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEwIDEwQzEyLjc2MTQgMTAgMTUgNy43NjE0MiAxNSA1QzE1IDIuMjM4NTggMTIuNzYxNCAwIDEwIDBDNy4yMzg1OCAwIDUgMi4yMzg1OCA1IDVDNSA3Ljc2MTQyIDcuMjM4NTggMTAgMTAgMTBaIiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNMTAgMTIuNUM0LjQ3NzE1IDEyLjUgMCAxNi45NzcxIDAgMjIuNUgxNUgyMEMyMCAxNi45NzcxIDE1LjUyMjkgMTIuNSAxMCAxMi41WiIgZmlsbD0id2hpdGUiLz4KPC9zdmc+Cg=='">
-                <div class="user-details">
-                    <div class="user-name">{{ user.name }}</div>
-                    <div class="user-email">{{ user.email }}</div>
+            <div class="profile-container">
+                <div class="profile-button" onclick="toggleProfileDropdown()">
+                    <img src="{{ user.picture }}" alt="Profile Picture" class="user-avatar" 
+                         onerror="this.src='data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'36\' height=\'36\' viewBox=\'0 0 36 36\'%3e%3ccircle cx=\'18\' cy=\'18\' r=\'18\' fill=\'%234285F4\'/%3e%3ctext x=\'18\' y=\'24\' text-anchor=\'middle\' fill=\'white\' font-size=\'14\' font-family=\'Arial\'%3e{{ user.name[0]|upper }}%3c/text%3e%3c/svg%3e'">
+                    <div class="user-details">
+                        <div class="user-name">{{ user.name }}</div>
+                        <div class="user-email">{{ user.email }}</div>
+                    </div>
                 </div>
-                <button class="logout-btn" onclick="logout()">Logout</button>
+                <div class="profile-dropdown" id="profileDropdown">
+                    <div class="profile-dropdown-header">
+                        <div class="profile-dropdown-name">{{ user.name }}</div>
+                        <div class="profile-dropdown-email">{{ user.email }}</div>
+                    </div>
+                    <button class="profile-dropdown-item logout" onclick="logout()">
+                        🚪 Logout
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -1698,11 +2034,11 @@
             document.documentElement.setAttribute('data-theme', theme);
             localStorage.setItem('focuspad-theme', theme);
             
-            const toggleButton = document.getElementById('themeToggle');
+            const themeSlider = document.getElementById('themeSlider');
             if (theme === 'dark') {
-                toggleButton.innerHTML = '☀️ Light';
+                themeSlider.classList.add('dark');
             } else {
-                toggleButton.innerHTML = '🌙 Dark';
+                themeSlider.classList.remove('dark');
             }
         }
 
@@ -1928,65 +2264,63 @@
                 return;
             }
 
-            // The content is already organized by category, no need to group it
             const categorizedContent = currentNote.content || {};
-            
-            // Format the created date for display (converts UTC to local time)
             const formatNoteDate = (dateString) => {
                 if (!dateString) return 'Not specified';
-                const date = new Date(dateString); // Automatically converts UTC to local time
-                
-                const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 
-                               'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
-                const month = months[date.getMonth()];
-                const day = String(date.getDate()).padStart(2, '0');
-                const year = date.getFullYear();
-                
-                return `${month}-${day}-${year}`;
+                const date = new Date(dateString);
+                const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+                return `${months[date.getMonth()]}-${String(date.getDate()).padStart(2, '0')}-${date.getFullYear()}`;
             };
             
             noteDisplay.innerHTML = `
-                <div class="note-header">
-                    <h1 class="note-title-display editable-title" 
-                        contenteditable="true" 
-                        data-field="title"
-                        data-original="${escapeHtml(currentNote.title || '')}"
-                        onblur="saveField(this, 'title')"
-                        onkeydown="handleEnterKey(event)">
-                        ${escapeHtml(currentNote.title || 'Untitled Note')}
-                    </h1>
-                    <p class="note-meta">${formatRelativeDate(currentNote.updated_at)}</p>
-                </div>
-
-                <div class="note-details">
-                    <div class="note-detail-item">
-                        <label class="detail-label">📅 Date:</label>
-                        <span class="detail-value clickable" onclick="openDatePicker()" style="display: flex; align-items: center; gap: 8px;">
-                            ${formatNoteDate(currentNote.created_at)}
-                            <span style="color: var(--text-muted); font-size: 0.75rem;">📅 Click to change</span>
-                        </span>
+                <div id="noteContentForPdf"> 
+                    <div class="note-header">
+                        <div class="note-header-top">
+                            <h1 class="note-title-display editable-title" 
+                                contenteditable="true" 
+                                data-field="title"
+                                data-original="${escapeHtml(currentNote.title || '')}"
+                                onblur="saveField(this, 'title')"
+                                onkeydown="handleEnterKey(event)">
+                                ${escapeHtml(currentNote.title || 'Untitled Note')}
+                            </h1>
+                            <div class="note-actions-bar">
+                                <button class="note-action-btn" onclick="console.log('PDF button clicked'); downloadNoteAsPDF()" title="Download as PDF">⬇️ Download PDF</button>
+                            </div>
+                        </div>
+                        <p class="note-meta">${formatRelativeDate(currentNote.updated_at)}</p>
                     </div>
-                    <div class="note-detail-item">
-                        <label class="detail-label">👥 Attendees:</label>
-                        <span class="detail-value editable" 
-                              contenteditable="true"
-                              data-field="attendees"
-                              data-original="${escapeHtml(currentNote.attendees || '')}"
-                              onblur="saveField(this, 'attendees')"
-                              onkeydown="handleEnterKey(event)">
-                            ${currentNote.attendees ? escapeHtml(currentNote.attendees) : 'None specified'}
-                        </span>
+
+                    <div class="note-details">
+                        <div class="note-detail-item">
+                            <label class="detail-label">📅 Date:</label>
+                            <span class="detail-value clickable" onclick="openDatePicker()" style="display: flex; align-items: center; gap: 8px;">
+                                ${formatNoteDate(currentNote.created_at)}
+                                <span style="color: var(--text-muted); font-size: 0.75rem;">📅 Click to change</span>
+                            </span>
+                        </div>
+                        <div class="note-detail-item">
+                            <label class="detail-label">👥 Attendees:</label>
+                            <span class="detail-value editable" 
+                                  contenteditable="true"
+                                  data-field="attendees"
+                                  data-original="${escapeHtml(currentNote.attendees || '')}"
+                                  onblur="saveField(this, 'attendees')"
+                                  onkeydown="handleEnterKey(event)">
+                                ${currentNote.attendees ? escapeHtml(currentNote.attendees) : 'None specified'}
+                            </span>
+                        </div>
                     </div>
-                </div>
 
-                ${currentNote.raw_content ? `
-                <div class="content-section">
-                    ${formatRawContentAsParagraphs(currentNote.raw_content)}
-                </div>
-                ` : ''}
+                    ${currentNote.raw_content ? `
+                    <div class="content-section" onclick="toggleContentSection(this)">
+                        ${formatRawContentAsParagraphs(currentNote.raw_content)}
+                    </div>
+                    ` : ''}
 
-                <div class="categories-grid">
-                    ${renderCategorizedContent(categorizedContent)}
+                    <div class="categories-grid">
+                        ${renderCategorizedContent(categorizedContent)}
+                    </div>
                 </div>
             `;
         }
@@ -2040,14 +2374,12 @@
         // Define preferred order without Summary
         const categoryOrder = ['Key Points', 'Action Items', 'Ideas', 'References'];
         
-        // Render categorized content using list-based design
+        // Render categorized content using a simpler, markdown-like heading style
         function renderCategorizedContent(categorizedContent) {
             if (!categorizedContent || Object.keys(categorizedContent).length === 0) {
                 return `
-                    <div class="category-item">
-                        <div class="empty-category">
-                            <p>No content yet. Start adding some content below!</p>
-                        </div>
+                    <div class="empty-category-section">
+                        <p>No content yet. Start adding some content below!</p>
                     </div>
                 `;
             }
@@ -2077,27 +2409,19 @@
                 }
 
                 const itemCount = items.length;
-                const categoryIcon = getCategoryIcon(category);
-                
-                // Auto-expand categories that have content
-                const expandedClass = itemCount > 0 ? ' expanded' : '';
+                const categoryIcon = getCategoryIcon(category); // We might still use this or remove later based on styling
 
+                // Markdown-like structure: Heading + List of items
                 return `
-                    <div class="category-item${expandedClass}" id="category-${category.replace(/\s+/g, '-').toLowerCase()}">
-                        <div class="category-header" onclick="toggleCategory('${category}')">
-                            <div class="category-left">
-                                <div class="category-icon">${categoryIcon}</div>
-                                <div class="category-info">
-                                    <div class="category-name">${escapeHtml(category)}</div>
-                                    <div class="category-count">${itemCount} item${itemCount === 1 ? '' : 's'}</div>
-                                </div>
-                            </div>
-                            <div class="category-actions" onclick="event.stopPropagation()">
-                                <button class="add-btn" onclick="openAddItemModal('${category}')" title="Add item">+ Add</button>
-                                <button class="edit-btn" onclick="openEditCategoryModal('${category}')" title="Edit category">✏️ Edit</button>
+                    <div class="category-section" id="category-${category.replace(/\s+/g, '-').toLowerCase()}">
+                        <div class="category-heading-wrapper">
+                            <h3 class="category-heading">${categoryIcon} ${escapeHtml(category)}</h3>
+                            <div class="category-actions-inline" onclick="event.stopPropagation()">
+                                <button class="add-btn-inline" onclick="openAddItemModal('${category}')" title="Add item">+ Add</button>
+                                <button class="edit-btn-inline" onclick="openEditCategoryModal('${category}')" title="Edit category">✏️ Edit</button>
                             </div>
                         </div>
-                        <div class="category-content">
+                        <div class="category-items-list">
                             ${renderCategoryItems(items, category)}
                         </div>
                     </div>
@@ -2105,7 +2429,7 @@
             }).join('');
         }
 
-        // Render items within a category
+        // Render items within a category (remains largely the same, but styling will differ)
         function renderCategoryItems(items, category) {
             if (!items || items.length === 0) {
                 return `
@@ -2136,14 +2460,6 @@
             }).join('');
 
             return `<div class="category-list">${itemsHtml}</div>`;
-        }
-
-        // Toggle category expansion
-        function toggleCategory(category) {
-            const categoryElement = document.getElementById(`category-${category.replace(/\s+/g, '-').toLowerCase()}`);
-            if (categoryElement) {
-                categoryElement.classList.toggle('expanded');
-            }
         }
 
         // Modal functions
@@ -2944,6 +3260,377 @@
             // Restore normal notes list
             renderNotesList();
         }
+
+        // PDF Export Function
+        async function downloadNoteAsPDF() {
+            console.log('PDF download function called');
+            
+            // Check if libraries are loaded with multiple fallbacks
+            let jsPDF = null;
+            
+            if (typeof window.jspdf !== 'undefined' && window.jspdf.jsPDF) {
+                jsPDF = window.jspdf.jsPDF;
+                console.log('Found jsPDF via window.jspdf.jsPDF');
+            } else if (typeof window.jsPDF !== 'undefined') {
+                jsPDF = window.jsPDF;
+                console.log('Found jsPDF via window.jsPDF');
+            } else if (typeof jsPDF !== 'undefined') {
+                // Sometimes it's available globally
+                console.log('Found jsPDF globally');
+            } else {
+                console.error('jsPDF library not found in any expected location');
+                console.log('Available on window:', Object.keys(window).filter(key => key.toLowerCase().includes('pdf')));
+                alert('PDF library not loaded. Please refresh the page and try again.\n\nIf the problem persists, there may be a network issue preventing the library from loading.');
+                return;
+            }
+            
+            if (typeof html2canvas === 'undefined') {
+                console.error('html2canvas library not loaded');
+                alert('Canvas library not loaded. Please refresh the page and try again.');
+                return;
+            }
+            
+            const noteContentElement = document.getElementById('noteContentForPdf');
+            
+            
+            if (!noteContentElement) {
+                console.error('noteContentForPdf element not found');
+                alert('Could not find note content to export.');
+                return;
+            }
+            
+            if (!currentNote) {
+                alert('No note selected to export.');
+                return;
+            }
+
+            const noteTitle = currentNote.title || 'FocusPad_Note';
+            const safeNoteTitle = noteTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+            
+            console.log('Starting PDF generation for:', noteTitle);
+
+            // Update button state
+            const pdfButton = document.querySelector('.note-action-btn[onclick="downloadNoteAsPDF()"]');
+            const originalButtonText = pdfButton ? pdfButton.innerHTML : '';
+            if (pdfButton) {
+                pdfButton.innerHTML = '⬇️ Generating...';
+                pdfButton.disabled = true;
+            }
+
+            try {
+                console.log('Hiding action elements...');
+                // Hide action buttons and interactive elements
+                const actionElements = noteContentElement.querySelectorAll('.category-actions-inline, .item-actions, .note-actions-bar');
+                const clickableElements = noteContentElement.querySelectorAll('.clickable span');
+                
+                actionElements.forEach(el => {
+                    el.style.setProperty('visibility', 'hidden', 'important');
+                });
+                clickableElements.forEach(el => {
+                    if (el.style.color && el.style.color.includes('--text-muted')) {
+                        el.style.setProperty('visibility', 'hidden', 'important');
+                    }
+                });
+
+                // Temporarily disable contenteditable
+                const editableFields = noteContentElement.querySelectorAll('[contenteditable="true"]');
+                editableFields.forEach(el => el.setAttribute('contenteditable', 'false'));
+
+                console.log('Capturing content with html2canvas...');
+                
+                const canvas = await html2canvas(noteContentElement, {
+                    scale: 2,
+                    useCORS: true,
+                    logging: true, // Enable logging for debugging
+                    backgroundColor: '#ffffff',
+                    width: noteContentElement.scrollWidth,
+                    height: noteContentElement.scrollHeight,
+                    onclone: (clonedDoc) => {
+                        console.log('html2canvas onclone called');
+                        // Ensure good styling for PDF
+                        const clonedElement = clonedDoc.getElementById('noteContentForPdf');
+                        if (clonedElement) {
+                            clonedElement.style.background = '#ffffff';
+                            clonedElement.style.color = '#000000';
+                        }
+                    }
+                });
+                
+                console.log('Canvas created:', canvas.width + 'x' + canvas.height);
+                
+                // Restore visibility and editability
+                actionElements.forEach(el => el.style.visibility = 'visible');
+                clickableElements.forEach(el => el.style.visibility = 'visible');
+                editableFields.forEach(el => el.setAttribute('contenteditable', 'true'));
+
+                console.log('Creating PDF document...');
+                
+                const pdf = new jsPDF({
+                    orientation: 'portrait',
+                    unit: 'pt',
+                    format: 'a4'
+                });
+
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const pdfHeight = pdf.internal.pageSize.getHeight();
+                const margin = 40;
+                
+                // Calculate scaling to fit page
+                const availableWidth = pdfWidth - (2 * margin);
+                const availableHeight = pdfHeight - (2 * margin);
+                
+                const imgAspectRatio = canvas.width / canvas.height;
+                let imgWidth = availableWidth;
+                let imgHeight = availableWidth / imgAspectRatio;
+                
+                // If image is too tall, scale to fit height
+                if (imgHeight > availableHeight) {
+                    imgHeight = availableHeight;
+                    imgWidth = availableHeight * imgAspectRatio;
+                }
+                
+                // Center the image
+                const x = (pdfWidth - imgWidth) / 2;
+                const y = (pdfHeight - imgHeight) / 2;
+                
+                // Convert canvas to image data
+                const imgData = canvas.toDataURL('image/png');
+                console.log('Image data created, adding to PDF...');
+                
+                // Add image to PDF
+                pdf.addImage(imgData, 'PNG', x, y, imgWidth, imgHeight);
+                
+                console.log('Saving PDF as:', safeNoteTitle + '.pdf');
+                
+                // Save the PDF
+                pdf.save(safeNoteTitle + '.pdf');
+                
+                console.log('PDF generation completed successfully');
+
+            } catch (error) {
+                console.error('Error generating PDF:', error);
+                
+                // Fallback: Create a text-based PDF if html2canvas fails
+                console.log('Attempting fallback text-based PDF...');
+                try {
+                    const pdf = new jsPDF({
+                        orientation: 'portrait',
+                        unit: 'pt',
+                        format: 'a4'
+                    });
+                    
+                    let yPosition = 50;
+                    const lineHeight = 20;
+                    const margin = 40;
+                    const pageWidth = pdf.internal.pageSize.getWidth();
+                    const maxWidth = pageWidth - (2 * margin);
+                    
+                    // Add title
+                    pdf.setFontSize(18);
+                    pdf.text(noteTitle, margin, yPosition);
+                    yPosition += lineHeight * 2;
+                    
+                    // Add date
+                    pdf.setFontSize(12);
+                    if (currentNote.created_at) {
+                        const dateStr = new Date(currentNote.created_at).toLocaleDateString();
+                        pdf.text('Date: ' + dateStr, margin, yPosition);
+                        yPosition += lineHeight;
+                    }
+                    
+                    // Add attendees if present
+                    if (currentNote.attendees) {
+                        pdf.text('Attendees: ' + currentNote.attendees, margin, yPosition);
+                        yPosition += lineHeight;
+                    }
+                    
+                    yPosition += lineHeight; // Extra space
+                    
+                    // Add raw content if available
+                    if (currentNote.raw_content) {
+                        pdf.setFontSize(14);
+                        pdf.text('Content:', margin, yPosition);
+                        yPosition += lineHeight;
+                        
+                        pdf.setFontSize(11);
+                        const lines = pdf.splitTextToSize(currentNote.raw_content, maxWidth);
+                        for (let i = 0; i < lines.length; i++) {
+                            if (yPosition > pdf.internal.pageSize.getHeight() - 50) {
+                                pdf.addPage();
+                                yPosition = 50;
+                            }
+                            pdf.text(lines[i], margin, yPosition);
+                            yPosition += lineHeight;
+                        }
+                    }
+                    
+                    // Add categorized content
+                    if (currentNote.content && typeof currentNote.content === 'object') {
+                        for (const [category, categoryData] of Object.entries(currentNote.content)) {
+                            let items = categoryData;
+                            if (categoryData && typeof categoryData === 'object' && categoryData.items) {
+                                items = categoryData.items;
+                            }
+                            
+                            if (Array.isArray(items) && items.length > 0) {
+                                // Add category heading
+                                if (yPosition > pdf.internal.pageSize.getHeight() - 100) {
+                                    pdf.addPage();
+                                    yPosition = 50;
+                                }
+                                
+                                pdf.setFontSize(14);
+                                pdf.text(category, margin, yPosition);
+                                yPosition += lineHeight;
+                                
+                                // Add items
+                                pdf.setFontSize(11);
+                                for (const item of items) {
+                                    let text = '';
+                                    if (typeof item === 'string') {
+                                        text = item;
+                                    } else if (item && typeof item === 'object') {
+                                        text = item.text || item.content || JSON.stringify(item);
+                                    }
+                                    
+                                    if (text) {
+                                        if (yPosition > pdf.internal.pageSize.getHeight() - 50) {
+                                            pdf.addPage();
+                                            yPosition = 50;
+                                        }
+                                        const itemLines = pdf.splitTextToSize('• ' + text, maxWidth);
+                                        for (let i = 0; i < itemLines.length; i++) {
+                                            pdf.text(itemLines[i], margin, yPosition);
+                                            yPosition += lineHeight;
+                                        }
+                                    }
+                                }
+                                
+                                yPosition += lineHeight / 2; // Extra space after category
+                            }
+                        }
+                    }
+                    
+                    pdf.save(safeNoteTitle + '_text.pdf');
+                    console.log('Fallback text-based PDF generated successfully');
+                    alert('PDF generated successfully (text-only fallback due to rendering issue).');
+                    
+                } catch (fallbackError) {
+                    console.error('Fallback PDF generation also failed:', fallbackError);
+                    alert('Error generating PDF: ' + error.message + '\nFallback also failed: ' + fallbackError.message + '\nCheck the browser console for more details.');
+                }
+            } finally {
+                // Restore button state
+                if (pdfButton) {
+                    pdfButton.innerHTML = originalButtonText;
+                    pdfButton.disabled = false;
+                }
+                
+                // Ensure elements are restored even if there was an error
+                const allActionElements = noteContentElement.querySelectorAll('.category-actions-inline, .item-actions, .note-actions-bar, .clickable span');
+                allActionElements.forEach(el => el.style.visibility = 'visible');
+                
+                const allEditableFields = noteContentElement.querySelectorAll('[contenteditable="false"]');
+                allEditableFields.forEach(el => el.setAttribute('contenteditable', 'true'));
+                
+                console.log('PDF generation cleanup completed');
+            }
+        }
+
+        // Test function to verify libraries are loaded (you can call this from browser console)
+        window.testPDFLibraries = function() {
+            console.log('=== PDF Libraries Test ===');
+            console.log('html2canvas available:', typeof html2canvas !== 'undefined');
+            console.log('window.jspdf available:', typeof window.jspdf !== 'undefined');
+            console.log('window.jsPDF available:', typeof window.jsPDF !== 'undefined');
+            
+            // Test which jsPDF reference works
+            let jsPDF = null;
+            if (typeof window.jspdf !== 'undefined' && window.jspdf.jsPDF) {
+                jsPDF = window.jspdf.jsPDF;
+                console.log('✅ jsPDF accessible via window.jspdf.jsPDF');
+            } else if (typeof window.jsPDF !== 'undefined') {
+                jsPDF = window.jsPDF;
+                console.log('✅ jsPDF accessible via window.jsPDF');
+            } else {
+                console.log('❌ jsPDF not accessible');
+                console.log('Available window properties containing "pdf":', 
+                    Object.keys(window).filter(key => key.toLowerCase().includes('pdf')));
+            }
+            
+            if (jsPDF) {
+                try {
+                    console.log('jsPDF version:', jsPDF.version || 'unknown');
+                    return true;
+                } catch (e) {
+                    console.log('Error accessing jsPDF:', e);
+                    return false;
+                }
+            }
+            return false;
+        };
+
+        // Simple test function to create a basic PDF (call from browser console)
+        window.testBasicPDF = function() {
+            try {
+                let jsPDF = null;
+                if (typeof window.jspdf !== 'undefined' && window.jspdf.jsPDF) {
+                    jsPDF = window.jspdf.jsPDF;
+                } else if (typeof window.jsPDF !== 'undefined') {
+                    jsPDF = window.jsPDF;
+                } else {
+                    console.error('jsPDF not available');
+                    return false;
+                }
+                
+                const pdf = new jsPDF();
+                pdf.text('Hello, this is a test PDF from FocusPad!', 20, 20);
+                pdf.text('Current time: ' + new Date().toLocaleString(), 20, 40);
+                if (currentNote) {
+                    pdf.text('Current note: ' + (currentNote.title || 'Untitled'), 20, 60);
+                }
+                pdf.save('focuspad_test.pdf');
+                console.log('Basic PDF test successful!');
+                return true;
+            } catch (error) {
+                console.error('Basic PDF test failed:', error);
+                return false;
+            }
+        };
+
+        // Function to test if button click is working
+        window.testButtonClick = function() {
+            console.log('Button click test - this function was called successfully');
+            alert('Button click is working! The downloadNoteAsPDF function should be called when you click the PDF button.');
+        };
+
+        // Toggle content section expand/collapse
+        function toggleContentSection(element) {
+            element.classList.toggle('expanded');
+        }
+
+        // Logout function
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                window.location.href = '/logout';
+            }
+        }
+
+        // Toggle profile dropdown
+        function toggleProfileDropdown() {
+            const dropdown = document.getElementById('profileDropdown');
+            dropdown.classList.toggle('show');
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            const profileContainer = document.querySelector('.profile-container');
+            const dropdown = document.getElementById('profileDropdown');
+            
+            if (dropdown && !profileContainer.contains(event.target)) {
+                dropdown.classList.remove('show');
+            }
+        });
     </script>
 
     <!-- Welcome Banner for returning users -->
