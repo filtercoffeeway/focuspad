@@ -177,7 +177,7 @@ Format your response as valid JSON only, no additional text.
     
     def _fallback_categorization(self, text, categories):
         """Fallback categorization when AI fails."""
-        # Simple keyword-based fallback
+        # Simple keyword-based fallback with better text splitting
         fallback_result = {}
         text_lower = text.lower()
         
@@ -196,52 +196,96 @@ Format your response as valid JSON only, no additional text.
             'prepare', 'create', 'update', 'review', 'check', 'verify'
         ]
         
-        # Check for action item patterns
-        is_action_item = False
-        
-        # Check for simple keywords
-        if any(word in text_lower for word in action_keywords):
-            is_action_item = True
-        
-        # Check for person + will/needs patterns (e.g., "John will...", "Sarah needs to...")
+        # Split text into sentences for better granularity
         import re
-        person_action_patterns = [
-            r'\b[A-Z][a-z]+ will\b',  # "John will", "Sarah will"
-            r'\b[A-Z][a-z]+ needs? to\b',  # "John needs to", "Sarah need to"
-            r'\b[A-Z][a-z]+ should\b',  # "John should", "Sarah should"
-            r'\b[A-Z][a-z]+ has to\b',  # "John has to", "Sarah has to"
-            r'\b[A-Z][a-z]+ must\b',  # "John must", "Sarah must"
-        ]
         
-        for pattern in person_action_patterns:
-            if re.search(pattern, text):
+        # First, split by common sentence endings
+        sentences = re.split(r'[.!?]+\s+', text.strip())
+        
+        # Clean up sentences and filter empty ones
+        sentences = [s.strip() for s in sentences if s.strip()]
+        
+        # If we only got one sentence, try splitting by other delimiters
+        if len(sentences) <= 1:
+            # Try splitting by common separators
+            sentences = re.split(r'[;\n]+', text.strip())
+            sentences = [s.strip() for s in sentences if s.strip()]
+        
+        # If still only one item, try splitting by person names + action patterns
+        if len(sentences) <= 1:
+            # Look for patterns like "John will...", "Sarah needs to..."
+            person_patterns = re.findall(r'[A-Z][a-z]+\s+(?:will|needs?\s+to|should|has\s+to|must|to)[^.]*', text)
+            if person_patterns:
+                sentences = person_patterns
+            else:
+                # Split by common connectors as last resort
+                sentences = re.split(r'\.\s+|\s+and\s+|\s+also\s+|\s+additionally\s+', text.strip())
+                sentences = [s.strip() for s in sentences if s.strip() and len(s) > 10]
+        
+        print(f"Fallback: Split text into {len(sentences)} sentences")
+        
+        # Categorize each sentence
+        for sentence in sentences:
+            if not sentence.strip():
+                continue
+                
+            sentence = sentence.strip()
+            sentence_lower = sentence.lower()
+            
+            # Check for action item patterns
+            is_action_item = False
+            
+            # Check for simple keywords
+            if any(word in sentence_lower for word in action_keywords):
                 is_action_item = True
-                break
+            
+            # Check for person + will/needs patterns (e.g., "John will...", "Sarah needs to...")
+            person_action_patterns = [
+                r'\b[A-Z][a-z]+\s+will\b',  # "John will", "Sarah will"
+                r'\b[A-Z][a-z]+\s+needs?\s+to\b',  # "John needs to", "Sarah need to"
+                r'\b[A-Z][a-z]+\s+should\b',  # "John should", "Sarah should"
+                r'\b[A-Z][a-z]+\s+has\s+to\b',  # "John has to", "Sarah has to"
+                r'\b[A-Z][a-z]+\s+must\b',  # "John must", "Sarah must"
+                r'\b[A-Z][a-z]+\s+to\s+\w+',  # "John to write", "Sarah to review"
+            ]
+            
+            for pattern in person_action_patterns:
+                if re.search(pattern, sentence):
+                    is_action_item = True
+                    break
+            
+            # Check for deadline patterns
+            deadline_patterns = [
+                r'by\s+\w+day',  # "by Monday", "by Friday"
+                r'due\s+\w+',    # "due tomorrow", "due next"
+                r'deadline',     # any mention of deadline
+                r'finish\s+by',  # "finish by..."
+                r'complete\s+by',# "complete by..."
+                r'eta[:\s]+',    # "ETA: 06/10", "ETA 06/10"
+            ]
+            
+            for pattern in deadline_patterns:
+                if re.search(pattern, sentence_lower):
+                    is_action_item = True
+                    break
+            
+            # Categorize the sentence
+            if is_action_item:
+                fallback_result['Action Items'].append(sentence)
+            elif any(word in sentence_lower for word in ['http', 'www', 'link', 'reference', 'source']):
+                fallback_result['References'].append(sentence)
+            elif any(word in sentence_lower for word in ['idea', 'thought', 'brainstorm', 'concept', 'option', 'exploring']):
+                if 'Ideas' in fallback_result:
+                    fallback_result['Ideas'].append(sentence)
+                else:
+                    fallback_result['Key Points'].append(sentence)
+            else:
+                # Default to Key Points for all other content
+                fallback_result['Key Points'].append(sentence)
         
-        # Check for deadline patterns
-        deadline_patterns = [
-            r'by \w+day',  # "by Monday", "by Friday"
-            r'due \w+',    # "due tomorrow", "due next"
-            r'deadline',   # any mention of deadline
-            r'finish by',  # "finish by..."
-            r'complete by' # "complete by..."
-        ]
-        
-        for pattern in deadline_patterns:
-            if re.search(pattern, text_lower):
-                is_action_item = True
-                break
-        
-        # Categorize based on enhanced detection
-        if is_action_item:
-            fallback_result['Action Items'] = [text]
-        elif any(word in text_lower for word in ['http', 'www', 'link', 'reference', 'source']):
-            fallback_result['References'] = [text]
-        elif any(word in text_lower for word in ['idea', 'thought', 'brainstorm', 'concept']):
-            fallback_result['Ideas'] = [text]
-        else:
-            # Default to Key Points for all other content including summaries
-            fallback_result['Key Points'] = [text]
+        # If no sentences were categorized but we have text, add it as Key Points
+        if all(len(items) == 0 for items in fallback_result.values()) and text.strip():
+            fallback_result['Key Points'] = [text.strip()]
         
         return fallback_result
     
