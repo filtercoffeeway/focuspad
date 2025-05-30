@@ -179,11 +179,14 @@ def update_note(note_id):
             except (ValueError, TypeError) as e:
                 return jsonify({'error': 'Invalid date format'}), 400
         if 'content' in data:
-            # Allow updating the content directly
+            # Allow updating the content directly (legacy JSON format)
             if isinstance(data['content'], str):
                 note.content = data['content']
             else:
                 note.set_content(data['content'])
+        if 'markdown_content' in data:
+            # Update markdown content (new primary format)
+            note.set_markdown_content(data['markdown_content'])
         
         # Encrypt updated data
         try:
@@ -640,4 +643,53 @@ def _highlight_text(text, query, max_length=200):
         return highlighted
     except Exception as e:
         current_app.logger.error(f"Error highlighting text: {e}")
-        return snippet  # Return unhighlighted snippet if highlighting fails 
+        return snippet  # Return unhighlighted snippet if highlighting fails
+
+@notes_bp.route('/<int:note_id>/markdown', methods=['PUT'])
+@jwt_required()
+def update_markdown_content(note_id):
+    """Update the markdown content of a note."""
+    try:
+        current_user_id = get_jwt_identity()
+        note = Note.query.get(note_id)
+        
+        if not note:
+            return jsonify({'error': 'Note not found'}), 404
+        
+        if note.user_id != current_user_id:
+            return jsonify({'error': 'Access denied'}), 403
+        
+        data = request.get_json()
+        if not data or 'markdown_content' not in data:
+            return jsonify({'error': 'Markdown content is required'}), 400
+        
+        # Decrypt current data first
+        try:
+            note.decrypt_sensitive_data(current_user_id)
+        except Exception as e:
+            current_app.logger.error(f"Failed to decrypt note {note_id} for markdown update: {e}")
+        
+        # Update markdown content
+        note.set_markdown_content(data['markdown_content'])
+        
+        # Encrypt updated data
+        try:
+            note.encrypt_sensitive_data(current_user_id)
+            db.session.commit()
+            current_app.logger.info(f"Note {note.id} markdown updated and encrypted for user {current_user_id}")
+        except Exception as e:
+            current_app.logger.error(f"Failed to encrypt updated note {note.id}: {e}")
+            # Save without encryption if it fails
+            db.session.commit()
+        
+        # Decrypt for response
+        note.decrypt_sensitive_data(current_user_id)
+        
+        return jsonify({
+            'message': 'Markdown content updated successfully',
+            'note': note.to_dict()
+        })
+        
+    except Exception as e:
+        current_app.logger.error(f"Update markdown content error: {str(e)}")
+        return jsonify({'error': 'Failed to update markdown content'}), 500 

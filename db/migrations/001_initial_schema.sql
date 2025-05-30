@@ -34,8 +34,9 @@ CREATE TABLE IF NOT EXISTS notes (
     user_id INTEGER REFERENCES users(id),
     title VARCHAR(255),
     description TEXT,
-    content TEXT,
-    raw_content TEXT,
+    content TEXT, -- Legacy JSON content for backward compatibility
+    raw_content TEXT, -- Raw unprocessed text input
+    markdown_content TEXT, -- Main markdown content (this will be the primary content field)
     attendees TEXT,
     template_id INTEGER REFERENCES templates(id),
     is_archived BOOLEAN DEFAULT FALSE,
@@ -47,7 +48,12 @@ CREATE TABLE IF NOT EXISTS notes (
     title_salt VARCHAR(255),
     title_is_encrypted BOOLEAN DEFAULT FALSE,
     
-    -- Encryption fields for content
+    -- Encryption fields for markdown_content
+    markdown_content_encrypted TEXT,
+    markdown_content_salt VARCHAR(255),
+    markdown_content_is_encrypted BOOLEAN DEFAULT FALSE,
+    
+    -- Encryption fields for content (legacy)
     content_encrypted TEXT,
     content_salt VARCHAR(255),
     content_is_encrypted BOOLEAN DEFAULT FALSE,

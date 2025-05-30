@@ -17,8 +17,9 @@ class Note(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text, nullable=True)
-    content = db.Column(db.Text, nullable=True)  # JSON string of categorized content
+    content = db.Column(db.Text, nullable=True)  # JSON string of categorized content (legacy)
     raw_content = db.Column(db.Text, nullable=True)  # Original uncategorized content
+    markdown_content = db.Column(db.Text, nullable=True)  # Main markdown content
     attendees = db.Column(db.Text, nullable=True)  # Meeting attendees
     template_id = db.Column(db.Integer, db.ForeignKey('templates.id'), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
@@ -33,6 +34,11 @@ class Note(db.Model):
     content_encrypted = db.Column(db.Text, nullable=True)
     content_salt = db.Column(db.String(255), nullable=True)
     content_is_encrypted = db.Column(db.Boolean, default=False)
+
+    # Encryption fields for markdown_content
+    markdown_content_encrypted = db.Column(db.Text, nullable=True)
+    markdown_content_salt = db.Column(db.String(255), nullable=True)
+    markdown_content_is_encrypted = db.Column(db.Boolean, default=False)
 
     raw_content_encrypted = db.Column(db.Text, nullable=True)
     raw_content_salt = db.Column(db.String(255), nullable=True)
@@ -62,6 +68,15 @@ class Note(db.Model):
     def set_content(self, content_dict):
         """Set content from a dictionary."""
         self.content = json.dumps(content_dict, indent=2)
+    
+    def get_markdown_content(self):
+        """Get markdown content."""
+        return self.markdown_content or ''
+    
+    def set_markdown_content(self, markdown_text):
+        """Set markdown content."""
+        self.markdown_content = markdown_text
+        self.updated_at = datetime.utcnow()
     
     def get_categorized_content(self):
         """Get content organized by categories."""
@@ -143,6 +158,7 @@ class Note(db.Model):
         if include_content:
             result['content'] = self.get_categorized_content()
             result['raw_content'] = self.raw_content
+            result['markdown_content'] = self.get_markdown_content()
         else:
             # Even when not including full content, provide a preview for the sidebar
             result['preview'] = self.get_preview_text()
@@ -151,12 +167,25 @@ class Note(db.Model):
     
     def get_preview_text(self, max_length=100):
         """Get a preview text for the note."""
-        # First try raw_content as it's the most direct representation
+        # First try markdown_content as it's the primary content
+        if self.markdown_content and self.markdown_content.strip():
+            # Remove markdown formatting for preview
+            import re
+            text = re.sub(r'#+ ', '', self.markdown_content)  # Remove headers
+            text = re.sub(r'\*\*([^*]+)\*\*', r'\1', text)  # Remove bold
+            text = re.sub(r'\*([^*]+)\*', r'\1', text)  # Remove italic
+            text = re.sub(r'`([^`]+)`', r'\1', text)  # Remove code
+            text = re.sub(r'- ', '', text)  # Remove bullet points
+            text = text.strip()
+            if text:
+                return text[:max_length] + ('...' if len(text) > max_length else '')
+        
+        # Fallback to raw_content
         if self.raw_content and self.raw_content.strip():
             text = self.raw_content.strip()
             return text[:max_length] + ('...' if len(text) > max_length else '')
         
-        # Try to get content from categorized content
+        # Last resort: try categorized content
         content_dict = self.get_content()
         for category_name, items in content_dict.items():
             if isinstance(items, list) and items:
@@ -188,7 +217,8 @@ class Note(db.Model):
             template_id=template_id,
             user_id=user_id,
             content='{}',
-            raw_content=''
+            raw_content='',
+            markdown_content=''
         )
         
         db.session.add(note)
@@ -212,6 +242,7 @@ class Note(db.Model):
             'title': self.title,
             'content': self.content,
             'raw_content': self.raw_content,
+            'markdown_content': self.markdown_content,
             'attendees': self.attendees,
             'description': self.description
         }
@@ -231,7 +262,7 @@ class Note(db.Model):
         """Decrypt sensitive fields in this note."""
         from app.utils.encryption_service import encryption_service
         
-        fields_to_decrypt = ['title', 'content', 'raw_content', 'attendees', 'description']
+        fields_to_decrypt = ['title', 'content', 'raw_content', 'markdown_content', 'attendees', 'description']
         
         for field in fields_to_decrypt:
             encrypted_field = getattr(self, f'{field}_encrypted', None)

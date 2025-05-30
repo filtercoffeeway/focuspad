@@ -6,6 +6,7 @@
     <title>FocusPad - Home</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.3.0/marked.min.js"></script>
     <script>
         // Check if libraries loaded and add fallback
         window.addEventListener('load', function() {
@@ -1836,6 +1837,188 @@
             }
         }
 
+        /* Markdown Editor Styles */
+        .markdown-container {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin-bottom: 24px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .markdown-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-light);
+            background: var(--bg-tertiary);
+            border-radius: 8px 8px 0 0;
+        }
+
+        .markdown-mode-label {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .markdown-mode-toggle {
+            background: var(--accent-bg);
+            color: var(--accent-border);
+            border: 1px solid var(--accent-border);
+            padding: 4px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .markdown-mode-toggle:hover {
+            background: var(--accent-border);
+            color: var(--bg-secondary);
+        }
+
+        .markdown-content {
+            padding: 20px;
+            min-height: 200px;
+            transition: all 0.3s ease;
+        }
+
+        /* Markdown View Mode */
+        .markdown-view {
+            cursor: pointer;
+            line-height: 1.6;
+            color: var(--text-secondary);
+        }
+
+        .markdown-view:hover {
+            background: var(--accent-bg);
+            border-radius: 4px;
+        }
+
+        .markdown-view h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 20px 0 12px 0;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 8px;
+        }
+
+        .markdown-view h1:first-child {
+            margin-top: 0;
+        }
+
+        .markdown-view h2 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 16px 0 8px 0;
+        }
+
+        .markdown-view h3 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin: 12px 0 6px 0;
+        }
+
+        .markdown-view p {
+            margin: 8px 0;
+            color: var(--text-muted);
+        }
+
+        .markdown-view ul, .markdown-view ol {
+            margin: 8px 0;
+            padding-left: 20px;
+        }
+
+        .markdown-view li {
+            margin: 4px 0;
+            color: var(--text-muted);
+        }
+
+        .markdown-view blockquote {
+            border-left: 4px solid var(--accent-border);
+            margin: 12px 0;
+            padding: 8px 16px;
+            background: var(--accent-bg);
+            color: var(--text-secondary);
+        }
+
+        .markdown-view code {
+            background: var(--bg-tertiary);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+            font-size: 0.875em;
+            color: var(--accent-border);
+        }
+
+        .markdown-view pre {
+            background: var(--bg-tertiary);
+            padding: 12px;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 12px 0;
+        }
+
+        .markdown-view pre code {
+            background: none;
+            padding: 0;
+        }
+
+        /* Markdown Edit Mode */
+        .markdown-edit {
+            display: none;
+        }
+
+        .markdown-editor {
+            width: 100%;
+            min-height: 300px;
+            border: none;
+            outline: none;
+            resize: none;
+            font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+            font-size: 0.875rem;
+            line-height: 1.5;
+            color: var(--text-primary);
+            background: transparent;
+            padding: 0;
+        }
+
+        .markdown-editor::placeholder {
+            color: var(--text-light);
+        }
+
+        /* Show edit mode when active */
+        .markdown-container.edit-mode .markdown-view {
+            display: none;
+        }
+
+        .markdown-container.edit-mode .markdown-edit {
+            display: block;
+        }
+
+        .markdown-container.edit-mode .markdown-mode-label {
+            color: var(--accent-border);
+        }
+
+        .markdown-container.edit-mode #markdownSaveBtn {
+            display: inline-block !important;
+        }
+
+        /* Empty state for markdown */
+        .markdown-empty {
+            color: var(--text-light);
+            font-style: italic;
+            text-align: center;
+            padding: 40px 20px;
+            border: 2px dashed var(--border-light);
+            border-radius: 8px;
+        }
     </style>
 </head>
 <body>
@@ -1935,7 +2118,7 @@
                 <textarea 
                     class="text-input" 
                     id="textInput" 
-                    placeholder="Add content to your note..."
+                    placeholder="Add quick notes here (they'll be organized automatically), or use the markdown editor above for structured content..."
                     rows="3"
                 ></textarea>
                 <button class="save-btn" id="saveBtn" onclick="saveContent()">Save</button>
@@ -2116,24 +2299,40 @@
                 return note.preview;
             }
             
-            // First try raw_content as it's the most direct representation
+            // First try markdown_content as it's the primary content
+            if (note.markdown_content && note.markdown_content.trim()) {
+                // Remove markdown formatting for preview
+                let text = note.markdown_content;
+                text = text.replace(/#+\s/g, '');  // Remove headers
+                text = text.replace(/\*\*([^*]+)\*\*/g, '$1');  // Remove bold
+                text = text.replace(/\*([^*]+)\*/g, '$1');  // Remove italic
+                text = text.replace(/`([^`]+)`/g, '$1');  // Remove code
+                text = text.replace(/^-\s/gm, '');  // Remove bullet points
+                text = text.replace(/^\>\s/gm, '');  // Remove blockquotes
+                text = text.trim();
+                if (text) {
+                    return text.substring(0, 100) + (text.length > 100 ? '...' : '');
+                }
+            }
+            
+            // Fallback to raw_content
             if (note.raw_content && note.raw_content.trim()) {
                 return note.raw_content.substring(0, 100) + (note.raw_content.length > 100 ? '...' : '');
             }
             
-            // Handle the new content structure (object with categories)
+            // Last resort: try legacy categorized content
             if (note.content && typeof note.content === 'object') {
-                // Try to find any text content in any category
                 for (const [category, categoryData] of Object.entries(note.content)) {
                     let items = categoryData;
                     
-                    // Handle the API structure: {category_info: {...}, items: [...]}
                     if (categoryData && typeof categoryData === 'object' && categoryData.items) {
                         items = categoryData.items;
+                        if (items && typeof items === 'object' && items.items && Array.isArray(items.items)) {
+                            items = items.items;
+                        }
                     }
                     
                     if (Array.isArray(items) && items.length > 0) {
-                        // Find first non-empty item
                         for (const item of items) {
                             let text = '';
                             if (typeof item === 'string' && item.trim()) {
@@ -2146,15 +2345,6 @@
                                 return text.substring(0, 100) + (text.length > 100 ? '...' : '');
                             }
                         }
-                    } else if (typeof items === 'object' && items !== null) {
-                        // Handle object with nested content
-                        for (const [key, value] of Object.entries(items)) {
-                            if (typeof value === 'string' && value.trim()) {
-                                return value.substring(0, 100) + (value.length > 100 ? '...' : '');
-                            }
-                        }
-                    } else if (typeof items === 'string' && items.trim()) {
-                        return items.substring(0, 100) + (items.length > 100 ? '...' : '');
                     }
                 }
             }
@@ -2264,7 +2454,6 @@
                 return;
             }
 
-            const categorizedContent = currentNote.content || {};
             const formatNoteDate = (dateString) => {
                 if (!dateString) return 'Not specified';
                 const date = new Date(dateString);
@@ -2299,7 +2488,7 @@
                             </span>
                         </div>
                         <div class="note-detail-item">
-                            <label class="detail-label">👥 Attendees:</label>
+                            <label class="detail-label">📝 Description:</label>
                             <span class="detail-value editable" 
                                   contenteditable="true"
                                   data-field="attendees"
@@ -2317,11 +2506,90 @@
                     </div>
                     ` : ''}
 
-                    <div class="categories-grid">
-                        ${renderCategorizedContent(categorizedContent)}
+                    <div class="markdown-container" id="markdownContainer">
+                        <div class="markdown-header">
+                            <span class="markdown-mode-label" id="markdownModeLabel">Notes</span>
+                            <div style="display: flex; gap: 8px;">
+                                <button class="markdown-mode-toggle" id="markdownModeToggle" onclick="toggleMarkdownMode()">Edit</button>
+                            </div>
+                        </div>
+                        <div class="markdown-content">
+                            <div class="markdown-view" id="markdownView" onclick="toggleMarkdownMode()">
+                                <!-- Rendered markdown will go here -->
+                            </div>
+                            <div class="markdown-edit" id="markdownEdit">
+                                <textarea class="markdown-editor" id="markdownEditor" placeholder="# Your Note Title
+
+Start writing your note here...
+
+You can use markdown syntax:
+- **Bold text**
+- *Italic text*
+- ## Subheadings
+- ### Smaller headings
+- \`Code snippets\`
+
+> Blockquotes for important notes
+
+Content auto-saves when you click outside this editor."></textarea>
+                            </div>
+                        </div>
                     </div>
                 </div>
             `;
+
+            // Initialize markdown content directly from API
+            markdownContent = currentNote.markdown_content || '';
+            
+            // FALLBACK: If no markdown content but we have old-style content, convert it
+            if (!markdownContent.trim() && currentNote.content && typeof currentNote.content === 'object') {
+                console.log('No markdown content found, converting from legacy content...');
+                markdownContent = convertContentToMarkdown(currentNote.content);
+                console.log('Converted markdown:', markdownContent);
+            }
+            
+            // Set up the editor
+            const markdownEditor = document.getElementById('markdownEditor');
+            const markdownView = document.getElementById('markdownView');
+            
+            console.log('Setting up markdown editor...');
+            console.log('markdownContent:', markdownContent);
+            console.log('markdownEditor found:', !!markdownEditor);
+            console.log('markdownView found:', !!markdownView);
+            console.log('marked available:', typeof marked !== 'undefined');
+            
+            if (markdownEditor && markdownView) {
+                markdownEditor.value = markdownContent;
+                
+                try {
+                    if (markdownContent.trim()) {
+                        console.log('Rendering markdown content...');
+                        if (typeof marked !== 'undefined' && marked.parse) {
+                            markdownView.innerHTML = marked.parse(markdownContent);
+                            console.log('Markdown rendered successfully');
+                        } else {
+                            console.warn('marked.parse not available, using plain text');
+                            markdownView.innerHTML = `<pre>${escapeHtml(markdownContent)}</pre>`;
+                        }
+                    } else {
+                        console.log('No markdown content, showing empty message');
+                        markdownView.innerHTML = '<div class="markdown-empty">Click "Edit" to start writing your note in markdown...</div>';
+                    }
+                } catch (error) {
+                    console.error('Error rendering markdown:', error);
+                    markdownView.innerHTML = `<div class="markdown-error">Error rendering markdown: ${error.message}<br><pre>${escapeHtml(markdownContent)}</pre></div>`;
+                }
+                
+                // Initialize the editor
+                try {
+                    initializeMarkdownEditor();
+                    console.log('Markdown editor initialized');
+                } catch (error) {
+                    console.error('Error initializing markdown editor:', error);
+                }
+            } else {
+                console.error('Could not find markdown editor elements');
+            }
         }
 
         // Format raw content as proper paragraphs
@@ -2397,9 +2665,15 @@
             return sortedEntries.map(([category, categoryData]) => {
                 let items = categoryData;
                 
-                // Handle API structure
-                if (categoryData && typeof categoryData === 'object' && categoryData.items) {
-                    items = categoryData.items;
+                // Handle API structure - check for multiple nesting levels
+                if (categoryData && typeof categoryData === 'object') {
+                    if (categoryData.items) {
+                        items = categoryData.items;
+                        // Check for additional nesting level (categoryData.items.items)
+                        if (items && typeof items === 'object' && items.items && Array.isArray(items.items)) {
+                            items = items.items;
+                        }
+                    }
                 }
 
                 // Ensure items is an array
@@ -2470,7 +2744,13 @@
 
         function openEditItemModal(category, itemIndex) {
             const categoryData = currentNote.content[category];
-            const items = Array.isArray(categoryData) ? categoryData : (categoryData?.items || []);
+            let items = Array.isArray(categoryData) ? categoryData : (categoryData?.items || []);
+            
+            // Handle double nesting
+            if (items && typeof items === 'object' && items.items && Array.isArray(items.items)) {
+                items = items.items;
+            }
+            
             const item = items[itemIndex];
             const text = typeof item === 'string' ? item : (item?.text || item?.content || '');
 
@@ -2481,7 +2761,13 @@
 
         function openEditCategoryModal(category) {
             const categoryData = currentNote.content[category];
-            const items = Array.isArray(categoryData) ? categoryData : (categoryData?.items || []);
+            let items = Array.isArray(categoryData) ? categoryData : (categoryData?.items || []);
+            
+            // Handle double nesting
+            if (items && typeof items === 'object' && items.items && Array.isArray(items.items)) {
+                items = items.items;
+            }
+            
             const text = items.map(item => 
                 typeof item === 'string' ? item : (item?.text || item?.content || '')
             ).join('\n');
@@ -2562,9 +2848,16 @@
                 updatedContent[category] = { items: [] };
             }
             
-            const items = updatedContent[category].items || [];
-            items.push(content.trim());
-            updatedContent[category].items = items;
+            let items = updatedContent[category].items || [];
+            // Handle double nesting
+            if (items && typeof items === 'object' && items.items && Array.isArray(items.items)) {
+                items = items.items;
+                updatedContent[category].items.items = [...items, content.trim()];
+            } else if (Array.isArray(items)) {
+                updatedContent[category].items = [...items, content.trim()];
+            } else {
+                updatedContent[category].items = [content.trim()];
+            }
 
             await updateNoteContent(updatedContent);
         }
@@ -2573,11 +2866,20 @@
             if (!newContent.trim()) return;
 
             const updatedContent = { ...currentNote.content };
-            const items = updatedContent[category]?.items || [];
+            let items = updatedContent[category]?.items || [];
             
-            if (itemIndex >= 0 && itemIndex < items.length) {
-                items[itemIndex] = newContent.trim();
-                await updateNoteContent(updatedContent);
+            // Handle double nesting
+            if (items && typeof items === 'object' && items.items && Array.isArray(items.items)) {
+                items = items.items;
+                if (itemIndex >= 0 && itemIndex < items.length) {
+                    updatedContent[category].items.items[itemIndex] = newContent.trim();
+                    await updateNoteContent(updatedContent);
+                }
+            } else if (Array.isArray(items)) {
+                if (itemIndex >= 0 && itemIndex < items.length) {
+                    updatedContent[category].items[itemIndex] = newContent.trim();
+                    await updateNoteContent(updatedContent);
+                }
             }
         }
 
@@ -2585,11 +2887,20 @@
             if (!confirm('Are you sure you want to delete this item?')) return;
 
             const updatedContent = { ...currentNote.content };
-            const items = updatedContent[category]?.items || [];
+            let items = updatedContent[category]?.items || [];
             
-            if (itemIndex >= 0 && itemIndex < items.length) {
-                items.splice(itemIndex, 1);
-                await updateNoteContent(updatedContent);
+            // Handle double nesting
+            if (items && typeof items === 'object' && items.items && Array.isArray(items.items)) {
+                items = items.items;
+                if (itemIndex >= 0 && itemIndex < items.length) {
+                    updatedContent[category].items.items.splice(itemIndex, 1);
+                    await updateNoteContent(updatedContent);
+                }
+            } else if (Array.isArray(items)) {
+                if (itemIndex >= 0 && itemIndex < items.length) {
+                    updatedContent[category].items.splice(itemIndex, 1);
+                    await updateNoteContent(updatedContent);
+                }
             }
         }
 
@@ -2604,6 +2915,7 @@
                 updatedContent[category] = { items: [] };
             }
             
+            // Always use the simple structure for updates
             updatedContent[category].items = items;
             await updateNoteContent(updatedContent);
         }
@@ -3630,6 +3942,549 @@
                 dropdown.classList.remove('show');
             }
         });
+
+        // Markdown Editor Functions
+        let isMarkdownEditMode = false;
+        let markdownContent = '';
+        let contentBackup = null; // Add backup mechanism
+
+        // Convert categorized content to markdown
+        function categoriesToMarkdown(categorizedContent) {
+            console.log('=== MARKDOWN GENERATION DEBUG ===');
+            console.log('Input categorized content:', categorizedContent);
+            
+            let markdown = '';
+            
+            if (!categorizedContent || Object.keys(categorizedContent).length === 0) {
+                const defaultMarkdown = '# Welcome to your note!\n\nStart typing here... You can use markdown syntax like:\n\n- **Bold text**\n- *Italic text*\n- `Code snippets`\n- ## Subheadings\n- ### Smaller headings\n\n> Blockquotes for important notes\n\nClick the "Edit" button above to switch to markdown editing mode.';
+                console.log('No content - returning default markdown');
+                return defaultMarkdown;
+            }
+
+            // Sort categories by preferred order
+            const categoryOrder = ['Key Points', 'Action Items', 'Ideas', 'References'];
+            const sortedEntries = Object.entries(categorizedContent).sort(([categoryA], [categoryB]) => {
+                const indexA = categoryOrder.indexOf(categoryA);
+                const indexB = categoryOrder.indexOf(categoryB);
+                
+                if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+                if (indexA !== -1 && indexB === -1) return -1;
+                if (indexA === -1 && indexB !== -1) return 1;
+                return categoryA.localeCompare(categoryB);
+            });
+
+            console.log('Sorted categories:', sortedEntries.map(([cat]) => cat));
+
+            for (const [category, categoryData] of sortedEntries) {
+                let items = categoryData;
+                
+                // Handle API structure - check for multiple nesting levels
+                if (categoryData && typeof categoryData === 'object') {
+                    if (categoryData.items) {
+                        items = categoryData.items;
+                        // Check for additional nesting level (categoryData.items.items)
+                        if (items && typeof items === 'object' && items.items && Array.isArray(items.items)) {
+                            items = items.items;
+                            console.log(`Found double-nested items for "${category}":`, items);
+                        }
+                    }
+                }
+
+                if (!Array.isArray(items)) {
+                    console.warn(`Category "${category}" items is not an array after processing:`, items);
+                    items = [];
+                }
+
+                if (items.length > 0) {
+                    markdown += `# ${category}\n\n`;
+                    console.log(`Adding category: "${category}" with ${items.length} items`);
+                    
+                    for (const item of items) {
+                        let text = '';
+                        if (typeof item === 'string') {
+                            text = item;
+                        } else if (item && typeof item === 'object') {
+                            text = item.text || item.content || JSON.stringify(item);
+                        }
+                        
+                        if (text.trim()) {
+                            markdown += `- ${text.trim()}\n`;
+                            console.log(`Added item: "${text.trim()}"`);
+                        }
+                    }
+                    
+                    markdown += '\n';
+                } else {
+                    console.log(`Skipping empty category: "${category}"`);
+                }
+            }
+            
+            const finalMarkdown = markdown.trim();
+            console.log('Generated markdown:', finalMarkdown);
+            return finalMarkdown;
+        }
+
+        // Convert markdown back to categorized content
+        function markdownToCategories(markdown) {
+            console.log('=== MARKDOWN PARSING DEBUG ===');
+            console.log('Input markdown:', markdown);
+            
+            const lines = markdown.split('\n');
+            const categorizedContent = {};
+            let currentCategory = null;
+            
+            console.log('Total lines to parse:', lines.length);
+            
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i].trim();
+                console.log(`Line ${i}: "${line}"`);
+                
+                // Check for H1 headings (categories)
+                if (line.startsWith('# ') && line.length > 2) {
+                    currentCategory = line.substring(2).trim();
+                    console.log(`Found category: "${currentCategory}"`);
+                    
+                    if (!categorizedContent[currentCategory]) {
+                        categorizedContent[currentCategory] = { items: [] };
+                    }
+                } else if (line.startsWith('- ') && currentCategory && line.length > 2) {
+                    // List items under current category
+                    const itemText = line.substring(2).trim();
+                    if (itemText) {
+                        console.log(`Adding item to "${currentCategory}": "${itemText}"`);
+                        categorizedContent[currentCategory].items.push(itemText);
+                    }
+                } else if (line.startsWith('* ') && currentCategory && line.length > 2) {
+                    // Also handle * bullets
+                    const itemText = line.substring(2).trim();
+                    if (itemText) {
+                        console.log(`Adding item (asterisk) to "${currentCategory}": "${itemText}"`);
+                        categorizedContent[currentCategory].items.push(itemText);
+                    }
+                } else if (line.length > 0) {
+                    console.log(`Ignored line: "${line}" (currentCategory: ${currentCategory})`);
+                }
+            }
+            
+            console.log('Final categorized content:', categorizedContent);
+            console.log('Categories found:', Object.keys(categorizedContent));
+            
+            // Ensure we have at least some content if the original note had content
+            if (Object.keys(categorizedContent).length === 0 && markdown.trim().length > 0) {
+                console.warn('⚠️ No categories parsed but markdown exists - creating fallback');
+                // Create a fallback category to prevent data loss
+                categorizedContent['Notes'] = { 
+                    items: [markdown.trim().replace(/\n+/g, ' ')] 
+                };
+            }
+            
+            return categorizedContent;
+        }
+
+        // Toggle between view and edit mode
+        function toggleMarkdownMode() {
+            const container = document.getElementById('markdownContainer');
+            const modeLabel = document.getElementById('markdownModeLabel');
+            const modeToggle = document.getElementById('markdownModeToggle');
+            const viewDiv = document.getElementById('markdownView');
+            const editTextarea = document.getElementById('markdownEditor');
+            
+            if (!container) return;
+            
+            isMarkdownEditMode = !isMarkdownEditMode;
+            
+            if (isMarkdownEditMode) {
+                // Create backup before entering edit mode
+                contentBackup = {
+                    content: JSON.parse(JSON.stringify(currentNote.content || {})),
+                    markdown: markdownContent
+                };
+                console.log('Created content backup:', contentBackup);
+                
+                // Switch to edit mode
+                container.classList.add('edit-mode');
+                modeLabel.textContent = 'Markdown Editor (Auto-saves on exit)';
+                modeToggle.textContent = 'Preview';
+                editTextarea.focus();
+                
+                // Auto-resize textarea
+                autoResizeTextarea(editTextarea);
+                
+                console.log('Switched to edit mode');
+            } else {
+                // Switch to view mode - save changes first
+                console.log('Switching to view mode, saving changes...');
+                
+                container.classList.remove('edit-mode');
+                modeLabel.textContent = 'Notes';
+                modeToggle.textContent = 'Edit';
+                
+                // Update the markdown content and re-render
+                updateMarkdownFromEditor();
+                
+                // Auto-save when switching to view mode
+                saveMarkdownContent();
+            }
+        }
+
+        // Add restore function for emergencies
+        function restoreFromBackup() {
+            if (contentBackup && currentNote) {
+                console.log('Restoring from backup:', contentBackup);
+                currentNote.content = contentBackup.content;
+                markdownContent = contentBackup.markdown;
+                
+                // Re-render
+                const markdownEditor = document.getElementById('markdownEditor');
+                const markdownView = document.getElementById('markdownView');
+                
+                if (markdownEditor) {
+                    markdownEditor.value = markdownContent;
+                }
+                
+                if (markdownView) {
+                    if (markdownContent.trim()) {
+                        markdownView.innerHTML = marked.parse(markdownContent);
+                    } else {
+                        markdownView.innerHTML = '<div class="markdown-empty">Click "Edit" to start writing your note in markdown...</div>';
+                    }
+                }
+                
+                alert('Content restored from backup!');
+                return true;
+            }
+            return false;
+        }
+
+        // Make restore function available globally for emergency use
+        window.restoreFromBackup = restoreFromBackup;
+
+        // Update markdown content from editor
+        function updateMarkdownFromEditor() {
+            const editTextarea = document.getElementById('markdownEditor');
+            const viewDiv = document.getElementById('markdownView');
+            
+            if (!editTextarea || !viewDiv) return;
+            
+            markdownContent = editTextarea.value;
+            
+            if (markdownContent.trim()) {
+                // Use marked.js to render markdown
+                viewDiv.innerHTML = marked.parse(markdownContent);
+            } else {
+                viewDiv.innerHTML = '<div class="markdown-empty">Click "Edit" to start writing your note in markdown...</div>';
+            }
+        }
+
+        // Auto-resize textarea
+        function autoResizeTextarea(textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = Math.max(300, textarea.scrollHeight) + 'px';
+        }
+
+        // Initialize markdown editor
+        function initializeMarkdownEditor() {
+            const editTextarea = document.getElementById('markdownEditor');
+            if (editTextarea) {
+                // Auto-resize on input
+                editTextarea.addEventListener('input', function() {
+                    autoResizeTextarea(this);
+                });
+                
+                // Auto-save on blur (when user clicks outside)
+                editTextarea.addEventListener('blur', function() {
+                    // Small delay to allow for other click events to process
+                    setTimeout(() => {
+                        if (isMarkdownEditMode) {
+                            console.log('Auto-saving on blur...');
+                            toggleMarkdownMode(); // This will save and switch to view mode
+                        }
+                    }, 150);
+                });
+                
+                // Save on Ctrl/Cmd + S (still useful for manual saves)
+                editTextarea.addEventListener('keydown', function(e) {
+                    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                        e.preventDefault();
+                        toggleMarkdownMode(); // Save and switch to view mode
+                    }
+                });
+            }
+        }
+
+        // Save markdown content - SIMPLIFIED VERSION
+        async function saveMarkdownContent() {
+            console.log('=== MARKDOWN SAVE STARTING ===');
+            
+            if (!currentNote) {
+                console.error('No current note - cannot save');
+                return false;
+            }
+            
+            const editTextarea = document.getElementById('markdownEditor');
+            if (!editTextarea) {
+                console.error('No markdown editor found');
+                return false;
+            }
+            
+            const markdown = editTextarea.value;
+            console.log('Markdown to save:', markdown);
+            
+            // Show saving state on toggle button
+            const modeToggle = document.getElementById('markdownModeToggle');
+            const originalToggleText = modeToggle?.textContent;
+            
+            if (modeToggle) {
+                modeToggle.textContent = 'Saving...';
+                modeToggle.disabled = true;
+            }
+            
+            try {
+                console.log('Attempting to save markdown to API...');
+                
+                const response = await fetch(`/api/notes/${currentNote.id}/markdown`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${accessToken}`
+                    },
+                    body: JSON.stringify({
+                        markdown_content: markdown
+                    })
+                });
+                
+                console.log('API Response status:', response.status);
+                
+                if (handleTokenExpiration(response)) {
+                    console.log('Token expired, redirecting...');
+                    return false;
+                }
+                
+                const responseText = await response.text();
+                console.log('API Response text:', responseText);
+                
+                if (!response.ok) {
+                    throw new Error(`API Error ${response.status}: ${responseText}`);
+                }
+                
+                // Try to parse response as JSON
+                let responseData;
+                try {
+                    responseData = JSON.parse(responseText);
+                    console.log('API Response data:', responseData);
+                } catch (e) {
+                    console.log('Response is not JSON, treating as success');
+                    responseData = { success: true };
+                }
+                
+                // Update local note object
+                console.log('Updating local note object...');
+                currentNote.markdown_content = markdown;
+                markdownContent = markdown;
+                
+                // Update the view
+                updateMarkdownFromEditor();
+                
+                // Refresh notes list
+                console.log('Refreshing notes list...');
+                await loadNotes();
+                
+                console.log('✅ Save completed successfully');
+                
+                // Show success feedback briefly
+                if (modeToggle) {
+                    modeToggle.textContent = 'Saved!';
+                    modeToggle.style.background = '#10b981';
+                    modeToggle.style.color = 'white';
+                }
+                
+                setTimeout(() => {
+                    if (modeToggle) {
+                        modeToggle.textContent = originalToggleText;
+                        modeToggle.style.background = '';
+                        modeToggle.style.color = '';
+                        modeToggle.disabled = false;
+                    }
+                }, 2000);
+                
+                return true;
+                
+            } catch (error) {
+                console.error('❌ Save failed:', error);
+                
+                // Restore button state
+                if (modeToggle) {
+                    modeToggle.textContent = originalToggleText;
+                    modeToggle.disabled = false;
+                }
+                
+                alert(`Save failed: ${error.message}\n\nYour content is still in the editor. Try again or check network connection.`);
+                return false;
+            }
+        }
+
+        // Emergency debugging and save functions
+        window.debugCurrentNote = function() {
+            console.log('=== CURRENT NOTE DEBUG ===');
+            console.log('currentNote:', currentNote);
+            console.log('currentNote.content:', currentNote?.content);
+            console.log('markdownContent:', markdownContent);
+            
+            const editor = document.getElementById('markdownEditor');
+            if (editor) {
+                console.log('Editor value:', editor.value);
+            }
+            
+            return {
+                currentNote: currentNote,
+                markdownContent: markdownContent,
+                editorValue: editor?.value
+            };
+        };
+
+        // Emergency save function with full logging
+        window.emergencySave = async function() {
+            console.log('=== EMERGENCY SAVE ===');
+            
+            if (!currentNote) {
+                alert('No current note selected!');
+                return false;
+            }
+            
+            const editor = document.getElementById('markdownEditor');
+            if (!editor) {
+                alert('No editor found!');
+                return false;
+            }
+            
+            const markdown = editor.value;
+            console.log('Markdown to save:', markdown);
+            
+            // Try the simple text save first
+            try {
+                console.log('Trying simple content save...');
+                const response = await fetch(`/api/notes/${currentNote.id}/content`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${accessToken}`
+                    },
+                    body: JSON.stringify({ text: markdown })
+                });
+                
+                console.log('Simple save response:', response.status);
+                const responseText = await response.text();
+                console.log('Simple save response body:', responseText);
+                
+                if (response.ok) {
+                    alert('Emergency save successful via text method!');
+                    return true;
+                }
+            } catch (error) {
+                console.error('Simple save failed:', error);
+            }
+            
+            // Try direct content update
+            try {
+                console.log('Trying direct content update...');
+                const categorizedContent = markdownToCategories(markdown);
+                console.log('Parsed content for direct update:', categorizedContent);
+                
+                const response = await fetch(`/api/notes/${currentNote.id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${accessToken}`
+                    },
+                    body: JSON.stringify({
+                        content: JSON.stringify(categorizedContent)
+                    })
+                });
+                
+                console.log('Direct update response:', response.status);
+                const responseText = await response.text();
+                console.log('Direct update response body:', responseText);
+                
+                if (response.ok) {
+                    alert('Emergency save successful via direct method!');
+                    return true;
+                } else {
+                    alert('Emergency save failed. Check console for details.');
+                    return false;
+                }
+            } catch (error) {
+                console.error('Direct save failed:', error);
+                alert('Emergency save failed with error: ' + error.message);
+                return false;
+            }
+        };
+
+        // Make functions available globally
+        window.debugCurrentNote = debugCurrentNote;
+        window.emergencySave = emergencySave;
+
+        // Convert legacy JSON content to markdown format
+        function convertContentToMarkdown(content) {
+            if (!content || typeof content !== 'object') {
+                return '';
+            }
+            
+            let markdown = '';
+            
+            // Define preferred order for categories
+            const categoryOrder = ['Key Points', 'Action Items', 'Decisions', 'Notes', 'Ideas', 'References'];
+            
+            // Get categories in preferred order
+            const sortedCategories = Object.keys(content).sort((a, b) => {
+                const indexA = categoryOrder.indexOf(a);
+                const indexB = categoryOrder.indexOf(b);
+                
+                if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+                if (indexA !== -1 && indexB === -1) return -1;
+                if (indexA === -1 && indexB !== -1) return 1;
+                return a.localeCompare(b);
+            });
+            
+            for (const categoryName of sortedCategories) {
+                const categoryData = content[categoryName];
+                let items = [];
+                
+                // Handle different data structures
+                if (Array.isArray(categoryData)) {
+                    items = categoryData;
+                } else if (categoryData && typeof categoryData === 'object') {
+                    if (categoryData.items) {
+                        items = categoryData.items;
+                        // Handle double nesting
+                        if (items && typeof items === 'object' && items.items && Array.isArray(items.items)) {
+                            items = items.items;
+                        }
+                    }
+                }
+                
+                // Convert to markdown
+                if (Array.isArray(items) && items.length > 0) {
+                    markdown += `# ${categoryName}\n\n`;
+                    
+                    for (const item of items) {
+                        let text = '';
+                        if (typeof item === 'string') {
+                            text = item;
+                        } else if (item && typeof item === 'object') {
+                            text = item.text || item.content || '';
+                        }
+                        
+                        if (text.trim()) {
+                            markdown += `- ${text.trim()}\n`;
+                        }
+                    }
+                    
+                    markdown += '\n';
+                }
+            }
+            
+            return markdown.trim();
+        }
     </script>
 
     <!-- Welcome Banner for returning users -->
