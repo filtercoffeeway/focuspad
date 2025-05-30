@@ -133,14 +133,68 @@ if [ -d "logs" ]; then
 fi
 
 # Create directories with proper permissions
-mkdir -p logs/nginx backups/deployments backups/cleanup 2>/dev/null || {
+mkdir -p logs/nginx backups/deployments backups/cleanup nginx/ssl 2>/dev/null || {
     echo "   Using sudo for directory creation..."
-    sudo mkdir -p logs/nginx backups/deployments backups/cleanup
-    sudo chown -R $(id -u):$(id -g) logs/ backups/ 2>/dev/null || true
+    sudo mkdir -p logs/nginx backups/deployments backups/cleanup nginx/ssl
+    sudo chown -R $(id -u):$(id -g) logs/ backups/ nginx/ 2>/dev/null || true
 }
 
+# Create nginx configuration if it doesn't exist
+if [ ! -f "nginx/nginx.conf" ]; then
+    echo "   Creating nginx configuration..."
+    cat > nginx/nginx.conf << 'EOF'
+events {
+    worker_connections 1024;
+}
+
+http {
+    upstream web {
+        server web:5000;
+    }
+
+    server {
+        listen 80;
+        server_name _;
+
+        # Security headers
+        add_header X-Frame-Options "SAMEORIGIN" always;
+        add_header X-XSS-Protection "1; mode=block" always;
+        add_header X-Content-Type-Options "nosniff" always;
+
+        # Proxy to web application
+        location / {
+            proxy_pass http://web;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            
+            # Timeout settings
+            proxy_connect_timeout 30s;
+            proxy_send_timeout 30s;
+            proxy_read_timeout 30s;
+        }
+
+        # Health check
+        location /health {
+            proxy_pass http://web/health;
+            access_log off;
+        }
+
+        # Static files (if needed)
+        location /static/ {
+            alias /usr/share/nginx/html/static/;
+            expires 1y;
+            add_header Cache-Control "public, immutable";
+        }
+    }
+}
+EOF
+    echo "   ✅ Created nginx.conf"
+fi
+
 # Ensure proper permissions for directories that need writing
-chmod -R 755 logs/ backups/ 2>/dev/null || sudo chmod -R 755 logs/ backups/ 2>/dev/null || true
+chmod -R 755 logs/ backups/ nginx/ 2>/dev/null || sudo chmod -R 755 logs/ backups/ nginx/ 2>/dev/null || true
 
 echo "✅ Directory structure configured"
 
@@ -214,10 +268,10 @@ try:
         else:
             print('⚠️  markdown_content field not found - may need manual migration')
         
-        if 'encrypted_markdown_content' in columns:
+        if 'markdown_content_encrypted' in columns:
             print('✅ Encrypted markdown_content field found')
         else:
-            print('⚠️  encrypted_markdown_content field not found - may need manual migration')
+            print('⚠️  markdown_content_encrypted field not found - may need manual migration')
             
         print('✅ Database verification completed successfully!')
             
