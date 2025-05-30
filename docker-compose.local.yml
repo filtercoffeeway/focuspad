@@ -1,0 +1,98 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: focuspad_web_local
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=development
+      - FLASK_DEBUG=1
+      - DATABASE_URL=postgresql://focuspad_user:focuspad_dev_password@db:5432/focuspad
+      - SECRET_KEY=${SECRET_KEY:-dev-secret-key-change-in-production}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-dev-jwt-secret-key}
+      - FOCUSPAD_MASTER_KEY=${FOCUSPAD_MASTER_KEY:-dev-master-key-base64}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - BASE_URL=${BASE_URL:-http://localhost:5000}
+      - CORS_ORIGINS=http://localhost:3000,http://localhost:5000,http://localhost:8080
+    env_file:
+      - .env.local
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - focuspad-local
+    restart: "no"
+    volumes:
+      - .:/app
+      - /app/__pycache__
+      - /app/.pytest_cache
+    command: flask run --host=0.0.0.0 --port=5000 --debug
+
+  db:
+    image: postgres:15-alpine
+    container_name: focuspad_db_local
+    environment:
+      POSTGRES_DB: focuspad
+      POSTGRES_USER: focuspad_user
+      POSTGRES_PASSWORD: focuspad_dev_password
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_local_data:/var/lib/postgresql/data
+      - ./scripts/init_dev.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - focuspad-local
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U focuspad_user -d focuspad"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # PgAdmin for database management in development
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: focuspad_pgadmin_local
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@focuspad.dev
+      PGADMIN_DEFAULT_PASSWORD: admin123
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "8080:80"
+    depends_on:
+      - db
+    networks:
+      - focuspad-local
+    restart: unless-stopped
+    volumes:
+      - pgadmin_local_data:/var/lib/pgadmin
+
+  # Redis for caching (optional in development)
+  redis:
+    image: redis:7-alpine
+    container_name: focuspad_redis_local
+    ports:
+      - "6379:6379"
+    networks:
+      - focuspad-local
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_local_data:/data
+
+volumes:
+  postgres_local_data:
+    driver: local
+  pgadmin_local_data:
+    driver: local
+  redis_local_data:
+    driver: local
+
+networks:
+  focuspad-local:
+    driver: bridge 

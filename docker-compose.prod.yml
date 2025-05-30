@@ -2,44 +2,161 @@ version: '3.8'
 
 services:
   web:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    container_name: focuspad_web_prod
     ports:
-      - "80:5000"
+      - "8080:5000"
     environment:
       - FLASK_ENV=production
+      - FLASK_DEBUG=0
       - DATABASE_URL=postgresql://focuspad_user:${DB_PASSWORD}@db:5432/focuspad
-      - FOCUSPAD_SECRET_KEY=${SECRET_KEY}
-      - FOCUSPAD_MASTER_KEY=${MASTER_KEY}
+      - SECRET_KEY=${SECRET_KEY}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - FOCUSPAD_MASTER_KEY=${FOCUSPAD_MASTER_KEY}
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - BASE_URL=${BASE_URL:-http://localhost}
+      - BASE_URL=${BASE_URL:-https://thefocuspad.com}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - WORKERS=${WORKERS:-2}
+      - TIMEOUT=${TIMEOUT:-30}
+    env_file:
+      - .env.prod
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+    networks:
+      - focuspad-prod
     restart: unless-stopped
     volumes:
       - ./logs:/app/logs
-    networks:
-      - focuspad-network
+      - app_static:/app/static
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.8'
+        reservations:
+          memory: 256M
+          cpus: '0.4'
 
   db:
     image: postgres:15-alpine
+    container_name: focuspad_db_prod
     environment:
       POSTGRES_DB: focuspad
       POSTGRES_USER: focuspad_user
       POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256 --auth-local=scram-sha-256"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
-    restart: unless-stopped
+      - postgres_prod_data:/var/lib/postgresql/data
+      - ./scripts/init_prod.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./backups:/backups
     networks:
-      - focuspad-network
+      - focuspad-prod
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U focuspad_user -d focuspad"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    command: >
+      postgres
+      -c shared_buffers=128MB
+      -c effective_cache_size=512MB
+      -c maintenance_work_mem=32MB
+      -c checkpoint_completion_target=0.9
+      -c wal_buffers=4MB
+      -c default_statistics_target=100
+      -c random_page_cost=1.1
+      -c effective_io_concurrency=200
+      -c work_mem=4MB
+      -c min_wal_size=1GB
+      -c max_wal_size=4GB
+      -c max_worker_processes=4
+      -c max_parallel_workers_per_gather=2
+      -c max_parallel_workers=4
+      -c max_parallel_maintenance_workers=2
+    deploy:
+      resources:
+        limits:
+          memory: 400M
+          cpus: '0.6'
+        reservations:
+          memory: 200M
+          cpus: '0.3'
+
+  redis:
+    image: redis:7-alpine
+    container_name: focuspad_redis_prod
+    command: >
+      redis-server
+      --appendonly yes
+      --appendfsync everysec
+      --maxmemory 64mb
+      --maxmemory-policy allkeys-lru
+      --save 900 1
+      --save 300 10
+      --save 60 10000
+    volumes:
+      - redis_prod_data:/data
+    networks:
+      - focuspad-prod
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 80M
+          cpus: '0.2'
+        reservations:
+          memory: 40M
+          cpus: '0.1'
+
+  nginx:
+    image: nginx:alpine
+    container_name: focuspad_nginx_prod
     ports:
-      - "5432:5432"
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - app_static:/usr/share/nginx/html/static:ro
+      - ./logs/nginx:/var/log/nginx
+    depends_on:
+      - web
+    networks:
+      - focuspad-prod
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
 volumes:
-  postgres_data:
+  postgres_prod_data:
+    driver: local
+  redis_prod_data:
+    driver: local
+  app_static:
+    driver: local
 
 networks:
-  focuspad-network:
-    driver: bridge 
+  focuspad-prod:
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.name: focuspad-prod 

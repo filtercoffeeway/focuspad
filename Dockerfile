@@ -38,7 +38,7 @@ COPY --chown=appuser:appuser . .
 # Create necessary directories and set permissions
 RUN mkdir -p /app/logs /app/instance \
     && chown -R appuser:appuser /app \
-    && chmod +x /app/deploy.sh /app/setup-ssl.sh
+    && find /app/scripts -name "*.sh" -type f -exec chmod +x {} \; 2>/dev/null || true
 
 # Remove development files and unnecessary files
 RUN rm -rf \
