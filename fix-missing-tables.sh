@@ -22,7 +22,7 @@ sys.path.insert(0, '/app')
 
 try:
     from app import create_app, db
-    from app.models import User, Note, Template, NoteContent
+    from app.models import User, Note, Template, Content
     
     print('🔧 Initializing database...')
     app = create_app()

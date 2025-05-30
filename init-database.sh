@@ -35,7 +35,7 @@ sys.path.insert(0, '/app')
 
 try:
     from app import create_app, db
-    from app.models import User, Note, Template, NoteContent
+    from app.models import User, Note, Template, Content
     
     print("🔧 Creating Flask app...")
     app = create_app()
@@ -56,7 +56,7 @@ try:
         result = db.session.execute(text("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'"))
         tables = [row[0] for row in result.fetchall()]
         
-        expected_tables = ['users', 'notes', 'templates', 'note_contents']
+        expected_tables = ['users', 'notes', 'templates', 'contents']
         missing_tables = [t for t in expected_tables if t not in tables]
         
         if missing_tables:
