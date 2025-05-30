@@ -1863,6 +1863,33 @@
             color: var(--text-secondary);
         }
 
+        .markdown-controls {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .markdown-help-btn {
+            background: var(--bg-secondary);
+            color: var(--text-muted);
+            border: 1px solid var(--border-color);
+            padding: 4px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .markdown-help-btn:hover {
+            background: var(--hover-bg);
+            color: var(--text-secondary);
+            border-color: var(--text-muted);
+        }
+
         .markdown-mode-toggle {
             background: var(--accent-bg);
             color: var(--accent-border);
@@ -2018,6 +2045,174 @@
             padding: 40px 20px;
             border: 2px dashed var(--border-light);
             border-radius: 8px;
+        }
+
+        /* Markdown Help Modal Styles */
+        .markdown-help-modal {
+            background: var(--bg-primary);
+            border-radius: 12px;
+            width: 90%;
+            max-width: 700px;
+            max-height: 80vh;
+            overflow: hidden;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            transform: scale(0.95);
+            transition: transform 0.3s ease;
+        }
+
+        .markdown-help-content {
+            max-height: 60vh;
+            overflow-y: auto;
+            padding: 0 24px 20px 24px;
+        }
+
+        .markdown-help-section {
+            margin-bottom: 24px;
+        }
+
+        .markdown-help-section h3 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+            border-bottom: 2px solid var(--border-light);
+            padding-bottom: 4px;
+        }
+
+        .markdown-example {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 16px;
+            padding: 12px;
+            background: var(--bg-tertiary);
+            border-radius: 6px;
+            border: 1px solid var(--border-light);
+        }
+
+        .markdown-example-code {
+            font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+            font-size: 0.875rem;
+            background: var(--bg-secondary);
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            white-space: pre-wrap;
+        }
+
+        .markdown-example-result {
+            padding: 8px;
+            background: var(--bg-secondary);
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            font-size: 0.875rem;
+        }
+
+        .markdown-example-result h1 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin: 0 0 8px 0;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 4px;
+        }
+
+        .markdown-example-result h2 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin: 0 0 6px 0;
+        }
+
+        .markdown-example-result h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin: 0 0 4px 0;
+        }
+
+        .markdown-example-result p {
+            margin: 4px 0;
+            line-height: 1.4;
+        }
+
+        .markdown-example-result ul, .markdown-example-result ol {
+            margin: 4px 0;
+            padding-left: 20px;
+        }
+
+        .markdown-example-result li {
+            margin: 2px 0;
+        }
+
+        .markdown-example-result blockquote {
+            border-left: 4px solid var(--accent-border);
+            margin: 8px 0;
+            padding: 4px 12px;
+            background: var(--accent-bg);
+            font-style: italic;
+        }
+
+        .markdown-example-result code {
+            background: var(--bg-tertiary);
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+            font-size: 0.875em;
+            color: var(--accent-border);
+        }
+
+        .markdown-example-result pre {
+            background: var(--bg-tertiary);
+            padding: 8px;
+            border-radius: 4px;
+            overflow-x: auto;
+            margin: 8px 0;
+        }
+
+        .markdown-example-result pre code {
+            background: none;
+            padding: 0;
+        }
+
+        .markdown-cheatsheet {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-top: 16px;
+        }
+
+        .markdown-cheatsheet-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 8px;
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+            font-size: 0.75rem;
+        }
+
+        .markdown-cheatsheet-syntax {
+            font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+            color: var(--accent-border);
+            font-weight: 600;
+        }
+
+        .markdown-cheatsheet-desc {
+            color: var(--text-muted);
+        }
+
+        @media (max-width: 768px) {
+            .markdown-example {
+                grid-template-columns: 1fr;
+            }
+            
+            .markdown-cheatsheet {
+                grid-template-columns: 1fr;
+            }
+            
+            .markdown-help-modal {
+                width: 95%;
+                max-width: none;
+            }
         }
     </style>
 </head>
@@ -2509,7 +2704,10 @@
                     <div class="markdown-container" id="markdownContainer">
                         <div class="markdown-header">
                             <span class="markdown-mode-label" id="markdownModeLabel">Notes</span>
-                            <div style="display: flex; gap: 8px;">
+                            <div class="markdown-controls">
+                                <button class="markdown-help-btn" id="markdownHelpBtn" onclick="showMarkdownHelp()" title="Markdown Syntax Guide">
+                                    📖 Help
+                                </button>
                                 <button class="markdown-mode-toggle" id="markdownModeToggle" onclick="toggleMarkdownMode()">Edit</button>
                             </div>
                         </div>
@@ -4485,6 +4683,46 @@ Content auto-saves when you click outside this editor."></textarea>
             
             return markdown.trim();
         }
+
+        function restartTutorial() {
+            localStorage.removeItem('focuspad-tutorial-completed');
+            showTutorial();
+        }
+
+        // Manual tutorial restart function for testing
+        function restartTutorial() {
+            localStorage.removeItem('focuspad-tutorial-completed');
+            showTutorial();
+        }
+
+        // Markdown Help Modal Functions
+        function showMarkdownHelp() {
+            const modal = document.getElementById('markdownHelpModal');
+            modal.classList.add('show');
+            
+            // Prevent body scroll when modal is open
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeMarkdownHelp(event) {
+            if (event && event.target !== event.currentTarget) return;
+            
+            const modal = document.getElementById('markdownHelpModal');
+            modal.classList.remove('show');
+            
+            // Restore body scroll
+            document.body.style.overflow = '';
+        }
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                const helpModal = document.getElementById('markdownHelpModal');
+                if (helpModal && helpModal.classList.contains('show')) {
+                    closeMarkdownHelp();
+                }
+            }
+        });
     </script>
 
     <!-- Welcome Banner for returning users -->
@@ -4528,6 +4766,156 @@ Content auto-saves when you click outside this editor."></textarea>
                 <div class="tutorial-progress-dot"></div>
                 <div class="tutorial-progress-dot"></div>
                 <div class="tutorial-progress-dot"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Markdown Help Modal -->
+    <div class="modal-overlay" id="markdownHelpModal" onclick="closeMarkdownHelp(event)">
+        <div class="modal markdown-help-modal" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <div class="modal-title">
+                    📖 Markdown Syntax Guide
+                    <div style="font-size: 0.75rem; font-weight: normal; color: var(--text-muted);">Quick reference for formatting your notes</div>
+                </div>
+                <button class="close-btn" onclick="closeMarkdownHelp()">&times;</button>
+            </div>
+            <div class="markdown-help-content">
+                <!-- Headers Section -->
+                <div class="markdown-help-section">
+                    <h3>📝 Headers</h3>
+                    <div class="markdown-example">
+                        <div class="markdown-example-code"># Main Heading
+## Sub Heading  
+### Small Heading</div>
+                        <div class="markdown-example-result">
+                            <h1>Main Heading</h1>
+                            <h2>Sub Heading</h2>
+                            <h3>Small Heading</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Text Formatting Section -->
+                <div class="markdown-help-section">
+                    <h3>✨ Text Formatting</h3>
+                    <div class="markdown-example">
+                        <div class="markdown-example-code">**Bold text**
+*Italic text*
+`Code text`
+~~Strikethrough~~</div>
+                        <div class="markdown-example-result">
+                            <p><strong>Bold text</strong></p>
+                            <p><em>Italic text</em></p>
+                            <p><code>Code text</code></p>
+                            <p><del>Strikethrough</del></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Lists Section -->
+                <div class="markdown-help-section">
+                    <h3>📋 Lists</h3>
+                    <div class="markdown-example">
+                        <div class="markdown-example-code">- Bullet point 1
+- Bullet point 2
+  - Nested point
+
+1. Numbered item 1
+2. Numbered item 2
+3. Numbered item 3</div>
+                        <div class="markdown-example-result">
+                            <ul>
+                                <li>Bullet point 1</li>
+                                <li>Bullet point 2
+                                    <ul><li>Nested point</li></ul>
+                                </li>
+                            </ul>
+                            <ol>
+                                <li>Numbered item 1</li>
+                                <li>Numbered item 2</li>
+                                <li>Numbered item 3</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Links and Images Section -->
+                <div class="markdown-help-section">
+                    <h3>🔗 Links & Quotes</h3>
+                    <div class="markdown-example">
+                        <div class="markdown-example-code">[Link text](https://example.com)
+
+> This is a quote
+> Multiple lines work too</div>
+                        <div class="markdown-example-result">
+                            <p><a href="https://example.com">Link text</a></p>
+                            <blockquote>
+                                This is a quote<br>
+                                Multiple lines work too
+                            </blockquote>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Code Blocks Section -->
+                <div class="markdown-help-section">
+                    <h3>💻 Code Blocks</h3>
+                    <div class="markdown-example">
+                        <div class="markdown-example-code">```
+function hello() {
+    console.log("Hello World!");
+}
+```</div>
+                        <div class="markdown-example-result">
+                            <pre><code>function hello() {
+    console.log("Hello World!");
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Reference Cheatsheet -->
+                <div class="markdown-help-section">
+                    <h3>🚀 Quick Reference</h3>
+                    <div class="markdown-cheatsheet">
+                        <div class="markdown-cheatsheet-item">
+                            <span class="markdown-cheatsheet-syntax"># ## ###</span>
+                            <span class="markdown-cheatsheet-desc">Headers</span>
+                        </div>
+                        <div class="markdown-cheatsheet-item">
+                            <span class="markdown-cheatsheet-syntax">**text**</span>
+                            <span class="markdown-cheatsheet-desc">Bold</span>
+                        </div>
+                        <div class="markdown-cheatsheet-item">
+                            <span class="markdown-cheatsheet-syntax">*text*</span>
+                            <span class="markdown-cheatsheet-desc">Italic</span>
+                        </div>
+                        <div class="markdown-cheatsheet-item">
+                            <span class="markdown-cheatsheet-syntax">`code`</span>
+                            <span class="markdown-cheatsheet-desc">Inline code</span>
+                        </div>
+                        <div class="markdown-cheatsheet-item">
+                            <span class="markdown-cheatsheet-syntax">- item</span>
+                            <span class="markdown-cheatsheet-desc">Bullet list</span>
+                        </div>
+                        <div class="markdown-cheatsheet-item">
+                            <span class="markdown-cheatsheet-syntax">1. item</span>
+                            <span class="markdown-cheatsheet-desc">Numbered list</span>
+                        </div>
+                        <div class="markdown-cheatsheet-item">
+                            <span class="markdown-cheatsheet-syntax">[link](url)</span>
+                            <span class="markdown-cheatsheet-desc">Link</span>
+                        </div>
+                        <div class="markdown-cheatsheet-item">
+                            <span class="markdown-cheatsheet-syntax">> quote</span>
+                            <span class="markdown-cheatsheet-desc">Quote</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-save" onclick="closeMarkdownHelp()">Got it!</button>
             </div>
         </div>
     </div>

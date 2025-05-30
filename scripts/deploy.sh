@@ -31,17 +31,21 @@ if ! command -v docker &> /dev/null; then
     exit 1
 fi
 
-# Check if .env.production exists
-if [ ! -f ".env.production" ]; then
-    echo "⚠️  .env.production not found. Creating from template..."
+# Check if .env.prod exists
+if [ ! -f ".env.prod" ]; then
+    echo "⚠️  .env.prod not found. Creating from template..."
     if [ -f ".env.prod.example" ]; then
-        cp .env.prod.example .env.production
-        echo "📝 Please edit .env.production with your actual configuration:"
+        cp .env.prod.example .env.prod
+        echo "📝 Please edit .env.prod with your actual configuration:"
         echo "   - GOOGLE_CLIENT_ID"
         echo "   - GOOGLE_CLIENT_SECRET"
         echo "   - OPENAI_API_KEY (optional)"
+        echo "   - DB_PASSWORD (generate strong password)"
+        echo "   - SECRET_KEY (generate secure key)"
+        echo "   - JWT_SECRET_KEY (generate secure key)"
+        echo "   - FOCUSPAD_MASTER_KEY (generate with: openssl rand -base64 32)"
         echo ""
-        read -p "Press Enter after updating .env.production..."
+        read -p "Press Enter after updating .env.prod..."
     else
         echo "❌ No environment template found"
         exit 1
@@ -50,9 +54,9 @@ fi
 
 # Generate secure keys if placeholders exist
 echo "🔐 Checking environment configuration..."
-if grep -q "your-google-client-id" .env.production 2>/dev/null; then
+if grep -q "your-google-client-id" .env.prod 2>/dev/null; then
     echo "⚠️  Google OAuth credentials need to be configured"
-    echo "Please update GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in .env.production"
+    echo "Please update GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in .env.prod"
     read -p "Press Enter after updating OAuth credentials..."
 fi
 
@@ -63,33 +67,33 @@ import secrets
 import base64
 import os
 
-# Read current .env.production
-with open('.env.production', 'r') as f:
+# Read current .env.prod
+with open('.env.prod', 'r') as f:
     content = f.read()
 
-# Generate new keys if they're using defaults
-if 'tbG92lEw36NSqLOgHsJFH7OLogGDj0kgnRn5tcYlaxc' in content:
+# Generate new keys if they're using defaults or placeholders
+if 'your-super-secret-key-change-this-to-a-long-random-string' in content:
     new_secret = secrets.token_urlsafe(32)
-    content = content.replace('tbG92lEw36NSqLOgHsJFH7OLogGDj0kgnRn5tcYlaxc', new_secret)
+    content = content.replace('your-super-secret-key-change-this-to-a-long-random-string', new_secret)
     print(f'✅ Generated new SECRET_KEY')
 
-if 'ukcwVZ072l2h7hdw8sdXpcHJbbJ1h1m_' in content:
+if 'your-jwt-secret-key-change-this-to-a-long-random-string' in content:
     new_jwt = secrets.token_urlsafe(32)
-    content = content.replace('ukcwVZ072l2h7hdw8sdXpcHJbbJ1h1m_', new_jwt)
+    content = content.replace('your-jwt-secret-key-change-this-to-a-long-random-string', new_jwt)
     print(f'✅ Generated new JWT_SECRET_KEY')
 
-if 'mOw1IQ3fr0b7lbaoeZgYHw' in content:
+if 'your-strong-database-password-here' in content:
     new_db_pass = secrets.token_urlsafe(16)
-    content = content.replace('mOw1IQ3fr0b7lbaoeZgYHw', new_db_pass)
+    content = content.replace('your-strong-database-password-here', new_db_pass)
     print(f'✅ Generated new DB_PASSWORD')
 
-if 'vJ88dzr9N/YhJlM94gSTyAWmlnFlKY8SpdVH5ow2LAk=' in content:
+if 'your-base64-encoded-master-key-here' in content:
     new_master = base64.b64encode(os.urandom(32)).decode()
-    content = content.replace('vJ88dzr9N/YhJlM94gSTyAWmlnFlKY8SpdVH5ow2LAk=', new_master)
+    content = content.replace('your-base64-encoded-master-key-here', new_master)
     print(f'✅ Generated new FOCUSPAD_MASTER_KEY')
 
 # Write updated content
-with open('.env.production', 'w') as f:
+with open('.env.prod', 'w') as f:
     f.write(content)
 
 print('✅ Environment configuration updated')
@@ -103,13 +107,13 @@ mkdir -p backups/deployments/$timestamp
 # Backup current containers if they exist
 if docker-compose -f docker-compose.prod.yml ps -q | grep -q .; then
     echo "💾 Backing up current deployment..."
-    docker-compose -f docker-compose.prod.yml --env-file .env.production logs > backups/deployments/$timestamp/container_logs.txt 2>/dev/null || true
+    docker-compose -f docker-compose.prod.yml --env-file .env.prod logs > backups/deployments/$timestamp/container_logs.txt 2>/dev/null || true
     echo "✅ Logs backed up to backups/deployments/$timestamp/"
 fi
 
 # Stop existing containers
 echo "🛑 Stopping existing containers..."
-docker-compose -f docker-compose.prod.yml down -v 2>/dev/null || true
+docker-compose -f docker-compose.prod.yml --env-file .env.prod down -v 2>/dev/null || true
 
 # Clean up old images and containers
 echo "🧹 Cleaning up old Docker resources..."
@@ -117,17 +121,17 @@ docker system prune -af --volumes 2>/dev/null || true
 
 # Build application
 echo "🏗️  Building application..."
-docker-compose -f docker-compose.prod.yml --env-file .env.production build --no-cache
+docker-compose -f docker-compose.prod.yml --env-file .env.prod build --no-cache
 
 # Start database first
 echo "🗄️  Starting database..."
-docker-compose -f docker-compose.prod.yml --env-file .env.production up -d db
+docker-compose -f docker-compose.prod.yml --env-file .env.prod up -d db
 
 # Wait for database to be ready
 echo "⏳ Waiting for database to be ready..."
 timeout=60
 counter=0
-while ! docker-compose -f docker-compose.prod.yml --env-file .env.production exec db pg_isready -U focuspad_user &>/dev/null; do
+while ! docker-compose -f docker-compose.prod.yml --env-file .env.prod exec db pg_isready -U focuspad_user &>/dev/null; do
     sleep 2
     counter=$((counter + 2))
     if [ $counter -ge $timeout ]; then
@@ -141,7 +145,7 @@ echo "✅ Database is ready"
 
 # Start web application
 echo "🚀 Starting web application..."
-docker-compose -f docker-compose.prod.yml --env-file .env.production up -d web
+docker-compose -f docker-compose.prod.yml --env-file .env.prod up -d web
 
 # Wait for web application to be ready
 echo "⏳ Waiting for application to be ready..."
@@ -149,11 +153,11 @@ sleep 15
 
 # Run database migrations
 echo "🗄️  Running database migrations..."
-docker-compose -f docker-compose.prod.yml --env-file .env.production exec web python3 /app/db/run_migrations.py
+docker-compose -f docker-compose.prod.yml --env-file .env.prod exec web python3 /app/db/run_migrations.py
 
-# Verify database setup
+# Verify database setup and check for new markdown_content field
 echo "🧪 Verifying database setup..."
-docker-compose -f docker-compose.prod.yml --env-file .env.production exec web python3 -c "
+docker-compose -f docker-compose.prod.yml --env-file .env.prod exec web python3 -c "
 import sys
 sys.path.insert(0, '/app')
 
@@ -180,6 +184,20 @@ try:
         for table in sorted(tables):
             print(f'   - {table}')
         
+        # Check for new markdown_content field in notes table
+        column_result = db.session.execute(text('SELECT column_name FROM information_schema.columns WHERE table_name = \'notes\' AND table_schema = \'public\''))
+        columns = [row[0] for row in column_result.fetchall()]
+        
+        if 'markdown_content' in columns:
+            print('✅ New markdown_content field found')
+        else:
+            print('⚠️  markdown_content field not found - may need manual migration')
+        
+        if 'encrypted_markdown_content' in columns:
+            print('✅ Encrypted markdown_content field found')
+        else:
+            print('⚠️  encrypted_markdown_content field not found - may need manual migration')
+            
         print('✅ Database verification completed successfully!')
             
 except Exception as e:
@@ -198,7 +216,7 @@ for i in {1..12}; do
         break
     elif [ $i -eq 12 ]; then
         echo "❌ Health check failed"
-        echo "📋 Check logs: docker-compose -f docker-compose.prod.yml --env-file .env.production logs web"
+        echo "📋 Check logs: docker-compose -f docker-compose.prod.yml --env-file .env.prod logs web"
         exit 1
     else
         echo "Waiting for health check... ($i/12)"
@@ -206,9 +224,19 @@ for i in {1..12}; do
     fi
 done
 
-# Reload nginx to ensure proxy is working
-echo "🌐 Reloading Nginx..."
-sudo systemctl reload nginx
+# Start additional services (Redis, Nginx)
+echo "🔄 Starting additional services..."
+docker-compose -f docker-compose.prod.yml --env-file .env.prod up -d
+
+# Wait for all services
+echo "⏳ Waiting for all services to be ready..."
+sleep 10
+
+# Reload nginx to ensure proxy is working (if nginx is managed by systemd)
+if systemctl is-active --quiet nginx; then
+    echo "🌐 Reloading system Nginx..."
+    sudo systemctl reload nginx || echo "⚠️  Could not reload system nginx - may not be configured"
+fi
 
 # Final verification
 echo "🧪 Final verification..."
@@ -216,27 +244,37 @@ sleep 3
 if curl -f -s http://localhost/health > /dev/null; then
     echo "✅ Application accessible through Nginx!"
 else
-    echo "⚠️  Application not accessible through Nginx - check configuration"
+    if curl -f -s http://localhost:8080/health > /dev/null; then
+        echo "✅ Application accessible directly (port 8080)"
+        echo "⚠️  Nginx proxy may need configuration"
+    else
+        echo "⚠️  Application not accessible - check configuration"
+    fi
 fi
 
 echo ""
 echo "🎉 Deployment completed successfully!"
 echo ""
 echo "📋 Deployment Summary:"
-echo "- Backup created: backups/deployments/$timestamp/"
-echo "- Database migrated and verified"
+echo "- Environment file: .env.prod ✅"
+echo "- Backup created: backups/deployments/$timestamp/ ✅"
+echo "- Database migrated and verified ✅"
 echo "- Application health check: ✅ PASSED"
-echo "- Nginx proxy: ✅ CONFIGURED"
+echo "- Services running: ✅ ALL"
 echo ""
 echo "🌐 Your application is now accessible at:"
-echo "   http://$(curl -s ifconfig.me 2>/dev/null || echo 'YOUR-IP')"
-echo "   https://thefocuspad.com (after SSL setup)"
+echo "   Direct: http://$(curl -s ifconfig.me 2>/dev/null || echo 'YOUR-IP'):8080"
+echo "   Proxy:  http://$(curl -s ifconfig.me 2>/dev/null || echo 'YOUR-IP')"
+echo "   Domain: https://thefocuspad.com (after DNS/SSL setup)"
 echo ""
 echo "📊 Useful Commands:"
-echo "   View logs:    docker-compose -f docker-compose.prod.yml --env-file .env.production logs -f"
-echo "   Check status: docker-compose -f docker-compose.prod.yml --env-file .env.production ps"
+echo "   View logs:    docker-compose -f docker-compose.prod.yml --env-file .env.prod logs -f"
+echo "   Check status: docker-compose -f docker-compose.prod.yml --env-file .env.prod ps"
 echo "   Stop app:     ./scripts/stop.sh"
 echo "   Start app:    ./scripts/start.sh"
+echo "   Clean start:  ./scripts/clean-docker-ec2.sh && ./scripts/deploy.sh"
 echo ""
-echo "🔒 Next: Run SSL setup if not done:"
-echo "   sudo certbot --nginx -d thefocuspad.com -d www.thefocuspad.com" 
+echo "🔒 Next steps:"
+echo "   1. Configure DNS: Point domain to $(curl -s ifconfig.me 2>/dev/null || echo 'YOUR-IP')"
+echo "   2. Setup SSL: sudo certbot --nginx -d yourdomain.com"
+echo "   3. Configure backups and monitoring" 
