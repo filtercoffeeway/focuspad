@@ -1219,6 +1219,300 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+
+        /* Responsive design for mobile */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 280px;
+            }
+            
+            .sidebar-header {
+                padding: 16px;
+            }
+            
+            .main-content {
+                padding: 16px;
+            }
+        }
+
+        /* Onboarding Tutorial Styles */
+        .tutorial-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 10000;
+            display: none;
+            backdrop-filter: blur(3px);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .tutorial-overlay.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .tutorial-step {
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+            width: 90%;
+            padding: 32px;
+            text-align: center;
+            position: relative;
+            animation: slideIn 0.4s ease;
+            border: 1px solid var(--border-color);
+        }
+
+        .tutorial-step-header {
+            margin-bottom: 24px;
+        }
+
+        .tutorial-step-number {
+            background: linear-gradient(135deg, #0ea5e9, #3b82f6);
+            color: white;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.125rem;
+            margin: 0 auto 16px;
+            box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
+        }
+
+        .tutorial-step-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .tutorial-step-description {
+            color: var(--text-muted);
+            font-size: 1rem;
+            line-height: 1.6;
+            margin-bottom: 24px;
+        }
+
+        .tutorial-step-visual {
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 24px 0;
+            border: 2px dashed var(--border-color);
+            position: relative;
+        }
+
+        .tutorial-step-visual .mock-input {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 12px;
+            width: 100%;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            text-align: left;
+            margin-bottom: 8px;
+        }
+
+        .tutorial-step-visual .ai-magic {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+            border-radius: 20px;
+            padding: 4px 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+            animation: pulse 2s infinite;
+        }
+
+        .tutorial-step-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin-top: 24px;
+        }
+
+        .tutorial-btn {
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+            outline: none;
+        }
+
+        .tutorial-btn-primary {
+            background: linear-gradient(135deg, #0ea5e9, #3b82f6);
+            color: white;
+            box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
+        }
+
+        .tutorial-btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(14, 165, 233, 0.4);
+        }
+
+        .tutorial-btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-muted);
+            border: 1px solid var(--border-color);
+        }
+
+        .tutorial-btn-secondary:hover {
+            background: var(--hover-bg);
+            border-color: var(--text-muted);
+        }
+
+        .tutorial-progress {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 20px;
+        }
+
+        .tutorial-progress-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--border-color);
+            transition: background 0.3s ease;
+        }
+
+        .tutorial-progress-dot.active {
+            background: #0ea5e9;
+        }
+
+        .tutorial-progress-dot.completed {
+            background: #10b981;
+        }
+
+        .tutorial-highlight {
+            position: fixed;
+            background: rgba(14, 165, 233, 0.1);
+            border: 2px solid #0ea5e9;
+            border-radius: 8px;
+            pointer-events: none;
+            z-index: 9999;
+            animation: highlight 2s infinite;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideIn {
+            from { 
+                opacity: 0; 
+                transform: translateY(20px) scale(0.95); 
+            }
+            to { 
+                opacity: 1; 
+                transform: translateY(0) scale(1); 
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        @keyframes highlight {
+            0%, 100% { 
+                box-shadow: 0 0 0 0 rgba(14, 165, 233, 0.4);
+            }
+            50% { 
+                box-shadow: 0 0 0 8px rgba(14, 165, 233, 0.1);
+            }
+        }
+
+        .tutorial-skip {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: none;
+            border: none;
+            color: var(--text-light);
+            font-size: 1.5rem;
+            cursor: pointer;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .tutorial-skip:hover {
+            background: var(--bg-tertiary);
+            color: var(--text-muted);
+        }
+
+        /* Welcome banner for returning users */
+        .welcome-banner {
+            background: linear-gradient(135deg, #0ea5e9, #3b82f6);
+            color: white;
+            padding: 16px 24px;
+            border-radius: 12px;
+            margin: 16px 24px;
+            display: none;
+            align-items: center;
+            gap: 16px;
+            box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
+        }
+
+        .welcome-banner.show {
+            display: flex;
+        }
+
+        .welcome-banner-icon {
+            font-size: 2rem;
+        }
+
+        .welcome-banner-content {
+            flex: 1;
+        }
+
+        .welcome-banner-title {
+            font-weight: 700;
+            font-size: 1.125rem;
+            margin-bottom: 4px;
+        }
+
+        .welcome-banner-text {
+            opacity: 0.9;
+            font-size: 0.875rem;
+        }
+
+        .welcome-banner-close {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.25rem;
+            transition: background 0.2s ease;
+        }
+
+        .welcome-banner-close:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
     </style>
 </head>
 <body>
@@ -1250,6 +1544,9 @@
         <div class="header-controls">
             <button class="theme-toggle" onclick="toggleTheme()" id="themeToggle">
                 🌙 Dark
+            </button>
+            <button class="theme-toggle" onclick="restartTutorial()" title="Restart Tutorial" style="margin-left: 8px;">
+                🎓 Tutorial
             </button>
             <div class="user-info">
                 <img src="{{ user.picture }}" alt="Profile Picture" class="user-avatar" 
@@ -1346,7 +1643,10 @@
             // Initialize search
             initializeSearch();
             
-            loadNotes();
+            // Load notes and then initialize tutorial
+            loadNotes().then(() => {
+                initializeTutorial();
+            });
             
             // Auto-resize textarea
             const textInput = document.getElementById('textInput');
@@ -1418,22 +1718,25 @@
                 
                 console.log('Notes response status:', response.status);
                 
-                if (handleTokenExpiration(response)) return;
+                if (handleTokenExpiration(response)) return Promise.reject(new Error('Token expired'));
                 
                 if (response.ok) {
                     const data = await response.json();
                     notes = data.notes || [];
                     console.log('Loaded notes:', notes.length);
                     renderNotesList();
+                    return Promise.resolve();
                 } else {
                     console.error('Failed to load notes, status:', response.status);
                     const errorText = await response.text();
                     console.error('Error response:', errorText);
                     document.getElementById('notesList').innerHTML = '<div style="padding: 20px; color: #999;">Failed to load notes. Try refreshing the page.</div>';
+                    return Promise.reject(new Error('Failed to load notes'));
                 }
             } catch (error) {
                 console.error('Error loading notes:', error);
                 document.getElementById('notesList').innerHTML = '<div style="padding: 20px; color: #999;">Error loading notes. Check your connection.</div>';
+                return Promise.reject(error);
             }
         }
 
@@ -2642,5 +2945,282 @@
             renderNotesList();
         }
     </script>
+
+    <!-- Welcome Banner for returning users -->
+    <div class="welcome-banner" id="welcomeBanner">
+        <div class="welcome-banner-icon">👋</div>
+        <div class="welcome-banner-content">
+            <div class="welcome-banner-title">Welcome back to FocusPad!</div>
+            <div class="welcome-banner-text">Need a refresher? Click here to see the tutorial again.</div>
+        </div>
+        <button class="welcome-banner-close" onclick="hideWelcomeBanner()">&times;</button>
+    </div>
+
+    <!-- Tutorial Overlay -->
+    <div class="tutorial-overlay" id="tutorialOverlay">
+        <div class="tutorial-step" id="tutorialStep">
+            <button class="tutorial-skip" onclick="skipTutorial()" title="Skip tutorial">&times;</button>
+            
+            <div class="tutorial-step-header">
+                <div class="tutorial-step-number" id="stepNumber">1</div>
+                <div class="tutorial-step-title" id="stepTitle">Welcome to FocusPad!</div>
+                <div class="tutorial-step-description" id="stepDescription">
+                    Let's get you started with AI-powered note organization in just 4 quick steps.
+                </div>
+            </div>
+
+            <div class="tutorial-step-visual" id="stepVisual">
+                <!-- Dynamic content will be inserted here -->
+            </div>
+
+            <div class="tutorial-step-actions">
+                <button class="tutorial-btn tutorial-btn-secondary" id="prevBtn" onclick="previousStep()" style="display: none;">
+                    Previous
+                </button>
+                <button class="tutorial-btn tutorial-btn-primary" id="nextBtn" onclick="nextStep()">
+                    Get Started
+                </button>
+            </div>
+
+            <div class="tutorial-progress">
+                <div class="tutorial-progress-dot active"></div>
+                <div class="tutorial-progress-dot"></div>
+                <div class="tutorial-progress-dot"></div>
+                <div class="tutorial-progress-dot"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tutorial System
+        let currentTutorialStep = 0;
+        let userCreatedDate = null;
+        
+        const tutorialSteps = [
+            {
+                title: "Welcome to FocusPad!",
+                description: "Let's get you started with AI-powered note organization in just 4 quick steps.",
+                visual: `
+                    <div style="text-align: center; padding: 20px;">
+                        <div style="font-size: 3rem; margin-bottom: 16px;">🎯</div>
+                        <div style="font-size: 1.125rem; font-weight: 600; color: var(--text-primary); margin-bottom: 8px;">
+                            Smart Note-Taking with AI
+                        </div>
+                        <div style="color: var(--text-muted); font-size: 0.875rem;">
+                            Turn messy thoughts into organized, actionable notes
+                        </div>
+                    </div>
+                `,
+                nextText: "Get Started"
+            },
+            {
+                title: "Create Your First Note",
+                description: "Start by creating a new note. Click the 'New Note' button to get started.",
+                visual: `
+                    <div style="position: relative;">
+                        <div class="mock-input" style="background: #f3f4f6; padding: 16px; text-align: center; font-weight: 600;">
+                            📝 New Note
+                        </div>
+                        <div style="margin-top: 12px; font-size: 0.875rem; color: var(--text-muted);">
+                            Click this button to create your first note
+                        </div>
+                    </div>
+                `,
+                nextText: "Next",
+                highlightElement: ".new-note-btn"
+            },
+            {
+                title: "The Magic Text Bar",
+                description: "Here's where the AI magic happens! Type anything in the text bar below and watch it automatically organize into categories.",
+                visual: `
+                    <div style="position: relative;">
+                        <div class="mock-input">
+                            Type: "Met with Sarah about project timeline. Need to review budget by Friday..."
+                        </div>
+                        <div class="ai-magic">✨ AI Magic</div>
+                        <div style="margin-top: 16px; padding: 12px; background: var(--accent-bg); border-radius: 6px; font-size: 0.875rem;">
+                            <div style="font-weight: 600; margin-bottom: 8px;">AI will organize into:</div>
+                            <div>📝 <strong>Meeting Notes:</strong> Met with Sarah about project timeline</div>
+                            <div>✅ <strong>Action Items:</strong> Review budget by Friday</div>
+                        </div>
+                    </div>
+                `,
+                nextText: "Show Me",
+                highlightElement: ".text-input"
+            },
+            {
+                title: "You're All Set!",
+                description: "That's it! Start typing in the text bar and let AI organize your thoughts. Happy note-taking!",
+                visual: `
+                    <div style="text-align: center; padding: 20px;">
+                        <div style="font-size: 3rem; margin-bottom: 16px;">🚀</div>
+                        <div style="font-size: 1.125rem; font-weight: 600; color: var(--text-primary); margin-bottom: 12px;">
+                            Ready to be productive!
+                        </div>
+                        <div style="color: var(--text-muted); font-size: 0.875rem; line-height: 1.5;">
+                            • Create notes with the "New Note" button<br>
+                            • Type anything in the text bar<br>
+                            • Watch AI organize it automatically<br>
+                            • Search through all your notes easily
+                        </div>
+                    </div>
+                `,
+                nextText: "Start Taking Notes!"
+            }
+        ];
+
+        // Check if user should see the tutorial
+        function shouldShowTutorial() {
+            // Check if tutorial was already completed
+            const tutorialCompleted = localStorage.getItem('focuspad-tutorial-completed');
+            if (tutorialCompleted) {
+                return false;
+            }
+
+            // Check if user is new (created account in last 24 hours or has no notes)
+            const userCreated = new Date("{{ user.created_at }}");
+            const now = new Date();
+            const hoursSinceCreation = (now - userCreated) / (1000 * 60 * 60);
+            
+            // Show tutorial if user is new (within 24 hours) or has no notes
+            return hoursSinceCreation < 24 || notes.length === 0;
+        }
+
+        // Initialize tutorial system
+        function initializeTutorial() {
+            // Wait for notes to load first
+            setTimeout(() => {
+                if (shouldShowTutorial()) {
+                    showTutorial();
+                } else {
+                    // Show welcome banner for returning users occasionally
+                    const lastBannerShow = localStorage.getItem('focuspad-welcome-banner-last-show');
+                    const daysSinceLastShow = lastBannerShow ? 
+                        (Date.now() - parseInt(lastBannerShow)) / (1000 * 60 * 60 * 24) : 999;
+                    
+                    if (daysSinceLastShow > 7) { // Show every week
+                        showWelcomeBanner();
+                    }
+                }
+            }, 1000); // Wait 1 second for notes to load
+        }
+
+        function showTutorial() {
+            currentTutorialStep = 0;
+            document.getElementById('tutorialOverlay').classList.add('active');
+            updateTutorialStep();
+        }
+
+        function hideTutorial() {
+            document.getElementById('tutorialOverlay').classList.remove('active');
+            removeHighlight();
+        }
+
+        function skipTutorial() {
+            localStorage.setItem('focuspad-tutorial-completed', 'true');
+            hideTutorial();
+        }
+
+        function nextStep() {
+            if (currentTutorialStep < tutorialSteps.length - 1) {
+                currentTutorialStep++;
+                updateTutorialStep();
+            } else {
+                // Tutorial completed
+                localStorage.setItem('focuspad-tutorial-completed', 'true');
+                hideTutorial();
+                
+                // Auto-create first note if none exist
+                if (notes.length === 0) {
+                    setTimeout(createNewNote, 500);
+                }
+            }
+        }
+
+        function previousStep() {
+            if (currentTutorialStep > 0) {
+                currentTutorialStep--;
+                updateTutorialStep();
+            }
+        }
+
+        function updateTutorialStep() {
+            const step = tutorialSteps[currentTutorialStep];
+            
+            // Update content
+            document.getElementById('stepNumber').textContent = currentTutorialStep + 1;
+            document.getElementById('stepTitle').textContent = step.title;
+            document.getElementById('stepDescription').textContent = step.description;
+            document.getElementById('stepVisual').innerHTML = step.visual;
+            document.getElementById('nextBtn').textContent = step.nextText;
+            
+            // Update buttons
+            const prevBtn = document.getElementById('prevBtn');
+            prevBtn.style.display = currentTutorialStep > 0 ? 'inline-block' : 'none';
+            
+            // Update progress dots
+            const dots = document.querySelectorAll('.tutorial-progress-dot');
+            dots.forEach((dot, index) => {
+                dot.classList.remove('active', 'completed');
+                if (index < currentTutorialStep) {
+                    dot.classList.add('completed');
+                } else if (index === currentTutorialStep) {
+                    dot.classList.add('active');
+                }
+            });
+            
+            // Add highlight to specific elements
+            removeHighlight();
+            if (step.highlightElement) {
+                setTimeout(() => highlightElement(step.highlightElement), 500);
+            }
+        }
+
+        function highlightElement(selector) {
+            const element = document.querySelector(selector);
+            if (!element) return;
+            
+            const rect = element.getBoundingClientRect();
+            const highlight = document.createElement('div');
+            highlight.className = 'tutorial-highlight';
+            highlight.style.top = (rect.top - 4) + 'px';
+            highlight.style.left = (rect.left - 4) + 'px';
+            highlight.style.width = (rect.width + 8) + 'px';
+            highlight.style.height = (rect.height + 8) + 'px';
+            
+            document.body.appendChild(highlight);
+        }
+
+        function removeHighlight() {
+            const existing = document.querySelector('.tutorial-highlight');
+            if (existing) {
+                existing.remove();
+            }
+        }
+
+        function showWelcomeBanner() {
+            const banner = document.getElementById('welcomeBanner');
+            banner.classList.add('show');
+            localStorage.setItem('focuspad-welcome-banner-last-show', Date.now().toString());
+            
+            // Add click to restart tutorial
+            banner.addEventListener('click', function(e) {
+                if (e.target.classList.contains('welcome-banner-close')) return;
+                hideWelcomeBanner();
+                localStorage.removeItem('focuspad-tutorial-completed');
+                showTutorial();
+            });
+        }
+
+        function hideWelcomeBanner() {
+            document.getElementById('welcomeBanner').classList.remove('show');
+        }
+
+        // Manual tutorial restart function for testing
+        function restartTutorial() {
+            localStorage.removeItem('focuspad-tutorial-completed');
+            showTutorial();
+        }
+    </script>
 </body>
-</html> 
+</html>
