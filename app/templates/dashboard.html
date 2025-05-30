@@ -720,7 +720,7 @@
 
         .note-detail-item {
             display: flex;
-            align-items: flex-start;
+            align-items: baseline;
             margin-bottom: 8px;
             gap: 8px;
         }
@@ -732,10 +732,10 @@
         .detail-label {
             font-weight: 600;
             color: var(--text-muted);
-            min-width: 100px;
+            min-width: 120px;
             font-size: 0.875rem;
-            padding-top: 4px;
             flex-shrink: 0;
+            line-height: 1.4;
         }
 
         .detail-value {
@@ -745,6 +745,7 @@
             min-width: 0;
             word-wrap: break-word;
             overflow-wrap: break-word;
+            line-height: 1.4;
         }
 
         .detail-value.clickable {
@@ -1233,11 +1234,13 @@
             min-width: 150px;
             word-wrap: break-word;
             overflow-wrap: break-word;
+            line-height: 1.4;
         }
 
         .editable:hover {
             background: var(--accent-bg);
             border: 1px solid var(--border-color);
+            margin: -5px -9px; /* Adjust for border */
         }
 
         .editable:hover::after {
@@ -1258,6 +1261,7 @@
             background: var(--accent-bg);
             border: 1px solid var(--accent-border);
             box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.1);
+            margin: -5px -9px; /* Adjust for border */
             min-width: 200px;
         }
 
@@ -3435,8 +3439,8 @@ Content auto-saves when you click outside this editor."></textarea>
             const originalValue = element.getAttribute('data-original');
             const currentText = element.textContent.trim();
             
-            // If it's showing placeholder text, clear it
-            if (!originalValue && (currentText === 'Click to add description...' || currentText === '')) {
+            // If it's showing placeholder text, clear it for editing
+            if (currentText === 'Click to add description...') {
                 element.textContent = '';
                 element.style.color = 'var(--text-secondary)';
                 element.style.fontStyle = 'normal';
@@ -3448,20 +3452,25 @@ Content auto-saves when you click outside this editor."></textarea>
             const newValue = element.textContent ? element.textContent.trim() : element.value;
             const originalValue = element.getAttribute('data-original');
             
-            // Handle placeholder text for attendees/description
-            if (fieldType === 'attendees' && (newValue === 'None specified' || newValue === 'Click to add description...')) {
-                // If user left it as placeholder text or cleared it, restore placeholder
-                if (!originalValue) {
-                    element.textContent = 'Click to add description...';
-                    element.style.color = 'var(--text-light)';
-                    element.style.fontStyle = 'italic';
+            // Handle placeholder text for attendees/description - but allow empty values to be saved
+            if (fieldType === 'attendees') {
+                // Remove placeholder text if it's there
+                let valueToSave = newValue;
+                if (newValue === 'Click to add description...' || newValue === 'None specified') {
+                    valueToSave = '';
                 }
-                return;
-            }
-            
-            // If no change, don't save
-            if (newValue === originalValue || (newValue === 'None specified' && originalValue === '') || (newValue === 'Click to add description...' && originalValue === '')) {
-                return;
+                
+                // If no change from original value, don't save
+                if (valueToSave === originalValue) {
+                    return;
+                }
+                
+                // Continue with save process for empty values too
+            } else {
+                // For non-attendees fields, check for no change
+                if (newValue === originalValue || (newValue === 'None specified' && originalValue === '') || (newValue === 'Click to add description...' && originalValue === '')) {
+                    return;
+                }
             }
 
             // Show saving indicator
@@ -3490,7 +3499,12 @@ Content auto-saves when you click outside this editor."></textarea>
                         updateData.created_at = newValue;
                     }
                 } else if (fieldType === 'attendees') {
-                    updateData.attendees = newValue === 'None specified' ? null : newValue;
+                    // Allow empty descriptions - save as empty string or null
+                    let valueToSave = newValue;
+                    if (newValue === 'Click to add description...' || newValue === 'None specified') {
+                        valueToSave = '';
+                    }
+                    updateData.attendees = valueToSave || null;
                 }
 
                 const response = await fetch(`/api/notes/${currentNote.id}`, {
@@ -3510,19 +3524,39 @@ Content auto-saves when you click outside this editor."></textarea>
                         currentNote.title = newValue;
                         loadNotes(); // Refresh sidebar
                     } else if (fieldType === 'attendees') {
-                        currentNote.attendees = newValue === 'None specified' ? null : newValue;
-                        // Update element styling for non-empty description
-                        if (newValue && newValue !== 'Click to add description...') {
+                        let savedValue = newValue;
+                        if (newValue === 'Click to add description...' || newValue === 'None specified') {
+                            savedValue = '';
+                        }
+                        currentNote.attendees = savedValue || null;
+                        
+                        // Update element display after successful save
+                        if (savedValue) {
+                            // Has content - show normal styling
                             element.style.color = 'var(--text-secondary)';
                             element.style.fontStyle = 'normal';
+                            element.textContent = savedValue;
+                            element.setAttribute('data-original', savedValue);
+                        } else {
+                            // Empty content - show placeholder styling
+                            element.style.color = 'var(--text-light)';
+                            element.style.fontStyle = 'italic';
+                            element.textContent = 'Click to add description...';
+                            element.setAttribute('data-original', '');
                         }
                     } else if (fieldType === 'date') {
                         currentNote.created_at = newValue;
                     }
                     
-                    // Restore element
-                    restoreElement(element, newValue, true);
-                    element.setAttribute('data-original', newValue === 'None specified' ? '' : newValue);
+                    // Restore element (skip for attendees as we handle it above)
+                    if (fieldType !== 'attendees') {
+                        restoreElement(element, newValue, true);
+                        element.setAttribute('data-original', newValue === 'None specified' ? '' : newValue);
+                    } else {
+                        // Just restore the editing state
+                        element.style.opacity = '1';
+                        element.contentEditable = 'true';
+                    }
                     
                     console.log(`${fieldType} updated successfully`);
                 } else {
