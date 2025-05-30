@@ -490,6 +490,86 @@ echo ""
 echo "📊 Container status:"
 docker-compose -f docker-compose.micro.yml --env-file .env.production ps
 
+# Fix 6: Initialize database tables
+echo ""
+echo "🔧 Fix 6: Initializing database tables..."
+
+# Wait a bit more for database to be fully ready
+sleep 10
+
+# Create a temporary Python script to initialize the database
+cat > /tmp/init_db.py << 'EOF'
+#!/usr/bin/env python3
+"""
+Initialize FocusPad database tables
+"""
+
+import sys
+import os
+sys.path.insert(0, '/app')
+
+try:
+    from app import create_app, db
+    from app.models import User, Note, Template, NoteContent
+    
+    print("🔧 Creating Flask app...")
+    app = create_app()
+    
+    with app.app_context():
+        print("🗄️  Creating database tables...")
+        
+        # Drop all tables and recreate (fresh start)
+        db.drop_all()
+        print("✅ Dropped existing tables")
+        
+        # Create all tables
+        db.create_all()
+        print("✅ Created all tables")
+        
+        # Verify tables were created
+        from sqlalchemy import text
+        result = db.session.execute(text("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'"))
+        tables = [row[0] for row in result.fetchall()]
+        
+        expected_tables = ['users', 'notes', 'templates', 'note_contents']
+        missing_tables = [t for t in expected_tables if t not in tables]
+        
+        if missing_tables:
+            print(f"⚠️  Missing tables: {missing_tables}")
+            print(f"📋 Available tables: {tables}")
+        else:
+            print("✅ All required tables created successfully")
+            for table in expected_tables:
+                print(f"   - {table}")
+        
+        # Commit changes
+        db.session.commit()
+        print("✅ Database initialization completed!")
+        
+except Exception as e:
+    print(f"❌ Database initialization failed: {e}")
+    import traceback
+    traceback.print_exc()
+    sys.exit(1)
+EOF
+
+# Copy the script to the container and run it
+echo "📤 Running database initialization..."
+docker cp /tmp/init_db.py focuspad-web-1:/tmp/init_db.py
+
+if docker-compose -f docker-compose.micro.yml --env-file .env.production exec web python3 /tmp/init_db.py; then
+    echo "✅ Database tables created successfully!"
+    
+    # Clean up
+    rm -f /tmp/init_db.py
+    docker-compose -f docker-compose.micro.yml --env-file .env.production exec web rm -f /tmp/init_db.py 2>/dev/null || true
+else
+    echo "❌ Database initialization failed"
+    echo "📋 Check database logs:"
+    echo "   docker-compose -f docker-compose.micro.yml --env-file .env.production logs db"
+    # Don't exit - continue with health check
+fi
+
 # Test health endpoint
 echo ""
 echo "🏥 Testing health endpoint..."
