@@ -45,6 +45,9 @@ nano .env.prod
 
 ### Step 3: Deploy Application
 ```bash
+# Optional: Verify deployment readiness first
+./scripts/verify-deployment.sh
+
 # Full deployment with migrations
 ./scripts/deploy.sh
 ```
@@ -86,6 +89,9 @@ docker-compose -f docker-compose.prod.yml --env-file .env.prod logs -f
 
 ### Deployment Commands
 ```bash
+# Verify deployment readiness
+./scripts/verify-deployment.sh
+
 # Full deployment
 ./scripts/deploy.sh
 
@@ -167,6 +173,18 @@ The migration system includes:
 ## 🚨 Troubleshooting
 
 ### Common Issues
+
+**Database initialization error: "Is a directory"**
+```bash
+# If you see: psql:/docker-entrypoint-initdb.d/init.sql: error: could not read from input file: Is a directory
+# This means the init_prod.sql file is missing. The file should exist at:
+ls -la scripts/init_prod.sql
+
+# If missing, it's been created by the deployment process
+# Clean restart to fix:
+./scripts/clean-docker-ec2.sh --force
+./scripts/deploy.sh
+```
 
 **Port 5000 in use (macOS AirPlay)**
 ```bash
@@ -254,4 +272,4 @@ If you encounter issues:
 - Configuration: `.env.prod`
 - Logs: `./logs/`
 - Backups: `./backups/`
-- Scripts: `./scripts/` 
+- Scripts: `./scripts/`
