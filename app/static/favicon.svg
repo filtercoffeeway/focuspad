@@ -1,0 +1,17 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle for better visibility -->
+  <circle cx="16" cy="16" r="16" fill="#0ea5e9"/>
+  
+  <!-- Document background -->
+  <rect x="8" y="7" width="16" height="18" rx="1.5" fill="white" opacity="0.95"/>
+  
+  <!-- Document lines -->
+  <line x1="10" y1="11" x2="22" y2="11" stroke="#0ea5e9" stroke-width="1" opacity="0.8"/>
+  <line x1="10" y1="14" x2="20" y2="14" stroke="#0ea5e9" stroke-width="1" opacity="0.6"/>
+  <line x1="10" y1="17" x2="21" y2="17" stroke="#0ea5e9" stroke-width="1" opacity="0.4"/>
+  <line x1="10" y1="20" x2="18" y2="20" stroke="#0ea5e9" stroke-width="1" opacity="0.3"/>
+  
+  <!-- Central focus dot -->
+  <circle cx="16" cy="16" r="2" fill="#0284c7"/>
+  <circle cx="16" cy="16" r="1" fill="white"/>
+</svg> 
