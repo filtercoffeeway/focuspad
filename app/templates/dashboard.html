@@ -319,6 +319,14 @@
             border-right: none;
         }
 
+        .sidebar.hidden .sidebar-toggle {
+            position: fixed;
+            left: 0;
+            right: auto;
+            border-radius: 0 6px 6px 0;
+            border-left: none;
+        }
+
         .main-content {
             flex: 1;
             display: flex;
@@ -334,24 +342,40 @@
 
         /* Sidebar toggle button */
         .sidebar-toggle {
-            background: var(--bg-tertiary);
-            color: var(--text-muted);
+            position: absolute;
+            top: 50%;
+            right: -12px;
+            transform: translateY(-50%);
+            width: 24px;
+            height: 48px;
+            background: var(--bg-secondary);
             border: 1px solid var(--border-color);
-            padding: 6px 10px;
-            border-radius: 6px;
+            border-radius: 0 6px 6px 0;
             cursor: pointer;
-            font-size: 0.875rem;
-            font-weight: 500;
-            transition: all 0.2s ease;
             display: flex;
             align-items: center;
-            gap: 4px;
+            justify-content: center;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            transition: all 0.2s ease;
+            z-index: 101;
+            box-shadow: 2px 0 4px rgba(0, 0, 0, 0.05);
         }
 
         .sidebar-toggle:hover {
             background: var(--hover-bg);
             color: var(--text-secondary);
-            border-color: var(--text-muted);
+            border-color: var(--accent-border);
+            box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .sidebar-toggle.collapsed {
+            right: -12px;
+            border-radius: 6px 0 0 6px;
+        }
+
+        .sidebar {
+            position: relative;
         }
 
         .sidebar-header {
@@ -2379,9 +2403,6 @@
                     <div class="theme-slider-knob"></div>
                 </div>
             </div>
-            <button class="sidebar-toggle" onclick="toggleSidebar()" title="Toggle sidebar" id="sidebarToggle">
-                ☰ Sidebar
-            </button>
             <button class="theme-toggle" onclick="restartTutorial()" title="Restart Tutorial" style="margin-left: 8px; background: var(--bg-tertiary); color: var(--text-muted); border: 1px solid var(--border-color); padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 0.875rem; font-weight: 500; transition: all 0.2s ease;">
                 🎓 Tutorial
             </button>
@@ -2411,6 +2432,9 @@
     <div class="main-container">
         <!-- Sidebar -->
         <div class="sidebar" id="sidebar">
+            <button class="sidebar-toggle" onclick="toggleSidebar()" title="Toggle sidebar" id="sidebarToggle">
+                ◀
+            </button>
             <div class="sidebar-header">
                 <div class="sidebar-title">Notes</div>
                 <button class="new-note-btn" onclick="createNewNote()">+ New</button>
@@ -4952,12 +4976,14 @@ Content auto-saves when you click outside this editor."></textarea>
                 if (isHidden) {
                     sidebar.classList.remove('hidden');
                     mainContent.classList.remove('expanded');
-                    toggleButton.innerHTML = '☰ Sidebar';
+                    toggleButton.innerHTML = '◀';
+                    toggleButton.classList.remove('collapsed');
                     toggleButton.title = 'Hide sidebar';
                 } else {
                     sidebar.classList.add('hidden');
                     mainContent.classList.add('expanded');
-                    toggleButton.innerHTML = '☰ Show';
+                    toggleButton.innerHTML = '▶';
+                    toggleButton.classList.add('collapsed');
                     toggleButton.title = 'Show sidebar';
                 }
             }
