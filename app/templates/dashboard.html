@@ -85,7 +85,7 @@
         .header {
             background: var(--bg-secondary);
             border-bottom: 1px solid var(--border-color);
-            padding: 16px 24px;
+            padding: 10px 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -95,22 +95,22 @@
         }
 
         .logo {
-            font-size: 1.5rem;
+            font-size: 1.25rem;
             font-weight: 700;
             color: var(--text-secondary);
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
         }
 
         .logo-icon {
-            width: 32px;
-            height: 32px;
+            width: 28px;
+            height: 28px;
             flex-shrink: 0;
         }
 
         .logo-text {
-            font-size: 1.5rem;
+            font-size: 1.25rem;
             font-weight: 700;
         }
 
@@ -310,7 +310,48 @@
             display: flex;
             flex-direction: column;
             overflow: hidden;
-            transition: background-color 0.3s ease, border-color 0.3s ease;
+            transition: width 0.3s ease, margin-left 0.3s ease, background-color 0.3s ease, border-color 0.3s ease;
+        }
+
+        .sidebar.hidden {
+            width: 0;
+            margin-left: -320px;
+            border-right: none;
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: var(--bg-primary);
+            transition: margin-left 0.3s ease;
+        }
+
+        .main-content.expanded {
+            margin-left: 0;
+        }
+
+        /* Sidebar toggle button */
+        .sidebar-toggle {
+            background: var(--bg-tertiary);
+            color: var(--text-muted);
+            border: 1px solid var(--border-color);
+            padding: 6px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .sidebar-toggle:hover {
+            background: var(--hover-bg);
+            color: var(--text-secondary);
+            border-color: var(--text-muted);
         }
 
         .sidebar-header {
@@ -687,14 +728,6 @@
             color: #9ca3af;
         }
 
-        .main-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            background: var(--bg-primary);
-        }
-
         .note-display {
             flex: 1;
             padding: 24px;
@@ -706,10 +739,10 @@
         }
 
         .note-title-display {
-            font-size: 1.875rem;
-            font-weight: 700;
-            color: var(--text-secondary);
-            margin-bottom: 8px;
+            flex: 1; /* Allow title to take available space */
+            margin: 0; /* Remove default h1 margin since we're controlling spacing with parent */
+            font-size: 1.75rem;
+            line-height: 1.3;
         }
 
         .note-meta {
@@ -1760,7 +1793,7 @@
 
         /* Styles for PDF Download Button and Note Actions Bar */
         .note-header { /* Modified to accommodate new button bar */
-            margin-bottom: 12px; /* Adjusted margin */
+            margin-bottom: 8px; /* Adjusted margin */
             position: relative; 
         }
 
@@ -1934,16 +1967,17 @@
         }
 
         .markdown-content {
-            padding: 20px;
-            min-height: 200px;
+            padding: 16px;
+            min-height: 180px;
             transition: all 0.3s ease;
         }
 
         /* Markdown View Mode */
         .markdown-view {
             cursor: pointer;
-            line-height: 1.6;
+            line-height: 1.5;
             color: var(--text-secondary);
+            font-size: 0.9rem;
         }
 
         .markdown-view:hover {
@@ -1952,12 +1986,12 @@
         }
 
         .markdown-view h1 {
-            font-size: 1.5rem;
+            font-size: 1.35rem;
             font-weight: 700;
             color: var(--text-primary);
-            margin: 20px 0 12px 0;
+            margin: 16px 0 10px 0;
             border-bottom: 2px solid var(--border-color);
-            padding-bottom: 8px;
+            padding-bottom: 6px;
         }
 
         .markdown-view h1:first-child {
@@ -1965,17 +1999,17 @@
         }
 
         .markdown-view h2 {
-            font-size: 1.25rem;
+            font-size: 1.15rem;
             font-weight: 600;
             color: var(--text-primary);
-            margin: 16px 0 8px 0;
+            margin: 14px 0 7px 0;
         }
 
         .markdown-view h3 {
-            font-size: 1.125rem;
+            font-size: 1.05rem;
             font-weight: 600;
             color: var(--text-secondary);
-            margin: 12px 0 6px 0;
+            margin: 10px 0 5px 0;
         }
 
         .markdown-view p {
@@ -2345,6 +2379,9 @@
                     <div class="theme-slider-knob"></div>
                 </div>
             </div>
+            <button class="sidebar-toggle" onclick="toggleSidebar()" title="Toggle sidebar" id="sidebarToggle">
+                ☰ Sidebar
+            </button>
             <button class="theme-toggle" onclick="restartTutorial()" title="Restart Tutorial" style="margin-left: 8px; background: var(--bg-tertiary); color: var(--text-muted); border: 1px solid var(--border-color); padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 0.875rem; font-weight: 500; transition: all 0.2s ease;">
                 🎓 Tutorial
             </button>
@@ -2769,7 +2806,7 @@
                                 ${currentNote.raw_content ? `<button class="note-action-btn" id="rawContentToggle" onclick="toggleRawContent()" title="Toggle raw content visibility">📄 Raw Content</button>` : ''}
                             </div>
                         </div>
-                        <p class="note-meta">${formatRelativeDate(currentNote.updated_at)}</p>
+                        <!-- <p class="note-meta">${formatRelativeDate(currentNote.updated_at)}</p> -->
                     </div>
 
                     <div class="note-details">
@@ -4899,6 +4936,29 @@ Content auto-saves when you click outside this editor."></textarea>
                     rawContentSection.style.display = 'block';
                     toggleButton.classList.add('active');
                     toggleButton.title = 'Hide raw content';
+                }
+            }
+        }
+
+        // Toggle sidebar visibility
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            const mainContent = document.querySelector('.main-content');
+            const toggleButton = document.getElementById('sidebarToggle');
+            
+            if (sidebar && mainContent && toggleButton) {
+                const isHidden = sidebar.classList.contains('hidden');
+                
+                if (isHidden) {
+                    sidebar.classList.remove('hidden');
+                    mainContent.classList.remove('expanded');
+                    toggleButton.innerHTML = '☰ Sidebar';
+                    toggleButton.title = 'Hide sidebar';
+                } else {
+                    sidebar.classList.add('hidden');
+                    mainContent.classList.add('expanded');
+                    toggleButton.innerHTML = '☰ Show';
+                    toggleButton.title = 'Show sidebar';
                 }
             }
         }
