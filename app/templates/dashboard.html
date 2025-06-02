@@ -310,21 +310,24 @@
             display: flex;
             flex-direction: column;
             overflow: hidden;
-            transition: width 0.3s ease, margin-left 0.3s ease, background-color 0.3s ease, border-color 0.3s ease;
+            transition: all 0.3s ease;
+            position: relative;
         }
 
         .sidebar.hidden {
             width: 0;
-            margin-left: -320px;
             border-right: none;
+            min-width: 0;
         }
 
         .sidebar.hidden .sidebar-toggle {
             position: fixed;
             left: 0;
-            right: auto;
+            top: 50%;
+            transform: translateY(-50%);
             border-radius: 0 6px 6px 0;
             border-left: none;
+            z-index: 1000;
         }
 
         .main-content {
@@ -333,7 +336,7 @@
             flex-direction: column;
             overflow: hidden;
             background: var(--bg-primary);
-            transition: margin-left 0.3s ease;
+            transition: all 0.3s ease;
         }
 
         .main-content.expanded {
@@ -370,8 +373,8 @@
         }
 
         .sidebar-toggle.collapsed {
-            right: -12px;
-            border-radius: 6px 0 0 6px;
+            border-radius: 0 6px 6px 0;
+            border-left: 1px solid var(--border-color);
         }
 
         .sidebar {
@@ -4974,12 +4977,14 @@ Content auto-saves when you click outside this editor."></textarea>
                 const isHidden = sidebar.classList.contains('hidden');
                 
                 if (isHidden) {
+                    // Show sidebar
                     sidebar.classList.remove('hidden');
                     mainContent.classList.remove('expanded');
                     toggleButton.innerHTML = '◀';
                     toggleButton.classList.remove('collapsed');
                     toggleButton.title = 'Hide sidebar';
                 } else {
+                    // Hide sidebar
                     sidebar.classList.add('hidden');
                     mainContent.classList.add('expanded');
                     toggleButton.innerHTML = '▶';
