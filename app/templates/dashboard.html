@@ -2240,6 +2240,76 @@
                 max-width: none;
             }
         }
+
+        /* Raw Content Section Styles */
+        .raw-content-section {
+            background: var(--bg-secondary);
+            border: 2px solid var(--accent-border);
+            border-radius: 8px;
+            padding: 0;
+            margin-bottom: 24px;
+            transition: all 0.3s ease;
+            cursor: default;
+        }
+
+        .raw-content-section.show {
+            display: block !important;
+        }
+
+        .raw-content-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: var(--accent-bg);
+            border-bottom: 1px solid var(--accent-border);
+            border-radius: 6px 6px 0 0;
+        }
+
+        .raw-content-header h4 {
+            margin: 0;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--accent-border);
+        }
+
+        .raw-content-close {
+            background: transparent;
+            border: none;
+            color: var(--accent-border);
+            font-size: 1.25rem;
+            font-weight: bold;
+            cursor: pointer;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .raw-content-close:hover {
+            background: var(--accent-border);
+            color: var(--bg-secondary);
+        }
+
+        .raw-content-body {
+            padding: 16px;
+        }
+
+        .raw-content-body p {
+            margin: 0;
+            white-space: pre-wrap;
+            line-height: 1.6;
+            color: var(--text-secondary);
+        }
+
+        /* Update the toggle button state */
+        .note-action-btn.active {
+            background: var(--accent-border);
+            color: var(--bg-secondary);
+        }
     </style>
 </head>
 <body>
@@ -2696,6 +2766,7 @@
                             </h1>
                             <div class="note-actions-bar">
                                 <button class="note-action-btn" onclick="console.log('PDF button clicked'); downloadNoteAsPDF()" title="Download as PDF">⬇️ Download PDF</button>
+                                ${currentNote.raw_content ? `<button class="note-action-btn" id="rawContentToggle" onclick="toggleRawContent()" title="Toggle raw content visibility">📄 Raw Content</button>` : ''}
                             </div>
                         </div>
                         <p class="note-meta">${formatRelativeDate(currentNote.updated_at)}</p>
@@ -2724,8 +2795,14 @@
                     </div>
 
                     ${currentNote.raw_content ? `
-                    <div class="content-section" onclick="toggleContentSection(this)">
-                        ${formatRawContentAsParagraphs(currentNote.raw_content)}
+                    <div class="content-section raw-content-section" id="rawContentSection" style="display: none;" onclick="event.stopPropagation()">
+                        <div class="raw-content-header">
+                            <h4>📄 Raw Content</h4>
+                            <button class="raw-content-close" onclick="toggleRawContent()" title="Hide raw content">×</button>
+                        </div>
+                        <div class="raw-content-body">
+                            ${formatRawContentAsParagraphs(currentNote.raw_content)}
+                        </div>
                     </div>
                     ` : ''}
 
@@ -4805,6 +4882,26 @@ Content auto-saves when you click outside this editor."></textarea>
                 }
             }
         });
+
+        // Toggle raw content visibility
+        function toggleRawContent() {
+            const rawContentSection = document.getElementById('rawContentSection');
+            const toggleButton = document.getElementById('rawContentToggle');
+            
+            if (rawContentSection && toggleButton) {
+                const isVisible = rawContentSection.style.display !== 'none';
+                
+                if (isVisible) {
+                    rawContentSection.style.display = 'none';
+                    toggleButton.classList.remove('active');
+                    toggleButton.title = 'Show raw content';
+                } else {
+                    rawContentSection.style.display = 'block';
+                    toggleButton.classList.add('active');
+                    toggleButton.title = 'Hide raw content';
+                }
+            }
+        }
     </script>
 
     <!-- Welcome Banner for returning users -->
