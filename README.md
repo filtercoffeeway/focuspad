@@ -20,6 +20,7 @@ FocusPad is a modern, secure note-taking application built with Flask, featuring
    - [Database Schema](#database-schema)
 10. [Development Guide](#development-guide) - Testing and debugging
 11. [Troubleshooting](#troubleshooting) - Common issues
+12. [Admin] - Admin Tools
 
 ---
 
@@ -804,3 +805,34 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 **Ready to build secure, intelligent notes! 🎉**
 
 *Built with ❤️ for developers who value security and performance* 
+
+## 🚀 Admin Tools
+
+### Query to get the user stats
+```
+docker-compose -f docker-compose.prod.yml exec web python3 -c "
+import os, sys
+sys.path.insert(0, '/app')
+from app import create_app, db
+from app.models.user import User
+from app.models.note import Note
+from datetime import datetime, timedelta
+
+os.environ['FLASK_ENV'] = 'production'
+app = create_app('production')
+
+with app.app_context():
+    total_users = User.query.count()
+    seven_days_ago = datetime.utcnow() - timedelta(days=7)
+    recent_users = User.query.filter(User.created_at >= seven_days_ago).count()
+    total_notes = Note.query.count()
+    
+    print('=' * 50)
+    print('📊 FOCUSPAD DATA STATISTICS (Production)')
+    print('=' * 50)
+    print(f'👥 Total number of users: {total_users}')
+    print(f'📅 Users created in last 7 days: {recent_users}')
+    print(f'📝 Total number of notes created: {total_notes}')
+    print('=' * 50)
+"
+```
