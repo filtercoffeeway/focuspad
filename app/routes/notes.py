@@ -543,6 +543,14 @@ def search_notes():
                         'highlight': _highlight_text(fresh_note.raw_content, query)
                     })
                 
+                # Search in markdown content
+                if fresh_note.markdown_content and query_lower in fresh_note.markdown_content.lower():
+                    matches.append({
+                        'field': 'markdown_content',
+                        'text': fresh_note.markdown_content,
+                        'highlight': _highlight_text(fresh_note.markdown_content, query)
+                    })
+                
                 # Search in categorized content
                 content_dict = fresh_note.get_content()
                 for category_name, items in content_dict.items():
@@ -692,4 +700,98 @@ def update_markdown_content(note_id):
         
     except Exception as e:
         current_app.logger.error(f"Update markdown content error: {str(e)}")
-        return jsonify({'error': 'Failed to update markdown content'}), 500 
+        return jsonify({'error': 'Failed to update markdown content'}), 500
+
+@notes_bp.route('/<int:note_id>/ai-summarize', methods=['POST'])
+@jwt_required()
+def ai_summarize_note(note_id):
+    """AI summarize and organize note content."""
+    try:
+        current_user_id = get_jwt_identity()
+        note = Note.query.get(note_id)
+        
+        if not note:
+            return jsonify({'error': 'Note not found'}), 404
+        
+        if note.user_id != current_user_id:
+            return jsonify({'error': 'Access denied'}), 403
+        
+        data = request.get_json()
+        if not data or 'content' not in data:
+            return jsonify({'error': 'Content is required'}), 400
+        
+        content = data['content'].strip()
+        if not content:
+            return jsonify({'error': 'Content cannot be empty'}), 400
+        
+        # Check if AI service is available
+        if not ai_service.is_available():
+            return jsonify({'error': 'AI service is not available. Please check your OpenAI API key configuration.'}), 503
+        
+        current_app.logger.info(f"AI summarizing note {note_id} for user {current_user_id}")
+        
+        # Create AI prompt for summarization and organization
+        prompt = f"""Please analyze and organize the following note content. Create a well-structured markdown document with appropriate headings and sections. 
+
+The content should be organized logically with relevant headings such as:
+- Key Points
+- Action Items  
+- Ideas
+- Important Details
+- References
+- Summary
+
+Use markdown formatting including:
+- # for main headings
+- ## for subheadings
+- ### for smaller sections
+- - for bullet points
+- **bold** for emphasis
+- `code` for technical terms if relevant
+
+Here's the content to organize:
+
+{content}
+
+Please return a well-organized markdown document that makes the content easy to read and understand."""
+
+        try:
+            # Call AI service to summarize and organize content
+            summarized_content = ai_service.generate_text(prompt)
+            
+            if not summarized_content:
+                return jsonify({'error': 'AI service returned empty response'}), 500
+            
+            # Decrypt current note data
+            try:
+                note.decrypt_sensitive_data(current_user_id)
+            except Exception as e:
+                current_app.logger.error(f"Failed to decrypt note {note_id} for AI summarization: {e}")
+            
+            # Update the note with AI-generated content
+            note.set_markdown_content(summarized_content)
+            
+            # Encrypt and save
+            try:
+                note.encrypt_sensitive_data(current_user_id)
+                db.session.commit()
+                current_app.logger.info(f"Note {note_id} AI-summarized and saved for user {current_user_id}")
+            except Exception as e:
+                current_app.logger.error(f"Failed to encrypt AI-summarized note {note_id}: {e}")
+                # Save without encryption if it fails
+                db.session.commit()
+            
+            # Return the summarized content
+            return jsonify({
+                'message': 'Note summarized successfully',
+                'summarized_content': summarized_content,
+                'note': note.to_dict()
+            })
+            
+        except Exception as ai_error:
+            current_app.logger.error(f"AI summarization failed for note {note_id}: {str(ai_error)}")
+            return jsonify({'error': f'AI summarization failed: {str(ai_error)}'}), 500
+        
+    except Exception as e:
+        current_app.logger.error(f"AI summarize note error: {str(e)}")
+        return jsonify({'error': 'Failed to summarize note'}), 500 
