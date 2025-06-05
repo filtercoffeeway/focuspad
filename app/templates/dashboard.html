@@ -2721,6 +2721,14 @@
                 return;
             }
             
+            // Check if access token is available
+            if (!accessToken || accessToken === 'None' || accessToken === '') {
+                console.error('No access token available');
+                alert('Authentication required. Please log in again.');
+                window.location.href = '/login';
+                return;
+            }
+            
             try {
                 // Update UI first
                 document.querySelectorAll('.note-item').forEach(item => {
@@ -2735,6 +2743,8 @@
 
                 // Load note details
                 console.log('Fetching note details for ID:', noteId);
+                console.log('Using access token:', accessToken ? 'Available' : 'Missing');
+                
                 const response = await fetch(`/api/notes/${noteId}`, {
                     headers: {
                         'Authorization': `Bearer ${accessToken}`
@@ -2767,21 +2777,35 @@
                     
                     // Update text input state
                     const textInput = document.getElementById('textInput');
-                    textInput.placeholder = 'Add content to your note...';
+                    if (textInput) {
+                        textInput.placeholder = 'Add content to your note...';
+                    }
                     
                     // Update save button state
                     const saveBtn = document.getElementById('saveBtn');
-                    saveBtn.disabled = !textInput.value.trim();
+                    if (saveBtn && textInput) {
+                        saveBtn.disabled = !textInput.value.trim();
+                    }
                     
                     console.log('Note selected successfully, ID:', currentNote.id);
                 } else {
                     const errorText = await response.text();
                     console.error('Failed to load note. Status:', response.status, 'Error:', errorText);
-                    alert('Failed to load note. Please try again.');
+                    
+                    // Provide more specific error messages
+                    if (response.status === 404) {
+                        alert('Note not found. It may have been deleted.');
+                    } else if (response.status === 403) {
+                        alert('Access denied. You do not have permission to view this note.');
+                    } else if (response.status === 500) {
+                        alert('Server error occurred while loading the note. Please try again.');
+                    } else {
+                        alert('Failed to load note. Please try again.');
+                    }
                 }
             } catch (error) {
                 console.error('Error loading note:', error);
-                alert('Error loading note. Please check your connection.');
+                alert('Error loading note. Please check your connection and try again.');
             }
         }
 
@@ -4870,6 +4894,14 @@ Content auto-saves when you switch to preview mode."></textarea>
                 return;
             }
             
+            // Check if access token is available
+            if (!accessToken || accessToken === 'None' || accessToken === '') {
+                console.error('No access token available for AI summarization');
+                alert('Authentication required. Please log in again.');
+                window.location.href = '/login';
+                return;
+            }
+            
             // Get current markdown content
             const markdownEditor = document.getElementById('markdownEditor');
             const currentContent = isMarkdownEditMode ? markdownEditor.value : markdownContent;
@@ -4889,6 +4921,8 @@ Content auto-saves when you switch to preview mode."></textarea>
             
             try {
                 console.log('Sending content to AI for summarization...');
+                console.log('Content length:', currentContent.length);
+                console.log('Using access token:', accessToken ? 'Available' : 'Missing');
                 
                 const response = await fetch(`/api/notes/${currentNote.id}/ai-summarize`, {
                     method: 'POST',
@@ -4944,17 +4978,42 @@ Content auto-saves when you switch to preview mode."></textarea>
                         
                         console.log('Content summarized successfully');
                     } else {
-                        throw new Error('No summarized content received');
+                        throw new Error('No summarized content received from AI service');
                     }
                 } else {
                     const errorData = await response.json().catch(() => ({}));
-                    throw new Error(errorData.error || `API Error: ${response.status}`);
+                    const errorMessage = errorData.error || `API Error: ${response.status}`;
+                    
+                    console.error('AI Summarization failed:', errorMessage);
+                    
+                    // Provide specific error messages based on status code
+                    if (response.status === 503) {
+                        alert('AI service is currently unavailable. Please check your OpenAI API key configuration or try again later.');
+                    } else if (response.status === 400) {
+                        alert('Invalid content provided for summarization. Please check your note content.');
+                    } else if (response.status === 404) {
+                        alert('Note not found. Please refresh the page and try again.');
+                    } else if (response.status === 500) {
+                        alert('AI summarization failed due to a server error. Please try again or contact support if the issue persists.');
+                    } else {
+                        alert(`AI Summarization failed: ${errorMessage}`);
+                    }
+                    
+                    throw new Error(errorMessage);
                 }
             } catch (error) {
                 console.error('AI Summarization failed:', error);
-                alert(`AI Summarization failed: ${error.message}\n\nPlease try again or check your connection.`);
+                
+                // Show user-friendly error message
+                if (error.message.includes('Failed to fetch')) {
+                    alert('Network error: Unable to connect to the AI service. Please check your internet connection.');
+                } else if (error.message.includes('AI service is not available')) {
+                    alert('AI service is currently unavailable. Please check the OpenAI API key configuration.');
+                } else {
+                    alert('AI Summarization failed. Please try again or contact support if the issue persists.');
+                }
             } finally {
-                // Restore button state
+                // Reset button state
                 if (aiButton) {
                     aiButton.innerHTML = originalButtonText;
                     aiButton.disabled = false;

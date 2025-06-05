@@ -80,18 +80,39 @@ class Note(db.Model):
     
     def get_categorized_content(self):
         """Get content organized by categories."""
-        template_categories = self.template.get_categories()
-        content_dict = self.get_content()
-        
-        organized_content = {}
-        for category in template_categories:
-            category_name = category['name']
-            organized_content[category_name] = {
-                'category_info': category,
-                'items': content_dict.get(category_name, [])
+        try:
+            # Safely get template categories with fallback
+            if self.template:
+                template_categories = self.template.get_categories()
+            else:
+                # Fallback: create default categories if template is missing
+                template_categories = [
+                    {'name': 'Key Points', 'description': 'Important information and highlights'},
+                    {'name': 'Action Items', 'description': 'Tasks and actions to be completed'},
+                    {'name': 'Ideas', 'description': 'Creative thoughts and brainstorming'},
+                    {'name': 'References', 'description': 'Links, sources, and external references'}
+                ]
+            
+            content_dict = self.get_content()
+            
+            organized_content = {}
+            for category in template_categories:
+                category_name = category['name']
+                organized_content[category_name] = {
+                    'category_info': category,
+                    'items': content_dict.get(category_name, [])
+                }
+            
+            return organized_content
+        except Exception as e:
+            logger.error(f"Error getting categorized content for note {self.id}: {e}")
+            # Return basic structure as fallback
+            return {
+                'Key Points': {'category_info': {'name': 'Key Points', 'description': 'Important information'}, 'items': []},
+                'Action Items': {'category_info': {'name': 'Action Items', 'description': 'Tasks to complete'}, 'items': []},
+                'Ideas': {'category_info': {'name': 'Ideas', 'description': 'Creative thoughts'}, 'items': []},
+                'References': {'category_info': {'name': 'References', 'description': 'Links and sources'}, 'items': []}
             }
-        
-        return organized_content
     
     def add_content_to_category(self, category_name, content_text):
         """Add content to a specific category."""
@@ -142,13 +163,20 @@ class Note(db.Model):
     
     def to_dict(self, include_content=True):
         """Convert note object to dictionary."""
+        # Safely get template name with fallback
+        try:
+            template_name = self.template.name if self.template else 'Default Template'
+        except Exception as e:
+            logger.error(f"Error accessing template for note {self.id}: {e}")
+            template_name = 'Default Template'
+        
         result = {
             'id': self.id,
             'title': self.title,
             'description': self.description,
             'attendees': self.attendees,
             'template_id': self.template_id,
-            'template_name': self.template.name if self.template else None,
+            'template_name': template_name,
             'user_id': self.user_id,
             'is_archived': self.is_archived,
             'created_at': self.created_at.isoformat() + 'Z' if self.created_at else None,
@@ -156,12 +184,23 @@ class Note(db.Model):
         }
         
         if include_content:
-            result['content'] = self.get_categorized_content()
-            result['raw_content'] = self.raw_content
-            result['markdown_content'] = self.get_markdown_content()
+            try:
+                result['content'] = self.get_categorized_content()
+                result['raw_content'] = self.raw_content
+                result['markdown_content'] = self.get_markdown_content()
+            except Exception as e:
+                logger.error(f"Error getting content for note {self.id}: {e}")
+                # Provide safe fallbacks
+                result['content'] = {}
+                result['raw_content'] = self.raw_content or ''
+                result['markdown_content'] = self.markdown_content or ''
         else:
             # Even when not including full content, provide a preview for the sidebar
-            result['preview'] = self.get_preview_text()
+            try:
+                result['preview'] = self.get_preview_text()
+            except Exception as e:
+                logger.error(f"Error getting preview for note {self.id}: {e}")
+                result['preview'] = 'Preview unavailable'
         
         return result
     

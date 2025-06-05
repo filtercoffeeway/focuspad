@@ -370,5 +370,57 @@ Respond with only the title, no additional text.
             words = text.split()[:6]
             return " ".join(words) + ("..." if len(text.split()) > 6 else "")
 
+    def generate_text(self, prompt):
+        """
+        Generate text using OpenAI's API.
+        
+        Args:
+            prompt (str): The prompt for text generation
+            
+        Returns:
+            str: Generated text
+        """
+        if not self.is_available():
+            raise Exception("AI service is not available. Please check your OpenAI API key configuration.")
+        
+        if not prompt.strip():
+            raise Exception("Prompt cannot be empty")
+        
+        try:
+            # Check if we're using modern or legacy OpenAI client
+            if hasattr(self.client, 'chat'):
+                # Modern OpenAI client
+                response = self.client.chat.completions.create(
+                    model="gpt-4",
+                    messages=[
+                        {"role": "system", "content": "You are a helpful assistant that organizes and summarizes content."},
+                        {"role": "user", "content": prompt}
+                    ],
+                    max_tokens=2000,
+                    temperature=0.5
+                )
+                return response.choices[0].message.content.strip()
+            else:
+                # Legacy OpenAI client
+                response = self.client.ChatCompletion.create(
+                    model="gpt-4",
+                    messages=[
+                        {"role": "system", "content": "You are a helpful assistant that organizes and summarizes content."},
+                        {"role": "user", "content": prompt}
+                    ],
+                    max_tokens=2000,
+                    temperature=0.5
+                )
+                return response.choices[0].message.content.strip()
+            
+        except Exception as e:
+            # Log error safely (handle missing app context)
+            error_msg = f"OpenAI API error in generate_text: {str(e)}"
+            try:
+                current_app.logger.error(error_msg)
+            except RuntimeError:
+                print(f"AI Service Error: {error_msg}")
+            raise Exception(f"AI text generation failed: {str(e)}")
+
 # Global instance
 ai_service = AIService() 
