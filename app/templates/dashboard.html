@@ -2499,7 +2499,7 @@
                 <div class="empty-state">
                     <div class="empty-icon">📝</div>
                     <h3>Welcome to FocusPad</h3>
-                    <p>Select a note from the sidebar or create a new one to start writing. Use the AI Summarize feature to organize your thoughts!</p>
+                    <p>Select a note from the sidebar or create a new one to start writing. Use the AI Organize feature to structure your thoughts!</p>
                 </div>
             </div>
         </div>
@@ -2513,8 +2513,11 @@
         // Function to handle token expiration and redirect to login
         function handleTokenExpiration(response) {
             if (response.status === 401) {
+                // Clone the response to avoid consuming the original stream
+                const clonedResponse = response.clone();
+                
                 // Check if the error message indicates token expiration
-                response.json().then(data => {
+                clonedResponse.json().then(data => {
                     if (data.msg && data.msg.includes('expired')) {
                         console.log('Token has expired, redirecting to login...');
                         alert('Your session has expired. Please log in again.');
@@ -2605,6 +2608,70 @@
             }
         }
 
+        // Get the first line of note content to use as title
+        function getFirstLineAsTitle(note) {
+            // First try markdown_content as it's the primary content
+            if (note.markdown_content && note.markdown_content.trim()) {
+                let text = note.markdown_content.trim();
+                // Remove markdown formatting
+                text = text.replace(/#+\s+/g, '');  // Remove headers
+                text = text.replace(/\*\*([^*]+)\*\*/g, '$1');  // Remove bold
+                text = text.replace(/\*([^*]+)\*/g, '$1');  // Remove italic
+                text = text.replace(/`([^`]+)`/g, '$1');  // Remove code
+                text = text.replace(/^[\-\*]\s+/gm, '');  // Remove bullet points
+                text = text.replace(/^\>\s+/gm, '');  // Remove blockquotes
+                
+                // Get the first line
+                const firstLine = text.split('\n')[0].trim();
+                if (firstLine && firstLine.length > 0) {
+                    const result = firstLine.length > 50 ? firstLine.substring(0, 50) + '...' : firstLine;
+                    return result;
+                }
+            }
+            
+            // Fallback to raw_content
+            if (note.raw_content && note.raw_content.trim()) {
+                const firstLine = note.raw_content.trim().split('\n')[0].trim();
+                if (firstLine && firstLine.length > 0) {
+                    const result = firstLine.length > 50 ? firstLine.substring(0, 50) + '...' : firstLine;
+                    return result;
+                }
+            }
+            
+            // Last resort: try legacy categorized content
+            if (note.content && typeof note.content === 'object') {
+                for (const [category, categoryData] of Object.entries(note.content)) {
+                    let items = categoryData;
+                    
+                    if (categoryData && typeof categoryData === 'object' && categoryData.items) {
+                        items = categoryData.items;
+                        if (items && typeof items === 'object' && items.items && Array.isArray(items.items)) {
+                            items = items.items;
+                        }
+                    }
+                    
+                    if (Array.isArray(items) && items.length > 0) {
+                        for (const item of items) {
+                            let text = '';
+                            if (typeof item === 'string' && item.trim()) {
+                                text = item;
+                            } else if (item && typeof item === 'object') {
+                                text = item.text || item.content || '';
+                            }
+                            
+                            if (text && text.trim()) {
+                                const firstLine = text.trim().split('\n')[0].trim();
+                                const result = firstLine.length > 50 ? firstLine.substring(0, 50) + '...' : firstLine;
+                                return result;
+                            }
+                        }
+                    }
+                }
+            }
+            
+            return 'Untitled Note';
+        }
+
         // Render notes list in sidebar
         function renderNotesList() {
             const notesList = document.getElementById('notesList');
@@ -2620,7 +2687,7 @@
             notesList.innerHTML = sortedNotes.map(note => `
                 <div class="note-item" onclick="selectNote(${note.id})" data-note-id="${note.id}">
                     <div class="note-header-row">
-                        <div class="note-title">${escapeHtml(note.title || 'Untitled Note')}</div>
+                        <div class="note-title">${escapeHtml(getFirstLineAsTitle(note))}</div>
                         <div class="note-actions">
                             <button class="delete-btn" onclick="deleteNote(${note.id}, event)" title="Delete note">🗑️</button>
                         </div>
@@ -2818,7 +2885,7 @@
                     <div class="empty-state">
                         <div class="empty-icon">📝</div>
                         <h3>Welcome to FocusPad</h3>
-                        <p>Select a note from the sidebar or create a new one to start writing. Use the AI Summarize feature to organize your thoughts!</p>
+                        <p>Select a note from the sidebar or create a new one to start writing. Use the AI Organize feature to structure your thoughts!</p>
                     </div>
                 `;
                 return;
@@ -2833,20 +2900,6 @@
             
             noteDisplay.innerHTML = `
                 <div id="noteContentForPdf"> 
-                    <div class="note-header">
-                        <div class="note-header-top">
-                            <h1 class="note-title-display editable-title" 
-                                contenteditable="true" 
-                                data-field="title"
-                                data-original="${escapeHtml(currentNote.title || '')}"
-                                onblur="saveField(this, 'title')"
-                                onkeydown="handleEnterKey(event)">
-                                ${escapeHtml(currentNote.title || 'Untitled Note')}
-                            </h1>
-                        </div>
-                        <!-- <p class="note-meta">${formatRelativeDate(currentNote.updated_at)}</p> -->
-                    </div>
-
                     ${currentNote.raw_content ? `
                     <div class="content-section raw-content-section" id="rawContentSection" style="display: none;" onclick="event.stopPropagation()">
                         <div class="raw-content-header">
@@ -2861,11 +2914,11 @@
 
                     <div class="markdown-container" id="markdownContainer">
                         <div class="markdown-header">
-                            <span class="markdown-mode-label" id="markdownModeLabel">Notes</span>
+                            <span class="markdown-mode-label" id="markdownModeLabel"></span>
                             <div class="markdown-controls">
                                 <button class="markdown-control-btn" onclick="console.log('PDF button clicked'); downloadNoteAsPDF()" title="Download as PDF">⬇️ Download PDF</button>
                                 ${currentNote.raw_content ? `<button class="markdown-control-btn" id="rawContentToggle" onclick="toggleRawContent()" title="Toggle raw content visibility">📄 Raw Content</button>` : ''}
-                                <button class="markdown-control-btn ai-summarize-btn" onclick="aiSummarizeContent()" title="AI Summarize & Organize">🤖 AI Summarize</button>
+                                <button class="markdown-control-btn ai-summarize-btn" onclick="aiSummarizeContent()" title="AI Organize & Structure">🤖 AI Organize</button>
                                 <button class="markdown-control-btn markdown-help-btn" id="markdownHelpBtn" onclick="showMarkdownHelp()" title="Markdown Syntax Guide">
                                     📖 Help
                                 </button>
@@ -2877,11 +2930,9 @@
                                 <!-- Rendered markdown will go here -->
                             </div>
                             <div class="markdown-edit" id="markdownEdit">
-                                <textarea class="markdown-editor" id="markdownEditor" placeholder="# Your Note Title
+                                <textarea class="markdown-editor" id="markdownEditor" placeholder="Start writing your notes here...
 
-Start writing your notes here...
-
-Write freely - add your thoughts, ideas, meeting notes, or any content. When you're ready, click the 'AI Summarize' button to have AI organize your content with relevant headings and structure.
+Write freely - add your thoughts, ideas, meeting notes, or any content. When you're ready, click the 'AI Organize' button to have AI structure your content with natural headings and organization.
 
 You can use markdown syntax:
 - **Bold text**
@@ -2912,6 +2963,12 @@ Content auto-saves when you switch to preview mode."></textarea>
             // Set up the editor
             const markdownEditor = document.getElementById('markdownEditor');
             const markdownView = document.getElementById('markdownView');
+            const markdownLabel = document.getElementById('markdownModeLabel');
+            
+            // Update label based on content
+            if (markdownLabel) {
+                markdownLabel.textContent = '';  // Always empty - no text in top bar
+            }
             
             console.log('Setting up markdown editor...');
             console.log('markdownContent:', markdownContent);
@@ -3411,7 +3468,7 @@ Content auto-saves when you switch to preview mode."></textarea>
                             <div class="empty-state">
                                 <div class="empty-icon">📝</div>
                                 <h3>Welcome to FocusPad</h3>
-                                <p>Select a note from the sidebar or create a new one to start writing. Use the AI Summarize feature to organize your thoughts!</p>
+                                <p>Select a note from the sidebar or create a new one to start writing. Use the AI Organize feature to structure your thoughts!</p>
                             </div>
                         `;
                         
@@ -4520,6 +4577,13 @@ Content auto-saves when you switch to preview mode."></textarea>
                         e.preventDefault();
                         toggleMarkdownMode(); // Save and switch to view mode
                     }
+                    
+                    // Save and exit edit mode on ESC key
+                    if (e.key === 'Escape') {
+                        e.preventDefault();
+                        console.log('ESC key pressed - auto-saving and switching to view mode...');
+                        toggleMarkdownMode(); // Save and switch to view mode
+                    }
                 });
             }
         }
@@ -4885,9 +4949,9 @@ Content auto-saves when you switch to preview mode."></textarea>
             }
         }
 
-        // AI Summarization Function
+        // AI Organization Function
         async function aiSummarizeContent() {
-            console.log('AI Summarize function called');
+            console.log('AI Organize function called');
             
             if (!currentNote) {
                 alert('Please select a note first.');
@@ -4896,7 +4960,7 @@ Content auto-saves when you switch to preview mode."></textarea>
             
             // Check if access token is available
             if (!accessToken || accessToken === 'None' || accessToken === '') {
-                console.error('No access token available for AI summarization');
+                console.error('No access token available for AI organization');
                 alert('Authentication required. Please log in again.');
                 window.location.href = '/login';
                 return;
@@ -4907,7 +4971,7 @@ Content auto-saves when you switch to preview mode."></textarea>
             const currentContent = isMarkdownEditMode ? markdownEditor.value : markdownContent;
             
             if (!currentContent || currentContent.trim().length === 0) {
-                alert('Please add some content to your note before summarizing.');
+                alert('Please add some content to your note before organizing.');
                 return;
             }
             
@@ -4915,12 +4979,12 @@ Content auto-saves when you switch to preview mode."></textarea>
             const aiButton = document.querySelector('.ai-summarize-btn');
             const originalButtonText = aiButton ? aiButton.innerHTML : '';
             if (aiButton) {
-                aiButton.innerHTML = '🤖 Summarizing...';
+                aiButton.innerHTML = '🤖 Organizing...';
                 aiButton.disabled = true;
             }
             
             try {
-                console.log('Sending content to AI for summarization...');
+                console.log('Sending content to AI for organization...');
                 console.log('Content length:', currentContent.length);
                 console.log('Using access token:', accessToken ? 'Available' : 'Missing');
                 
@@ -4935,25 +4999,25 @@ Content auto-saves when you switch to preview mode."></textarea>
                     })
                 });
                 
-                console.log('AI Summarize response status:', response.status);
+                console.log('AI Organize response status:', response.status);
                 
                 if (handleTokenExpiration(response)) return;
                 
                 if (response.ok) {
                     const responseData = await response.json();
-                    console.log('AI Summarize response:', responseData);
+                    console.log('AI Organize response:', responseData);
                     
-                    // Update the markdown content with AI-generated summary
-                    const summarizedContent = responseData.summarized_content || responseData.content;
+                    // Update the markdown content with AI-organized content
+                    const organizedContent = responseData.summarized_content || responseData.content;
                     
-                    if (summarizedContent) {
+                    if (organizedContent) {
                         // Update local content
-                        markdownContent = summarizedContent;
-                        currentNote.markdown_content = summarizedContent;
+                        markdownContent = organizedContent;
+                        currentNote.markdown_content = organizedContent;
                         
                         // Update editor if in edit mode
                         if (markdownEditor) {
-                            markdownEditor.value = summarizedContent;
+                            markdownEditor.value = organizedContent;
                         }
                         
                         // Update view
@@ -4964,7 +5028,7 @@ Content auto-saves when you switch to preview mode."></textarea>
                         
                         // Show success feedback
                         if (aiButton) {
-                            aiButton.innerHTML = '✅ Summarized!';
+                            aiButton.innerHTML = '✅ Organized!';
                             aiButton.style.background = 'linear-gradient(135deg, #10b981, #059669)';
                         }
                         
@@ -4976,33 +5040,33 @@ Content auto-saves when you switch to preview mode."></textarea>
                             }
                         }, 3000);
                         
-                        console.log('Content summarized successfully');
+                        console.log('Content organized successfully');
                     } else {
-                        throw new Error('No summarized content received from AI service');
+                        throw new Error('No organized content received from AI service');
                     }
                 } else {
                     const errorData = await response.json().catch(() => ({}));
                     const errorMessage = errorData.error || `API Error: ${response.status}`;
                     
-                    console.error('AI Summarization failed:', errorMessage);
+                    console.error('AI Organization failed:', errorMessage);
                     
                     // Provide specific error messages based on status code
                     if (response.status === 503) {
                         alert('AI service is currently unavailable. Please check your OpenAI API key configuration or try again later.');
                     } else if (response.status === 400) {
-                        alert('Invalid content provided for summarization. Please check your note content.');
+                        alert('Invalid content provided for organization. Please check your note content.');
                     } else if (response.status === 404) {
                         alert('Note not found. Please refresh the page and try again.');
                     } else if (response.status === 500) {
-                        alert('AI summarization failed due to a server error. Please try again or contact support if the issue persists.');
+                        alert('AI organization failed due to a server error. Please try again or contact support if the issue persists.');
                     } else {
-                        alert(`AI Summarization failed: ${errorMessage}`);
+                        alert(`AI Organization failed: ${errorMessage}`);
                     }
                     
                     throw new Error(errorMessage);
                 }
             } catch (error) {
-                console.error('AI Summarization failed:', error);
+                console.error('AI Organization failed:', error);
                 
                 // Show user-friendly error message
                 if (error.message.includes('Failed to fetch')) {
@@ -5010,7 +5074,7 @@ Content auto-saves when you switch to preview mode."></textarea>
                 } else if (error.message.includes('AI service is not available')) {
                     alert('AI service is currently unavailable. Please check the OpenAI API key configuration.');
                 } else {
-                    alert('AI Summarization failed. Please try again or contact support if the issue persists.');
+                    alert('AI Organization failed. Please try again or contact support if the issue persists.');
                 }
             } finally {
                 // Reset button state
@@ -5258,18 +5322,18 @@ function hello() {
             },
             {
                 title: "AI-Powered Note Organization",
-                description: "Write your notes in the markdown editor and click 'AI Summarize' to have AI organize your content with relevant headings and structure.",
+                description: "Write your notes in the markdown editor and click 'AI Organize' to have AI structure your content with natural headings and organization based on the content.",
                 visual: `
                     <div style="position: relative;">
                         <div class="mock-input">
                             Write: "Met with Sarah about project timeline. Need to review budget by Friday. Great ideas for new features..."
                         </div>
-                        <div class="ai-magic">🤖 AI Summarize</div>
+                        <div class="ai-magic">🤖 AI Organize</div>
                         <div style="margin-top: 16px; padding: 12px; background: var(--accent-bg); border-radius: 6px; font-size: 0.875rem;">
-                            <div style="font-weight: 600; margin-bottom: 8px;">AI will organize into:</div>
-                            <div>## 📝 <strong>Meeting Notes</strong></div>
-                            <div>## ✅ <strong>Action Items</strong></div>
-                            <div>## 💡 <strong>Ideas</strong></div>
+                            <div style="font-weight: 600; margin-bottom: 8px;">AI will organize into natural sections like:</div>
+                            <div>## 📅 <strong>Project Timeline Discussion</strong></div>
+                            <div>## ⏰ <strong>Upcoming Deadlines</strong></div>
+                            <div>## 💡 <strong>Feature Ideas</strong></div>
                         </div>
                     </div>
                 `,
@@ -5288,7 +5352,7 @@ function hello() {
                         <div style="color: var(--text-muted); font-size: 0.875rem; line-height: 1.5;">
                             • Create notes with the "New Note" button<br>
                             • Write freely in the markdown editor<br>
-                            • Click "AI Summarize" to organize content<br>
+                            • Click "AI Organize" to structure content<br>
                             • Search through all your notes easily
                         </div>
                     </div>

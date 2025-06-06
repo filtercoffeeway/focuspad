@@ -195,12 +195,18 @@ class Note(db.Model):
                 result['raw_content'] = self.raw_content or ''
                 result['markdown_content'] = self.markdown_content or ''
         else:
-            # Even when not including full content, provide a preview for the sidebar
+            # Even when not including full content, provide content fields for sidebar title generation
             try:
                 result['preview'] = self.get_preview_text()
+                # Include minimal content for sidebar title generation
+                result['markdown_content'] = self.get_markdown_content()
+                result['raw_content'] = self.raw_content or ''
+                # Don't include the full categorized content structure to keep response lightweight
             except Exception as e:
                 logger.error(f"Error getting preview for note {self.id}: {e}")
                 result['preview'] = 'Preview unavailable'
+                result['markdown_content'] = ''
+                result['raw_content'] = ''
         
         return result
     
