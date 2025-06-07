@@ -5187,24 +5187,39 @@ Content auto-saves when you switch to preview mode."></textarea>
         <div class="modal markdown-help-modal" onclick="event.stopPropagation()">
             <div class="modal-header">
                 <div class="modal-title">
-                    📖 Markdown Syntax Guide
-                    <div style="font-size: 0.75rem; font-weight: normal; color: var(--text-muted);">Quick reference for formatting your notes</div>
+                    📖 Markdown Guide for FocusPad
+                    <div style="font-size: 0.75rem; font-weight: normal; color: var(--text-muted);">Master markdown syntax for better note organization</div>
                 </div>
                 <button class="close-btn" onclick="closeMarkdownHelp()">&times;</button>
             </div>
             <div class="markdown-help-content">
+                <!-- Getting Started Section -->
+                <div class="markdown-help-section">
+                    <h3>🚀 Getting Started</h3>
+                    <div style="padding: 12px; background: var(--bg-tertiary); border-radius: 6px; border: 1px solid var(--border-light); margin-bottom: 16px;">
+                        <p style="margin: 0; color: var(--text-secondary); font-size: 0.875rem; line-height: 1.4;">
+                            <strong>Pro Tip:</strong> Write naturally, then click <strong>"🤖 AI Organize"</strong> to automatically structure your content with proper headings and sections. You can always edit the markdown afterwards for fine-tuning!
+                        </p>
+                    </div>
+                </div>
+
                 <!-- Headers Section -->
                 <div class="markdown-help-section">
-                    <h3>📝 Headers</h3>
+                    <h3>📝 Headers & Structure</h3>
                     <div class="markdown-example">
-                        <div class="markdown-example-code"># Main Heading
-## Sub Heading  
-### Small Heading</div>
+                        <div class="markdown-example-code"># Main Topic
+## Key Points  
+### Subtopic
+#### Details</div>
                         <div class="markdown-example-result">
-                            <h1>Main Heading</h1>
-                            <h2>Sub Heading</h2>
-                            <h3>Small Heading</h3>
+                            <h1>Main Topic</h1>
+                            <h2>Key Points</h2>
+                            <h3>Subtopic</h3>
+                            <h4>Details</h4>
                         </div>
+                    </div>
+                    <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 8px;">
+                        💡 Use headers to organize meetings, projects, or any structured content
                     </div>
                 </div>
 
@@ -5212,77 +5227,154 @@ Content auto-saves when you switch to preview mode."></textarea>
                 <div class="markdown-help-section">
                     <h3>✨ Text Formatting</h3>
                     <div class="markdown-example">
-                        <div class="markdown-example-code">**Bold text**
-*Italic text*
-`Code text`
-~~Strikethrough~~</div>
+                        <div class="markdown-example-code">**Important points**
+*Emphasis or thoughts*
+`code or filenames`
+~~Completed tasks~~
+==Highlighted text==</div>
                         <div class="markdown-example-result">
-                            <p><strong>Bold text</strong></p>
-                            <p><em>Italic text</em></p>
-                            <p><code>Code text</code></p>
-                            <p><del>Strikethrough</del></p>
+                            <p><strong>Important points</strong></p>
+                            <p><em>Emphasis or thoughts</em></p>
+                            <p><code>code or filenames</code></p>
+                            <p><del>Completed tasks</del></p>
+                            <p><mark>Highlighted text</mark></p>
                         </div>
                     </div>
                 </div>
 
                 <!-- Lists Section -->
                 <div class="markdown-help-section">
-                    <h3>📋 Lists</h3>
+                    <h3>📋 Lists & Tasks</h3>
                     <div class="markdown-example">
-                        <div class="markdown-example-code">- Bullet point 1
-- Bullet point 2
-  - Nested point
+                        <div class="markdown-example-code">- [ ] Todo item
+- [x] Completed task
+- Action item
+  - Sub-item
+  - Another sub-item
 
-1. Numbered item 1
-2. Numbered item 2
-3. Numbered item 3</div>
+1. First priority
+2. Second priority
+3. Third priority</div>
                         <div class="markdown-example-result">
+                            <ul style="list-style: none; padding-left: 0;">
+                                <li>☐ Todo item</li>
+                                <li>☑ Completed task</li>
+                            </ul>
                             <ul>
-                                <li>Bullet point 1</li>
-                                <li>Bullet point 2
-                                    <ul><li>Nested point</li></ul>
+                                <li>Action item
+                                    <ul>
+                                        <li>Sub-item</li>
+                                        <li>Another sub-item</li>
+                                    </ul>
                                 </li>
                             </ul>
                             <ol>
-                                <li>Numbered item 1</li>
-                                <li>Numbered item 2</li>
-                                <li>Numbered item 3</li>
+                                <li>First priority</li>
+                                <li>Second priority</li>  
+                                <li>Third priority</li>
                             </ol>
                         </div>
                     </div>
+                    <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 8px;">
+                        💡 Great for meeting action items, project tasks, and priorities
+                    </div>
                 </div>
 
-                <!-- Links and Images Section -->
+                <!-- Links and References Section -->
                 <div class="markdown-help-section">
-                    <h3>🔗 Links & Quotes</h3>
+                    <h3>🔗 Links & References</h3>
                     <div class="markdown-example">
-                        <div class="markdown-example-code">[Link text](https://example.com)
+                        <div class="markdown-example-code">[Project Link](https://example.com)
+[Internal Reference](#section-name)
 
-> This is a quote
-> Multiple lines work too</div>
+> Important quote or note
+> Multiple lines work great
+> for key insights
+
+📧 Email: john@company.com  
+📞 Phone: (555) 123-4567</div>
                         <div class="markdown-example-result">
-                            <p><a href="https://example.com">Link text</a></p>
+                            <p><a href="https://example.com">Project Link</a></p>
+                            <p><a href="#section-name">Internal Reference</a></p>
                             <blockquote>
-                                This is a quote<br>
-                                Multiple lines work too
+                                Important quote or note<br>
+                                Multiple lines work great<br>
+                                for key insights
                             </blockquote>
+                            <p>📧 Email: john@company.com<br>  
+                            📞 Phone: (555) 123-4567</p>
                         </div>
                     </div>
                 </div>
 
-                <!-- Code Blocks Section -->
+                <!-- Code and Technical Content -->
                 <div class="markdown-help-section">
-                    <h3>💻 Code Blocks</h3>
+                    <h3>💻 Code & Technical</h3>
                     <div class="markdown-example">
-                        <div class="markdown-example-code">```
-function hello() {
-    console.log("Hello World!");
+                        <div class="markdown-example-code">```javascript
+function meetingNotes() {
+    return "AI organized!";
 }
-```</div>
+```
+
+```bash
+npm install package-name
+```
+
+Inline `code snippets` or `file.txt`</div>
                         <div class="markdown-example-result">
-                            <pre><code>function hello() {
-    console.log("Hello World!");
+                            <pre><code>function meetingNotes() {
+    return "AI organized!";
 }</code></pre>
+                            <pre><code>npm install package-name</code></pre>
+                            <p>Inline <code>code snippets</code> or <code>file.txt</code></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tables Section -->
+                <div class="markdown-help-section">
+                    <h3>📊 Tables & Data</h3>
+                    <div class="markdown-example">
+                        <div class="markdown-example-code">| Task | Assigned | Due Date |
+|------|----------|----------|
+| Design | Sarah | Jan 15 |
+| Development | Mike | Jan 30 |
+| Testing | Team | Feb 5 |</div>
+                        <div class="markdown-example-result">
+                            <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem;">
+                                <thead>
+                                    <tr style="border-bottom: 1px solid var(--border-color);">
+                                        <th style="padding: 4px; text-align: left;">Task</th>
+                                        <th style="padding: 4px; text-align: left;">Assigned</th>
+                                        <th style="padding: 4px; text-align: left;">Due Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td style="padding: 4px;">Design</td><td style="padding: 4px;">Sarah</td><td style="padding: 4px;">Jan 15</td></tr>
+                                    <tr><td style="padding: 4px;">Development</td><td style="padding: 4px;">Mike</td><td style="padding: 4px;">Jan 30</td></tr>
+                                    <tr><td style="padding: 4px;">Testing</td><td style="padding: 4px;">Team</td><td style="padding: 4px;">Feb 5</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FocusPad Specific Tips -->
+                <div class="markdown-help-section">
+                    <h3>🎯 FocusPad Power Tips</h3>
+                    <div style="display: grid; gap: 12px;">
+                        <div style="padding: 12px; background: var(--accent-bg); border-radius: 6px; border-left: 4px solid var(--accent-border);">
+                            <div style="font-weight: 600; margin-bottom: 4px; color: var(--text-primary);">🤖 AI Organization</div>
+                            <div style="font-size: 0.875rem; color: var(--text-secondary);">Write freely, then click "AI Organize" to automatically add headers, structure, and emojis to your content</div>
+                        </div>
+                        <div style="padding: 12px; background: var(--accent-bg); border-radius: 6px; border-left: 4px solid var(--accent-border);">
+                            <div style="font-weight: 600; margin-bottom: 4px; color: var(--text-primary);">📝 Meeting Templates</div>
+                            <div style="font-size: 0.875rem; color: var(--text-secondary);">Start with "Meeting with [Name] about [Topic]" and AI will organize attendees, agenda, and action items</div>
+                        </div>
+                        <div style="padding: 12px; background: var(--accent-bg); border-radius: 6px; border-left: 4px solid var(--accent-border);">
+                            <div style="font-weight: 600; margin-bottom: 4px; color: var(--text-primary);">🔍 Search & Tags</div>
+                            <div style="font-size: 0.875rem; color: var(--text-secondary);">Use #tags and clear headers - they make your notes searchable and easier to find later</div>
                         </div>
                     </div>
                 </div>
@@ -5305,15 +5397,15 @@ function hello() {
                         </div>
                         <div class="markdown-cheatsheet-item">
                             <span class="markdown-cheatsheet-syntax">`code`</span>
-                            <span class="markdown-cheatsheet-desc">Inline code</span>
+                            <span class="markdown-cheatsheet-desc">Code</span>
+                        </div>
+                        <div class="markdown-cheatsheet-item">
+                            <span class="markdown-cheatsheet-syntax">- [ ] task</span>
+                            <span class="markdown-cheatsheet-desc">Todo</span>
                         </div>
                         <div class="markdown-cheatsheet-item">
                             <span class="markdown-cheatsheet-syntax">- item</span>
-                            <span class="markdown-cheatsheet-desc">Bullet list</span>
-                        </div>
-                        <div class="markdown-cheatsheet-item">
-                            <span class="markdown-cheatsheet-syntax">1. item</span>
-                            <span class="markdown-cheatsheet-desc">Numbered list</span>
+                            <span class="markdown-cheatsheet-desc">List</span>
                         </div>
                         <div class="markdown-cheatsheet-item">
                             <span class="markdown-cheatsheet-syntax">[link](url)</span>
@@ -5323,11 +5415,19 @@ function hello() {
                             <span class="markdown-cheatsheet-syntax">> quote</span>
                             <span class="markdown-cheatsheet-desc">Quote</span>
                         </div>
+                        <div class="markdown-cheatsheet-item">
+                            <span class="markdown-cheatsheet-syntax">```code```</span>
+                            <span class="markdown-cheatsheet-desc">Code block</span>
+                        </div>
+                        <div class="markdown-cheatsheet-item">
+                            <span class="markdown-cheatsheet-syntax">| table |</span>
+                            <span class="markdown-cheatsheet-desc">Tables</span>
+                        </div>
                     </div>
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn-save" onclick="closeMarkdownHelp()">Got it!</button>
+                <button class="btn-save" onclick="closeMarkdownHelp()">Got it! Let's write! 🚀</button>
             </div>
         </div>
     </div>
