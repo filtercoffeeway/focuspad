@@ -916,7 +916,15 @@ async function deleteNote(noteId, event) {
             try {
                 // Update the notes list display
                 console.log('Refreshing notes list...');
+                console.log('Notes array length before render:', notes.length);
                 renderNotesList();
+                
+                // Force a small delay and re-render to ensure DOM updates
+                setTimeout(() => {
+                    console.log('Force re-rendering notes list after delay...');
+                    renderNotesList();
+                }, 100);
+                
             } catch (error) {
                 console.error('Error rendering notes list:', error);
             }
