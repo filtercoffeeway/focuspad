@@ -731,38 +731,18 @@ def ai_summarize_note(note_id):
         current_app.logger.info(f"AI summarizing note {note_id} for user {current_user_id}")
         
         # Create AI prompt for summarization and organization
-        prompt = f"""Please analyze and organize the following note content into a well-structured, readable markdown document.
+        prompt = f"""You are an AI assistant. Clean and organize the following markdown notes by fixing grammar and spelling mistakes only.
 
-Your task is to:
-1. Understand the context and purpose of the content
-2. Create logical sections with appropriate headings based on the actual content
-3. Improve clarity and readability while preserving all important information
-4. Use natural, contextual headings that make sense for the specific content
+Do not add new information or change the original meaning.
+Add appropriate headers where it makes sense to improve readability.
+Preserve the markdown formatting and structure.
+Keep the content concise and aligned clearly.
 
-Guidelines for organization:
-- Use clear, descriptive headings that reflect the actual content
-- Group related information together logically
-- Maintain the original meaning and intent
-- Use markdown formatting for better readability:
-  * # for main headings
-  * ## for subheadings  
-  * ### for smaller sections
-  * - for bullet points
-  * **bold** for emphasis
-  * `code` for technical terms
-  * > for important quotes or notes
-
-Do not force content into predefined categories. Instead, let the content guide the organization. For example:
-- Meeting notes might have "Discussion Points", "Decisions Made", "Next Steps"
-- Project plans might have "Objectives", "Timeline", "Resources", "Risks"
-- Research notes might have "Findings", "Methodology", "Conclusions"
-- Personal notes might have "Thoughts", "Reflections", "Goals"
-
-Here's the content to organize:
+Here's the content to clean and organize:
 
 {content}
 
-Please return a well-organized markdown document that makes the content easy to read and understand, using headings that naturally fit the content type and context."""
+Please return a well-organized markdown document with corrected grammar and spelling, using simple headers that naturally fit the content."""
 
         try:
             # Call AI service to summarize and organize content
