@@ -85,10 +85,10 @@ function renderNoteDisplay() {
                     <button class="markdown-mode-toggle" onclick="toggleMarkdownMode()">
                         📝 Edit
                     </button>
-                    <button class="markdown-help-btn" onclick="aiSummarizeNote()" title="AI Organize Note Content">
+                    <button class="markdown-control-btn ai-summarize-btn" onclick="aiSummarizeNote()" title="AI Organize Note Content">
                         🤖 AI Organize
                     </button>
-                    <button class="markdown-help-btn" onclick="exportNoteToPDF()" title="Export as PDF">
+                    <button class="markdown-control-btn" onclick="exportNoteToPDF()" title="Export as PDF">
                         📄 Export PDF
                     </button>
                 </div>
@@ -133,10 +133,10 @@ function renderModernNoteDisplay() {
                     <button class="markdown-mode-toggle" onclick="toggleMarkdownMode()">
                         📝 Edit
                     </button>
-                    <button class="markdown-help-btn" onclick="aiSummarizeNote()" title="AI Organize Note Content">
+                    <button class="markdown-control-btn ai-summarize-btn" onclick="aiSummarizeNote()" title="AI Organize Note Content">
                         🤖 AI Organize
                     </button>
-                    <button class="markdown-help-btn" onclick="exportNoteToPDF()" title="Export as PDF">
+                    <button class="markdown-control-btn" onclick="exportNoteToPDF()" title="Export as PDF">
                         📄 Export PDF
                     </button>
                 </div>
@@ -169,10 +169,10 @@ function renderModernNoteDisplay() {
                     <button class="markdown-help-btn" onclick="showMarkdownHelp()" title="Markdown syntax help">
                         ❓ Help
                     </button>
-                    <button class="markdown-help-btn" onclick="aiSummarizeNote()" title="AI Organize Note Content">
+                    <button class="markdown-control-btn ai-summarize-btn" onclick="aiSummarizeNote()" title="AI Organize Note Content">
                         🤖 AI Organize
                     </button>
-                    <button class="markdown-help-btn" onclick="exportNoteToPDF()" title="Export as PDF">
+                    <button class="markdown-control-btn" onclick="exportNoteToPDF()" title="Export as PDF">
                         📄 Export PDF
                     </button>
                 </div>
@@ -430,7 +430,7 @@ async function aiSummarizeNote() {
     }
     
     // Update button state
-    const aiButton = document.querySelector('.markdown-help-btn[onclick*="aiSummarizeNote"]');
+    const aiButton = document.querySelector('.markdown-control-btn.ai-summarize-btn');
     const originalButtonText = aiButton ? aiButton.innerHTML : '';
     if (aiButton) {
         aiButton.innerHTML = '🤖 Organizing...';
@@ -581,7 +581,7 @@ async function exportNoteToPDF() {
     console.log('Starting PDF generation for:', noteTitle);
 
     // Update button state
-    const pdfButton = document.querySelector('.markdown-help-btn[onclick*="exportNoteToPDF"]');
+    const pdfButton = document.querySelector('.markdown-control-btn[onclick*="exportNoteToPDF"]');
     const originalButtonText = pdfButton ? pdfButton.innerHTML : '';
     if (pdfButton) {
         pdfButton.innerHTML = '📄 Generating...';
@@ -1031,7 +1031,7 @@ function getFirstLineAsTitle(note) {
     }
     
     // Final fallback
-    return note.title || 'Untitled Note';
+    return 'Untitled Note';
 }
 
 // Helper function to save todos to localStorage
