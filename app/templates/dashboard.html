@@ -4742,6 +4742,29 @@
             localStorage.removeItem('focuspad-tutorial-completed');
             showTutorial();
         }
+
+        // Logout function
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                window.location.href = '/logout';
+            }
+        }
+
+        // Toggle profile dropdown
+        function toggleProfileDropdown() {
+            const dropdown = document.getElementById('profileDropdown');
+            dropdown.classList.toggle('show');
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            const profileContainer = document.querySelector('.profile-container');
+            const dropdown = document.getElementById('profileDropdown');
+            
+            if (dropdown && !profileContainer.contains(event.target)) {
+                dropdown.classList.remove('show');
+            }
+        });
     </script>
 
     <!-- Welcome Banner for returning users -->
@@ -4755,5 +4778,38 @@
     </div>
 
     <!-- Tutorial Overlay -->
+    <div class="tutorial-overlay" id="tutorialOverlay">
+        <div class="tutorial-step" id="tutorialStep">
+            <button class="tutorial-skip" onclick="skipTutorial()" title="Skip tutorial">&times;</button>
+            
+            <div class="tutorial-step-header">
+                <div class="tutorial-step-number" id="stepNumber">1</div>
+                <div class="tutorial-step-title" id="stepTitle">Welcome to FocusPad!</div>
+                <div class="tutorial-step-description" id="stepDescription">
+                    Let's get you started with AI-powered note organization in just 4 quick steps.
+                </div>
+            </div>
+
+            <div class="tutorial-step-visual" id="stepVisual">
+                <!-- Dynamic content will be inserted here -->
+            </div>
+
+            <div class="tutorial-step-actions">
+                <button class="tutorial-btn tutorial-btn-secondary" id="prevBtn" onclick="previousStep()" style="display: none;">
+                    Previous
+                </button>
+                <button class="tutorial-btn tutorial-btn-primary" id="nextBtn" onclick="nextStep()">
+                    Get Started
+                </button>
+            </div>
+
+            <div class="tutorial-progress">
+                <div class="tutorial-progress-dot active"></div>
+                <div class="tutorial-progress-dot"></div>
+                <div class="tutorial-progress-dot"></div>
+                <div class="tutorial-progress-dot"></div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
