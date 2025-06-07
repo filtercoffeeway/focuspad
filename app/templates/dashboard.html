@@ -15,6 +15,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.3.0/marked.min.js"></script>
+    <script src="{{ url_for('static', filename='missing_functions.js') }}"></script>
     <script>
         // Check if libraries loaded and add fallback
         window.addEventListener('load', function() {
@@ -2406,6 +2407,631 @@
             transform: none;
             box-shadow: none;
         }
+
+        /* Main content styles continue here */
+        
+        /* Tab Navigation Styles */
+        .tab-navigation {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            padding: 0 20px;
+            display: flex;
+            align-items: center;
+            transition: background-color 0.3s ease, border-color 0.3s ease;
+        }
+
+        .tab-list {
+            display: flex;
+            gap: 2px;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .tab-button {
+            background: transparent;
+            border: none;
+            padding: 12px 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-radius: 8px 8px 0 0;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .tab-button:hover {
+            background: var(--hover-bg);
+            color: var(--text-secondary);
+        }
+
+        .tab-button.active {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            border-bottom: 2px solid var(--accent-border);
+        }
+
+        .tab-button.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: var(--bg-primary);
+        }
+
+        .tab-content {
+            flex: 1;
+            overflow: hidden;
+            background: var(--bg-primary);
+        }
+
+        .tab-panel {
+            display: none;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .tab-panel.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* To Do specific styles */
+        .todo-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .todo-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+            background: var(--bg-secondary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .todo-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .todo-controls {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .show-completed-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        .toggle-checkbox {
+            width: 16px;
+            height: 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 3px;
+            cursor: pointer;
+            position: relative;
+            background: var(--bg-primary);
+        }
+
+        .toggle-checkbox.checked {
+            background: var(--accent-border);
+            border-color: var(--accent-border);
+        }
+
+        .toggle-checkbox.checked::after {
+            content: '✓';
+            position: absolute;
+            top: -1px;
+            left: 2px;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .todo-table-container {
+            flex: 1;
+            overflow: auto;
+            padding: 20px;
+        }
+
+        .todo-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px var(--shadow);
+        }
+
+        .todo-table th {
+            background: var(--bg-tertiary);
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.875rem;
+        }
+
+        .todo-table td {
+            padding: 12px 8px;
+            border-bottom: 1px solid var(--border);
+            vertical-align: top;
+            position: relative;
+        }
+
+        .todo-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .todo-table tr:hover {
+            background-color: var(--hover-bg);
+        }
+
+        .todo-table tr[style*="cursor: pointer"]:hover {
+            background-color: var(--hover-bg);
+            transition: background-color 0.2s;
+        }
+
+        .todo-task-name {
+            font-weight: 500;
+            max-width: 300px;
+            word-wrap: break-word;
+        }
+
+        .todo-due-date {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            min-width: 100px;
+        }
+
+        .todo-due-date.overdue {
+            color: #dc2626;
+            font-weight: 500;
+        }
+
+        .todo-due-date.due-soon {
+            color: #f59e0b;
+            font-weight: 500;
+        }
+
+        .todo-status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .todo-status.not-started {
+            background: #f3f4f6;
+            color: #374151;
+        }
+
+        .todo-status.in-progress {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .todo-status.completed {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        [data-theme="dark"] .todo-status.not-started {
+            background: #374151;
+            color: #d1d5db;
+        }
+
+        [data-theme="dark"] .todo-status.in-progress {
+            background: #451a03;
+            color: #fbbf24;
+        }
+
+        [data-theme="dark"] .todo-status.completed {
+            background: #064e3b;
+            color: #34d399;
+        }
+
+        .todo-comments {
+            max-width: 200px;
+            word-wrap: break-word;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        .empty-todo-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--text-muted);
+            text-align: center;
+            padding: 40px;
+        }
+
+        .empty-todo-icon {
+            font-size: 3rem;
+            margin-bottom: 16px;
+            opacity: 0.6;
+        }
+
+        .empty-todo-state h3 {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .empty-todo-state p {
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        /* Manual To Do Creation */
+        .add-todo-btn {
+            background: var(--accent-border);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .add-todo-btn:hover {
+            background: #0284c7;
+            transform: translateY(-1px);
+        }
+
+        .todo-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .delete-todo-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            font-size: 0.875rem;
+            transition: all 0.2s ease;
+            opacity: 0;
+        }
+
+        .todo-table tr:hover .delete-todo-btn {
+            opacity: 1;
+        }
+
+        .delete-todo-btn:hover {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+        }
+
+        .ai-extract-btn {
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .ai-extract-btn:hover {
+            background: var(--hover-bg);
+            border-color: var(--accent-border);
+        }
+
+        .todo-modal .form-row {
+            display: flex;
+            gap: 12px;
+        }
+
+        .todo-modal .form-row .form-group {
+            flex: 1;
+        }
+
+        .status-select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 0.875rem;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            transition: border-color 0.2s ease;
+        }
+
+        .status-select:focus {
+            outline: none;
+            border-color: var(--accent-border);
+            box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.1);
+        }
+
+        /* Editable Comments Styles */
+        .todo-comments-editable {
+            min-height: 20px;
+            max-width: 200px;
+            word-wrap: break-word;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+            cursor: text;
+            position: relative;
+        }
+
+        .todo-comments-editable:hover {
+            background: var(--hover-bg);
+        }
+
+        .todo-comments-editable[contenteditable="true"] {
+            background: var(--bg-primary);
+            border: 1px solid var(--accent-border);
+            box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.1);
+            outline: none;
+        }
+
+        .todo-comments-editable.saving {
+            background: var(--accent-bg);
+            opacity: 0.7;
+        }
+
+        .todo-comments-editable.saved {
+            background: #d1fae5;
+            border-color: #10b981;
+        }
+
+        [data-theme="dark"] .todo-comments-editable.saved {
+            background: #064e3b;
+            border-color: #10b981;
+        }
+
+        .todo-comments-editable:empty::before {
+            content: 'Click to add comments...';
+            color: var(--text-light);
+            font-style: italic;
+        }
+
+        /* Editable Task Name Styles */
+        .todo-task-editable {
+            font-weight: 500;
+            max-width: 300px;
+            word-wrap: break-word;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+            cursor: text;
+            min-height: 20px;
+        }
+
+        .todo-task-editable:hover {
+            background: var(--hover-bg);
+        }
+
+        .todo-task-editable[contenteditable="true"] {
+            background: var(--bg-primary);
+            border: 1px solid var(--accent-border);
+            box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.1);
+            outline: none;
+        }
+
+        .todo-task-editable.saving {
+            background: var(--accent-bg);
+            opacity: 0.7;
+        }
+
+        .todo-task-editable.saved {
+            background: #d1fae5;
+            border-color: #10b981;
+        }
+
+        [data-theme="dark"] .todo-task-editable.saved {
+            background: #064e3b;
+            border-color: #10b981;
+        }
+
+        /* Editable Due Date Styles */
+        .todo-due-date-editable {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            min-width: 100px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            min-height: 20px;
+        }
+
+        .todo-due-date-editable:hover {
+            background: var(--hover-bg);
+        }
+
+        .todo-due-date-editable.editing {
+            background: var(--bg-primary);
+            border: 1px solid var(--accent-border);
+            box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.1);
+        }
+
+        .todo-due-date-editable.saving {
+            background: var(--accent-bg);
+            opacity: 0.7;
+        }
+
+        .todo-due-date-editable.saved {
+            background: #d1fae5;
+            border-color: #10b981;
+        }
+
+        [data-theme="dark"] .todo-due-date-editable.saved {
+            background: #064e3b;
+            border-color: #10b981;
+        }
+
+        .todo-due-date-input {
+            background: transparent;
+            border: none;
+            outline: none;
+            color: inherit;
+            font-size: inherit;
+            width: 100%;
+        }
+
+        /* Editable Status Styles */
+        .todo-status-editable {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .todo-status-editable:hover {
+            transform: scale(1.05);
+        }
+
+        .todo-status-editable.editing {
+            box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.3);
+            position: relative;
+            z-index: 9999;
+            isolation: isolate;
+        }
+
+        .todo-status-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            margin-top: 4px;
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+            z-index: 10000;
+            min-width: 140px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-8px);
+            transition: all 0.2s ease;
+            /* Ensure solid background */
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .todo-status-dropdown.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .todo-status-option {
+            padding: 10px 14px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: background 0.2s ease;
+            background: #ffffff;
+            border: none;
+            position: relative;
+            z-index: 10001;
+        }
+
+        .todo-status-option:hover {
+            background: #f3f4f6;
+        }
+
+        .todo-status-option:first-child {
+            border-radius: 8px 8px 0 0;
+        }
+
+        .todo-status-option:last-child {
+            border-radius: 0 0 8px 8px;
+        }
+
+        .todo-status-option.not-started {
+            color: #374151;
+        }
+
+        .todo-status-option.in-progress {
+            color: #92400e;
+        }
+
+        .todo-status-option.completed {
+            color: #065f46;
+        }
+
+        [data-theme="dark"] .todo-status-option.not-started {
+            color: #d1d5db;
+        }
+
+        [data-theme="dark"] .todo-status-option.in-progress {
+            color: #fbbf24;
+        }
+
+        [data-theme="dark"] .todo-status-option.completed {
+            color: #34d399;
+        }
+
+        .todo-status-option.selected {
+            background-color: var(--primary-light);
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        [data-theme="dark"] .todo-status-option.selected {
+            background-color: var(--primary-dark);
+            color: var(--primary-light);
+        }
+
+        [data-theme="dark"] .todo-status-dropdown {
+            background: #1f2937;
+            border-color: #374151;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        }
+
+        [data-theme="dark"] .todo-status-option {
+            background: #1f2937;
+        }
+
+        [data-theme="dark"] .todo-status-option:hover {
+            background: #374151;
+        }
     </style>
 </head>
 <body>
@@ -2495,11 +3121,55 @@
 
         <!-- Main Content -->
         <div class="main-content">
-            <div class="note-display" id="noteDisplay">
-                <div class="empty-state">
-                    <div class="empty-icon">📝</div>
-                    <h3>Welcome to FocusPad</h3>
-                    <p>Select a note from the sidebar or create a new one to start writing. Use the AI Organize feature to structure your thoughts!</p>
+            <!-- Tab Navigation -->
+            <div class="tab-navigation">
+                <ul class="tab-list">
+                    <li><button class="tab-button active" onclick="switchTab('notes')" id="notesTab">📝 Notes</button></li>
+                    <li><button class="tab-button" onclick="switchTab('todo')" id="todoTab">✅ To Do</button></li>
+                </ul>
+            </div>
+
+            <!-- Tab Content -->
+            <div class="tab-content">
+                <!-- Notes Tab Panel -->
+                <div class="tab-panel active" id="notesPanel">
+                    <div class="note-display" id="noteDisplay">
+                        <div class="empty-state">
+                            <div class="empty-icon">📝</div>
+                            <h3>Welcome to FocusPad</h3>
+                            <p>Select a note from the sidebar or create a new one to start writing. Use the AI Organize feature to structure your thoughts!</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- To Do Tab Panel -->
+                <div class="tab-panel" id="todoPanel">
+                    <div class="todo-container">
+                        <div class="todo-header">
+                            <div class="todo-title">To Do List</div>
+                            <div class="todo-controls">
+                                <button class="ai-extract-btn" onclick="aiExtractTodos()" title="Use AI to find action items in notes">
+                                    🤖 AI Extract
+                                </button>
+                                <button class="add-todo-btn" onclick="openAddTodoModal()">
+                                    ➕ Add Task
+                                </button>
+                                <div class="show-completed-toggle">
+                                    <div class="toggle-checkbox" id="showCompletedToggle" onclick="toggleShowCompleted()"></div>
+                                    <span>Show completed</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="todo-table-container">
+                            <div id="todoTableContainer">
+                                <div class="empty-todo-state">
+                                    <div class="empty-todo-icon">📋</div>
+                                    <h3>No Tasks Yet</h3>
+                                    <p>Create notes with to-do items and they will automatically appear here.<br>Use formats like:<br>• "TODO: Task description"<br>• "[ ] Task to complete"<br>• "- [ ] Another task format"</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -2508,7 +3178,311 @@
     <script>
         let currentNote = null;
         let notes = [];
+        let todos = [];
+        let showCompleted = false;
         const accessToken = "{{ access_token }}";
+
+        // Tab Management Functions
+        function switchTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(tabName + 'Tab').classList.add('active');
+            
+            // Update tab panels
+            document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('active'));
+            document.getElementById(tabName + 'Panel').classList.add('active');
+            
+            // Load appropriate content
+            if (tabName === 'todo') {
+                extractAndLoadTodos();
+            }
+        }
+
+        // To-Do Management Functions
+        function toggleShowCompleted() {
+            showCompleted = !showCompleted;
+            const toggle = document.getElementById('showCompletedToggle');
+            if (showCompleted) {
+                toggle.classList.add('checked');
+            } else {
+                toggle.classList.remove('checked');
+            }
+            renderTodoTable();
+        }
+
+        function extractTodosFromNotes() {
+            const extractedTodos = [];
+            
+            notes.forEach(note => {
+                if (!note.markdown_content && !note.raw_content) return;
+                
+                const content = note.markdown_content || note.raw_content || '';
+                const lines = content.split('\n');
+                let currentTaskSection = false;
+                let taskSectionName = '';
+                
+                lines.forEach((line, lineIndex) => {
+                    const trimmedLine = line.trim();
+                    let todoMatch = null;
+                    let taskName = '';
+                    let status = 'not-started';
+                    
+                    // Check if this line is a task-related heading
+                    const taskHeadingMatch = trimmedLine.match(/^#+\s*(.*(?:task|todo|action|pending|checklist|to-do|deliverable|milestone).*)/i);
+                    if (taskHeadingMatch) {
+                        currentTaskSection = true;
+                        taskSectionName = taskHeadingMatch[1];
+                        return; // Don't process the heading itself as a task
+                    }
+                    
+                    // Reset task section when we hit a different heading
+                    if (trimmedLine.match(/^#+\s+/)) {
+                        currentTaskSection = false;
+                        taskSectionName = '';
+                        return;
+                    }
+                    
+                    // Match various to-do formats
+                    if (todoMatch = trimmedLine.match(/^(?:TODO:|TODO\s|To\s?Do:?)\s*(.+)$/i)) {
+                        taskName = todoMatch[1].trim();
+                    } else if (todoMatch = trimmedLine.match(/^[-*]\s*\[\s*([xX]?)\s*\]\s*(.+)$/)) {
+                        taskName = todoMatch[2].trim();
+                        status = todoMatch[1] ? 'completed' : 'not-started';
+                    } else if (todoMatch = trimmedLine.match(/^(?:[-*]\s*)?(.+?)\s*(?:\((?:todo|task|action)\)|\s*(?:--?|—)\s*(?:todo|task|action))\s*$/i)) {
+                        taskName = todoMatch[1].trim();
+                    } else if (currentTaskSection && (todoMatch = trimmedLine.match(/^[-*+]\s*(.+)$/))) {
+                        // Extract bullet points under task-related headings
+                        taskName = todoMatch[1].trim();
+                    } else if (currentTaskSection && (todoMatch = trimmedLine.match(/^\d+\.\s*(.+)$/))) {
+                        // Extract numbered lists under task-related headings
+                        taskName = todoMatch[1].trim();
+                    }
+                    
+                    if (taskName) {
+                        // Extract due date if present
+                        let dueDate = null;
+                        const dueDateMatch = taskName.match(/(?:by|due|deadline?)\s*:?\s*(\d{1,2}\/\d{1,2}\/?\d{0,4}|\d{4}-\d{2}-\d{2}|(?:today|tomorrow|next week|this week))/i);
+                        if (dueDateMatch) {
+                            const dateStr = dueDateMatch[1].toLowerCase();
+                            if (dateStr === 'today') {
+                                dueDate = new Date().toISOString().split('T')[0];
+                            } else if (dateStr === 'tomorrow') {
+                                const tomorrow = new Date();
+                                tomorrow.setDate(tomorrow.getDate() + 1);
+                                dueDate = tomorrow.toISOString().split('T')[0];
+                            } else if (dateStr === 'next week') {
+                                const nextWeek = new Date();
+                                nextWeek.setDate(nextWeek.getDate() + 7);
+                                dueDate = nextWeek.toISOString().split('T')[0];
+                            } else if (dateStr === 'this week') {
+                                const thisWeek = new Date();
+                                const daysUntilFriday = 5 - thisWeek.getDay();
+                                thisWeek.setDate(thisWeek.getDate() + Math.max(0, daysUntilFriday));
+                                dueDate = thisWeek.toISOString().split('T')[0];
+                            } else {
+                                // Try to parse other date formats
+                                try {
+                                    const parsed = new Date(dueDateMatch[1]);
+                                    if (!isNaN(parsed.getTime())) {
+                                        dueDate = parsed.toISOString().split('T')[0];
+                                    }
+                                } catch (e) {
+                                    // Ignore invalid dates
+                                }
+                            }
+                            // Remove the due date from task name
+                            taskName = taskName.replace(dueDateMatch[0], '').trim();
+                        }
+                        
+                        // Extract status indicators
+                        if (taskName.match(/\b(?:done|completed|finished)\b/i)) {
+                            status = 'completed';
+                            taskName = taskName.replace(/\b(?:done|completed|finished)\b/i, '').trim();
+                        } else if (taskName.match(/\b(?:in progress|working on|started)\b/i)) {
+                            status = 'in-progress';
+                            taskName = taskName.replace(/\b(?:in progress|working on|started)\b/i, '').trim();
+                        }
+                        
+                        // Create context comment
+                        let contextComment = `From note: ${getFirstLineAsTitle(note)}`;
+                        if (currentTaskSection && taskSectionName) {
+                            contextComment += ` (${taskSectionName})`;
+                        }
+                        
+                        extractedTodos.push({
+                            id: `${note.id}-${lineIndex}`,
+                            taskName: taskName,
+                            dueDate: dueDate,
+                            status: status,
+                            comments: contextComment,
+                            noteId: note.id,
+                            noteName: getFirstLineAsTitle(note)
+                        });
+                    }
+                });
+            });
+            
+            return extractedTodos;
+        }
+
+        function sortTodos(todos) {
+            return todos.sort((a, b) => {
+                // Null due dates go to top
+                if (!a.dueDate && !b.dueDate) return 0;
+                if (!a.dueDate) return -1;
+                if (!b.dueDate) return 1;
+                
+                // Sort by due date ascending
+                return new Date(a.dueDate) - new Date(b.dueDate);
+            });
+        }
+
+        function extractAndLoadTodos() {
+            // First load any saved todos from storage
+            loadTodosFromStorage();
+            
+            // Then extract new todos from notes and merge them
+            const extractedTodos = extractTodosFromNotes();
+            
+            // Merge extracted todos with existing todos, avoiding duplicates
+            extractedTodos.forEach(extractedTodo => {
+                if (!todos.find(existing => existing.id === extractedTodo.id)) {
+                    todos.push(extractedTodo);
+                }
+            });
+            
+            todos = sortTodos(todos);
+            renderTodoTable();
+        }
+
+        function renderTodoTable() {
+            const container = document.getElementById('todoTableContainer');
+            const filteredTodos = showCompleted ? todos : todos.filter(todo => todo.status !== 'completed');
+            
+            if (filteredTodos.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-todo-state">
+                        <div class="empty-todo-icon">📋</div>
+                        <h3>${todos.length > 0 ? 'All Tasks Completed!' : 'No Tasks Yet'}</h3>
+                        <p>${todos.length > 0 ? 
+                            'Great job! All your tasks are completed.<br>Toggle "Show completed" to see them.' : 
+                            'Create notes with to-do items and they will automatically appear here.<br>Use formats like:<br>• "TODO: Task description"<br>• "[ ] Task to complete"<br>• "- [ ] Another task format"<br><br>Or click "Add Task" to create tasks manually.'
+                        }</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            const now = new Date();
+            const todayStr = now.toISOString().split('T')[0];
+            const tomorrowStr = new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+            
+            container.innerHTML = `
+                <table class="todo-table">
+                    <thead>
+                        <tr>
+                            <th>Task Name</th>
+                            <th>Due Date</th>
+                            <th>Status</th>
+                            <th>Comments</th>
+                            <th style="width: 60px;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${filteredTodos.map(todo => {
+                            let dueDateClass = '';
+                            let dueDateText = todo.dueDate || '-';
+                            
+                            if (todo.dueDate) {
+                                // Format date without timezone conversion
+                                const dateStr = todo.dueDate;
+                                dueDateText = new Date(dateStr + 'T00:00:00').toLocaleDateString();
+                                
+                                if (todo.dueDate < todayStr) {
+                                    dueDateClass = 'overdue';
+                                } else if (todo.dueDate === todayStr || todo.dueDate === tomorrowStr) {
+                                    dueDateClass = 'due-soon';
+                                }
+                            }
+                            
+                            const clickHandler = todo.isManual ? '' : 
+                                (todo.noteId ? `onclick="handleTodoRowClick(event, '${todo.noteId}')"` : '');
+                            const cursorStyle = (todo.isManual || !todo.noteId) ? '' : 'style="cursor: pointer;"';
+                            
+                            return `
+                                <tr ${clickHandler} ${cursorStyle}>
+                                    <td class="todo-task-name">
+                                        <div class="todo-task-editable" 
+                                             data-todo-id="${todo.id}"
+                                             data-field="taskName"
+                                             onclick="event.stopPropagation(); startEditingField(this, 'taskName')"
+                                             onblur="saveField(this, 'taskName')"
+                                             onkeydown="handleFieldKeydown(event, this, 'taskName')"
+                                             title="Click to edit task name">${escapeHtml(todo.taskName)}</div>
+                                    </td>
+                                    <td class="todo-due-date ${dueDateClass}">
+                                        <div class="todo-due-date-editable" 
+                                             data-todo-id="${todo.id}"
+                                             data-field="dueDate"
+                                             onclick="event.stopPropagation(); startEditingDate(this)"
+                                             title="Click to edit due date">${dueDateText}</div>
+                                    </td>
+                                    <td>
+                                        <div class="todo-status-editable todo-status ${todo.status}" 
+                                             data-todo-id="${todo.id}"
+                                             data-field="status"
+                                             onclick="event.stopPropagation(); startEditingStatus(this)"
+                                             title="Click to change status">${todo.status.replace('-', ' ')}</div>
+                                    </td>
+                                    <td class="todo-comments">
+                                        <div class="todo-comments-editable" 
+                                             data-todo-id="${todo.id}"
+                                             onclick="event.stopPropagation(); startEditingComment(this)"
+                                             onblur="saveComment(this)"
+                                             onkeydown="handleCommentKeydown(event, this)"
+                                             title="Click to edit comments">${escapeHtml(todo.comments || '')}</div>
+                                    </td>
+                                    <td class="todo-actions">
+                                        <button class="delete-todo-btn" onclick="event.stopPropagation(); deleteTodo('${todo.id}')" title="Delete task">🗑️</button>
+                                    </td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        function handleTodoRowClick(event, noteId) {
+            // Only navigate if the click is not on an editable element or interactive control
+            const target = event.target;
+            
+            // Don't navigate if clicking on editable elements, buttons, or inputs
+            if (target.closest('.todo-task-editable') || 
+                target.closest('.todo-due-date-editable') || 
+                target.closest('.todo-status-editable') || 
+                target.closest('.todo-comments-editable') || 
+                target.closest('.delete-todo-btn') ||
+                target.closest('input') ||
+                target.closest('button') ||
+                target.closest('.todo-status-dropdown')) {
+                return;
+            }
+            
+            // Only navigate on clicking empty areas or specifically the row background
+            selectNoteFromTodo(noteId);
+        }
+
+        function selectNoteFromTodo(noteId) {
+            // Switch to notes tab
+            switchTab('notes');
+            
+            // Find and select the note
+            const note = notes.find(n => n.id === noteId);
+            if (note) {
+                selectNote(note);
+            }
+        }
 
         // Function to handle token expiration and redirect to login
         function handleTokenExpiration(response) {
@@ -2779,8 +3753,19 @@
         }
 
         // Select a note
-        async function selectNote(noteId) {
-            console.log('Selecting note with ID:', noteId);
+        async function selectNote(noteIdOrObject) {
+            console.log('Selecting note with ID or object:', noteIdOrObject);
+            
+            // Ensure we're on the Notes tab when selecting a note
+            switchTab('notes');
+            
+            // Handle both note objects and note IDs
+            let noteId;
+            if (typeof noteIdOrObject === 'object' && noteIdOrObject.id) {
+                noteId = noteIdOrObject.id;
+            } else {
+                noteId = noteIdOrObject;
+            }
             
             if (!noteId || noteId === 'undefined') {
                 console.error('Invalid note ID:', noteId);
@@ -2795,7 +3780,7 @@
                 window.location.href = '/login';
                 return;
             }
-            
+
             try {
                 // Update UI first
                 document.querySelectorAll('.note-item').forEach(item => {
@@ -2876,964 +3861,500 @@
             }
         }
 
-        // Render note in main display area
-        function renderNoteDisplay() {
-            const noteDisplay = document.getElementById('noteDisplay');
+        // AI-Powered Action Item Extraction
+        async function aiExtractTodos() {
+            const aiBtn = document.querySelector('.ai-extract-btn');
+            const originalText = aiBtn.innerHTML;
             
-            if (!currentNote) {
-                noteDisplay.innerHTML = `
-                    <div class="empty-state">
-                        <div class="empty-icon">📝</div>
-                        <h3>Welcome to FocusPad</h3>
-                        <p>Select a note from the sidebar or create a new one to start writing. Use the AI Organize feature to structure your thoughts!</p>
-                    </div>
-                `;
-                return;
-            }
-
-            const formatNoteDate = (dateString) => {
-                if (!dateString) return 'Not specified';
-                const date = new Date(dateString);
-                const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
-                return `${months[date.getMonth()]}-${String(date.getDate()).padStart(2, '0')}-${date.getFullYear()}`;
-            };
-            
-            noteDisplay.innerHTML = `
-                <div id="noteContentForPdf"> 
-                    ${currentNote.raw_content ? `
-                    <div class="content-section raw-content-section" id="rawContentSection" style="display: none;" onclick="event.stopPropagation()">
-                        <div class="raw-content-header">
-                            <h4>📄 Raw Content</h4>
-                            <button class="raw-content-close" onclick="toggleRawContent()" title="Hide raw content">×</button>
-                        </div>
-                        <div class="raw-content-body">
-                            ${formatRawContentAsParagraphs(currentNote.raw_content)}
-                        </div>
-                    </div>
-                    ` : ''}
-
-                    <div class="markdown-container" id="markdownContainer">
-                        <div class="markdown-header">
-                            <span class="markdown-mode-label" id="markdownModeLabel"></span>
-                            <div class="markdown-controls">
-                                <button class="markdown-control-btn" onclick="console.log('PDF button clicked'); downloadNoteAsPDF()" title="Download as PDF">⬇️ Download PDF</button>
-                                ${currentNote.raw_content ? `<button class="markdown-control-btn" id="rawContentToggle" onclick="toggleRawContent()" title="Toggle raw content visibility">📄 Raw Content</button>` : ''}
-                                <button class="markdown-control-btn ai-summarize-btn" onclick="aiSummarizeContent()" title="AI Organize & Structure">🤖 AI Organize</button>
-                                <button class="markdown-control-btn markdown-help-btn" id="markdownHelpBtn" onclick="showMarkdownHelp()" title="Markdown Syntax Guide">
-                                    📖 Help
-                                </button>
-                                <button class="markdown-control-btn markdown-mode-toggle" id="markdownModeToggle" onclick="toggleMarkdownMode()">Edit</button>
-                            </div>
-                        </div>
-                        <div class="markdown-content">
-                            <div class="markdown-view" id="markdownView" onclick="toggleMarkdownMode()">
-                                <!-- Rendered markdown will go here -->
-                            </div>
-                            <div class="markdown-edit" id="markdownEdit">
-                                <textarea class="markdown-editor" id="markdownEditor" placeholder="Start writing your notes here...
-
-Write freely - add your thoughts, ideas, meeting notes, or any content. When you're ready, click the 'AI Organize' button to have AI structure your content with natural headings and organization.
-
-You can use markdown syntax:
-- **Bold text**
-- *Italic text*
-- ## Subheadings
-- ### Smaller headings
-- \`Code snippets\`
-
-> Important notes
-
-Content auto-saves when you switch to preview mode."></textarea>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-
-            // Initialize markdown content directly from API
-            markdownContent = currentNote.markdown_content || '';
-            
-            // FALLBACK: If no markdown content but we have old-style content, convert it
-            if (!markdownContent.trim() && currentNote.content && typeof currentNote.content === 'object') {
-                console.log('No markdown content found, converting from legacy content...');
-                markdownContent = convertContentToMarkdown(currentNote.content);
-                console.log('Converted markdown:', markdownContent);
-            }
-            
-            // Set up the editor
-            const markdownEditor = document.getElementById('markdownEditor');
-            const markdownView = document.getElementById('markdownView');
-            const markdownLabel = document.getElementById('markdownModeLabel');
-            
-            // Update label based on content
-            if (markdownLabel) {
-                markdownLabel.textContent = '';  // Always empty - no text in top bar
-            }
-            
-            console.log('Setting up markdown editor...');
-            console.log('markdownContent:', markdownContent);
-            console.log('markdownEditor found:', !!markdownEditor);
-            console.log('markdownView found:', !!markdownView);
-            console.log('marked available:', typeof marked !== 'undefined');
-            
-            if (markdownEditor && markdownView) {
-                markdownEditor.value = markdownContent;
-                
-                try {
-                    if (markdownContent.trim()) {
-                        console.log('Rendering markdown content...');
-                        if (typeof marked !== 'undefined' && marked.parse) {
-                            markdownView.innerHTML = marked.parse(markdownContent);
-                            console.log('Markdown rendered successfully');
-                        } else {
-                            console.warn('marked.parse not available, using plain text');
-                            markdownView.innerHTML = `<pre>${escapeHtml(markdownContent)}</pre>`;
-                        }
-                    } else {
-                        console.log('No markdown content, showing empty message');
-                        markdownView.innerHTML = '<div class="markdown-empty">Click "Edit" to start writing your note in markdown...</div>';
-                    }
-                } catch (error) {
-                    console.error('Error rendering markdown:', error);
-                    markdownView.innerHTML = `<div class="markdown-error">Error rendering markdown: ${error.message}<br><pre>${escapeHtml(markdownContent)}</pre></div>`;
-                }
-                
-                // Initialize the editor
-                try {
-                    initializeMarkdownEditor();
-                    console.log('Markdown editor initialized');
-                } catch (error) {
-                    console.error('Error initializing markdown editor:', error);
-                }
-            } else {
-                console.error('Could not find markdown editor elements');
-            }
-        }
-
-        // Format raw content as proper paragraphs
-        function formatRawContentAsParagraphs(rawContent) {
-            if (!rawContent || !rawContent.trim()) {
-                return '<p><em>No content yet.</em></p>';
-            }
-
-            // Split by newlines, trim each line, and filter out empty lines
-            const lines = rawContent
-                .split(/\n/)
-                .map(line => line.trim())
-                .filter(line => line.length > 0);
-
-            if (lines.length === 0) {
-                return '<p><em>No content yet.</em></p>';
-            }
-
-            // Add periods to lines that don't end with punctuation, then join into one paragraph
-            const formattedLines = lines.map(line => {
-                // Check if line already ends with punctuation
-                const endsWithPunctuation = /[.!?:;,]$/.test(line);
-                return endsWithPunctuation ? line : line + '.';
-            });
-
-            // Join all lines with spaces to create one flowing paragraph
-            const paragraph = formattedLines.join(' ');
-
-            return `<p>${escapeHtml(paragraph)}</p>`;
-        }
-
-        // Format date relative to now (like "2 hours ago")
-        function formatRelativeDate(dateString) {
-            const date = new Date(dateString);
-            const now = new Date();
-            const diff = now - date;
-            const minutes = Math.floor(diff / 60000);
-            const hours = Math.floor(diff / 3600000);
-            const days = Math.floor(diff / 86400000);
-
-            if (minutes < 1) return 'Just now';
-            if (minutes < 60) return `${minutes} minute${minutes === 1 ? '' : 's'} ago`;
-            if (hours < 24) return `${hours} hour${hours === 1 ? '' : 's'} ago`;
-            if (days < 7) return `${days} day${days === 1 ? '' : 's'} ago`;
-            if (days < 30) return `${Math.floor(days / 7)} week${Math.floor(days / 7) === 1 ? '' : 's'} ago`;
-            return date.toLocaleDateString();
-        }
-
-        // Define preferred order without Summary
-        const categoryOrder = ['Key Points', 'Action Items', 'Ideas', 'References'];
-        
-        // Render categorized content using a simpler, markdown-like heading style
-        function renderCategorizedContent(categorizedContent) {
-            if (!categorizedContent || Object.keys(categorizedContent).length === 0) {
-                return `
-                    <div class="empty-category-section">
-                        <p>No content yet. Start adding some content below!</p>
-                    </div>
-                `;
-            }
-
-            // Sort categories by preferred order, then alphabetically
-            const sortedEntries = Object.entries(categorizedContent).sort(([categoryA], [categoryB]) => {
-                const indexA = categoryOrder.indexOf(categoryA);
-                const indexB = categoryOrder.indexOf(categoryB);
-                
-                if (indexA !== -1 && indexB !== -1) return indexA - indexB;
-                if (indexA !== -1 && indexB === -1) return -1;
-                if (indexA === -1 && indexB !== -1) return 1;
-                return categoryA.localeCompare(categoryB);
-            });
-
-            return sortedEntries.map(([category, categoryData]) => {
-                let items = categoryData;
-                
-                // Handle API structure - check for multiple nesting levels
-                if (categoryData && typeof categoryData === 'object') {
-                    if (categoryData.items) {
-                        items = categoryData.items;
-                        // Check for additional nesting level (categoryData.items.items)
-                        if (items && typeof items === 'object' && items.items && Array.isArray(items.items)) {
-                            items = items.items;
-                        }
-                    }
-                }
-
-                // Ensure items is an array
-                if (!Array.isArray(items)) {
-                    items = [];
-                }
-
-                const itemCount = items.length;
-                const categoryIcon = getCategoryIcon(category); // We might still use this or remove later based on styling
-
-                // Markdown-like structure: Heading + List of items
-                return `
-                    <div class="category-section" id="category-${category.replace(/\s+/g, '-').toLowerCase()}">
-                        <div class="category-heading-wrapper">
-                            <h3 class="category-heading">${categoryIcon} ${escapeHtml(category)}</h3>
-                            <div class="category-actions-inline" onclick="event.stopPropagation()">
-                                <button class="add-btn-inline" onclick="openAddItemModal('${category}')" title="Add item">+ Add</button>
-                                <button class="edit-btn-inline" onclick="openEditCategoryModal('${category}')" title="Edit category">✏️ Edit</button>
-                            </div>
-                        </div>
-                        <div class="category-items-list">
-                            ${renderCategoryItems(items, category)}
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        // Render items within a category (remains largely the same, but styling will differ)
-        function renderCategoryItems(items, category) {
-            if (!items || items.length === 0) {
-                return `
-                    <div class="empty-category">
-                        <p>No items in ${category} yet.</p>
-                    </div>
-                `;
-            }
-
-            const itemsHtml = items.map((item, index) => {
-                let text = '';
-                if (typeof item === 'string') {
-                    text = item;
-                } else if (item && typeof item === 'object') {
-                    text = item.text || item.content || JSON.stringify(item);
-                }
-
-                return `
-                    <div class="category-list-item">
-                        <span class="item-bullet">•</span>
-                        <span class="item-text">${escapeHtml(text)}</span>
-                        <div class="item-actions">
-                            <button class="edit-item-btn" onclick="openEditItemModal('${category}', ${index})" title="Edit">✏️</button>
-                            <button class="delete-item-btn" onclick="deleteItem('${category}', ${index})" title="Delete">🗑️</button>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-
-            return `<div class="category-list">${itemsHtml}</div>`;
-        }
-
-        // Modal functions
-        function openAddItemModal(category) {
-            showModal('Add Item', `Add new item to ${category}`, '', (content) => {
-                addItemToCategory(category, content);
-            });
-        }
-
-        function openEditItemModal(category, itemIndex) {
-            const categoryData = currentNote.content[category];
-            let items = Array.isArray(categoryData) ? categoryData : (categoryData?.items || []);
-            
-            // Handle double nesting
-            if (items && typeof items === 'object' && items.items && Array.isArray(items.items)) {
-                items = items.items;
-            }
-            
-            const item = items[itemIndex];
-            const text = typeof item === 'string' ? item : (item?.text || item?.content || '');
-
-            showModal('Edit Item', `Edit item in ${category}`, text, (content) => {
-                editItemInCategory(category, itemIndex, content);
-            });
-        }
-
-        function openEditCategoryModal(category) {
-            const categoryData = currentNote.content[category];
-            let items = Array.isArray(categoryData) ? categoryData : (categoryData?.items || []);
-            
-            // Handle double nesting
-            if (items && typeof items === 'object' && items.items && Array.isArray(items.items)) {
-                items = items.items;
-            }
-            
-            const text = items.map(item => 
-                typeof item === 'string' ? item : (item?.text || item?.content || '')
-            ).join('\n');
-
-            showModal('Edit Category', `Edit all items in ${category}`, text, (content) => {
-                updateCategory(category, content);
-            }, true);
-        }
-
-        // Generic modal function
-        function showModal(title, subtitle, initialContent, onSave, isTextarea = false) {
-            const modalHtml = `
-                <div class="modal-overlay" id="editModal" onclick="closeModal(event)">
-                    <div class="modal" onclick="event.stopPropagation()">
-                        <div class="modal-header">
-                            <div class="modal-title">
-                                ${title}
-                                <div style="font-size: 0.75rem; font-weight: normal; color: var(--text-muted);">${subtitle}</div>
-                            </div>
-                            <button class="close-btn" onclick="closeModal()">&times;</button>
-                        </div>
-                        <div class="modal-body">
-                            <div class="form-group">
-                                <label class="form-label">Content</label>
-                                ${isTextarea ? 
-                                    `<textarea class="form-textarea" id="modalContent" placeholder="Enter content (one item per line)">${escapeHtml(initialContent)}</textarea>` :
-                                    `<input type="text" class="form-input" id="modalContent" placeholder="Enter content" value="${escapeHtml(initialContent)}">`
-                                }
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button class="btn-cancel" onclick="closeModal()">Cancel</button>
-                            <button class="btn-save" onclick="saveModalContent()">Save</button>
-                        </div>
-                    </div>
-                </div>
-            `;
-
-            document.body.insertAdjacentHTML('beforeend', modalHtml);
-            
-            // Store the save callback
-            window.currentModalSave = onSave;
-            
-            // Show modal with animation
-            requestAnimationFrame(() => {
-                document.getElementById('editModal').classList.add('show');
-                document.getElementById('modalContent').focus();
-            });
-        }
-
-        function closeModal(event) {
-            if (event && event.target !== event.currentTarget) return;
-            
-            const modal = document.getElementById('editModal');
-            if (modal) {
-                modal.classList.remove('show');
-                setTimeout(() => {
-                    modal.remove();
-                    window.currentModalSave = null;
-                }, 300);
-            }
-        }
-
-        function saveModalContent() {
-            const content = document.getElementById('modalContent').value.trim();
-            if (content && window.currentModalSave) {
-                window.currentModalSave(content);
-            }
-            closeModal();
-        }
-
-        // Category manipulation functions
-        async function addItemToCategory(category, content) {
-            if (!content.trim()) return;
-
-            const updatedContent = { ...currentNote.content };
-            if (!updatedContent[category]) {
-                updatedContent[category] = { items: [] };
-            }
-            
-            let items = updatedContent[category].items || [];
-            // Handle double nesting
-            if (items && typeof items === 'object' && items.items && Array.isArray(items.items)) {
-                items = items.items;
-                updatedContent[category].items.items = [...items, content.trim()];
-            } else if (Array.isArray(items)) {
-                updatedContent[category].items = [...items, content.trim()];
-            } else {
-                updatedContent[category].items = [content.trim()];
-            }
-
-            await updateNoteContent(updatedContent);
-        }
-
-        async function editItemInCategory(category, itemIndex, newContent) {
-            if (!newContent.trim()) return;
-
-            const updatedContent = { ...currentNote.content };
-            let items = updatedContent[category]?.items || [];
-            
-            // Handle double nesting
-            if (items && typeof items === 'object' && items.items && Array.isArray(items.items)) {
-                items = items.items;
-                if (itemIndex >= 0 && itemIndex < items.length) {
-                    updatedContent[category].items.items[itemIndex] = newContent.trim();
-                    await updateNoteContent(updatedContent);
-                }
-            } else if (Array.isArray(items)) {
-                if (itemIndex >= 0 && itemIndex < items.length) {
-                    updatedContent[category].items[itemIndex] = newContent.trim();
-                    await updateNoteContent(updatedContent);
-                }
-            }
-        }
-
-        async function deleteItem(category, itemIndex) {
-            if (!confirm('Are you sure you want to delete this item?')) return;
-
-            const updatedContent = { ...currentNote.content };
-            let items = updatedContent[category]?.items || [];
-            
-            // Handle double nesting
-            if (items && typeof items === 'object' && items.items && Array.isArray(items.items)) {
-                items = items.items;
-                if (itemIndex >= 0 && itemIndex < items.length) {
-                    updatedContent[category].items.items.splice(itemIndex, 1);
-                    await updateNoteContent(updatedContent);
-                }
-            } else if (Array.isArray(items)) {
-                if (itemIndex >= 0 && itemIndex < items.length) {
-                    updatedContent[category].items.splice(itemIndex, 1);
-                    await updateNoteContent(updatedContent);
-                }
-            }
-        }
-
-        async function updateCategory(category, content) {
-            const updatedContent = { ...currentNote.content };
-            
-            const items = content.split('\n')
-                .map(line => line.trim())
-                .filter(line => line.length > 0);
-
-            if (!updatedContent[category]) {
-                updatedContent[category] = { items: [] };
-            }
-            
-            // Always use the simple structure for updates
-            updatedContent[category].items = items;
-            await updateNoteContent(updatedContent);
-        }
-
-        // Update note content via API
-        async function updateNoteContent(updatedContent) {
             try {
-                const response = await fetch(`/api/notes/${currentNote.id}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${accessToken}`
-                    },
-                    body: JSON.stringify({
-                        content: JSON.stringify(updatedContent)
-                    })
-                });
-
-                if (handleTokenExpiration(response)) return;
-
-                if (response.ok) {
-                    currentNote.content = updatedContent;
-                    renderNoteDisplay();
-                    loadNotes(); // Refresh sidebar
-                } else {
-                    console.error('Failed to update note content');
-                    alert('Failed to save changes. Please try again.');
-                }
-            } catch (error) {
-                console.error('Error updating note content:', error);
-                alert('Error saving changes. Please check your connection.');
-            }
-        }
-
-        // Create new note
-        async function createNewNote() {
-            const title = 'New note';
-            const attendees = ''; // Blank attendees
-
-            console.log('Creating new note with title:', title);
-
-            try {
-                const requestBody = { title: title };
-                // Don't add attendees if it's empty
+                // Show loading state
+                aiBtn.innerHTML = '🤖 Analyzing...';
+                aiBtn.disabled = true;
                 
-                const response = await fetch('/api/notes/', {
+                const response = await fetch('/api/notes/extract-action-items', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${accessToken}`
-                    },
-                    body: JSON.stringify(requestBody)
+                        'Authorization': `Bearer ${accessToken}`,
+                        'Content-Type': 'application/json'
+                    }
                 });
-
-                console.log('Create note response status:', response.status);
-
+                
                 if (handleTokenExpiration(response)) return;
-
-                if (response.ok) {
-                    const responseData = await response.json();
-                    console.log('Created note response:', responseData);
-                    
-                    // Extract note from the response (could be wrapped in 'note' property)
-                    const newNote = responseData.note || responseData;
-                    
-                    if (!newNote || !newNote.id) {
-                        console.error('Invalid note data in create response:', responseData);
-                        alert('Created note but received invalid data. Please refresh the page.');
-                        return;
-                    }
-                    
-                    notes.unshift(newNote); // Add to beginning
-                    renderNotesList();
-                    selectNote(newNote.id);
-                } else {
-                    const errorText = await response.text();
-                    console.error('Failed to create note:', errorText);
-                    alert('Failed to create note. Please try again.');
-                }
-            } catch (error) {
-                console.error('Error creating note:', error);
-                alert('Error creating note. Please check your connection.');
-            }
-        }
-
-        // Delete note function
-        async function deleteNote(noteId, event) {
-            // Prevent the click event from bubbling up to selectNote
-            event.stopPropagation();
-            
-            console.log('Deleting note with ID:', noteId);
-            
-            if (!noteId || noteId === 'undefined') {
-                console.error('Invalid note ID:', noteId);
-                alert('Invalid note ID. Please try refreshing the page.');
-                return;
-            }
-            
-            // Find the note to get its title for confirmation - with error handling
-            let noteTitle = 'this note';
-            try {
-                const noteToDelete = notes.find(note => note.id === noteId);
-                if (noteToDelete) {
-                    // Use the stored title or first line, with fallback
-                    noteTitle = noteToDelete.title || getFirstLineAsTitle(noteToDelete) || `Note ${noteId}`;
-                }
-            } catch (error) {
-                console.warn('Error getting note title for deletion:', error);
-                noteTitle = `Note ${noteId}`;
-            }
-            
-            // Confirm deletion
-            if (!confirm(`Are you sure you want to delete "${noteTitle}"? This action cannot be undone.`)) {
-                return;
-            }
-            
-            try {
-                console.log('Sending delete request...');
-                const response = await fetch(`/api/notes/${noteId}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'Authorization': `Bearer ${accessToken}`
-                    }
-                });
-                
-                console.log('Delete note response status:', response.status);
-                console.log('Response ok:', response.ok);
-                
-                if (handleTokenExpiration(response)) {
-                    console.log('Token expiration handled, returning...');
-                    return;
-                }
                 
                 if (response.ok) {
-                    console.log('Delete response was ok, processing...');
+                    const data = await response.json();
                     
-                    try {
-                        // Remove note from local array
-                        const noteIndex = notes.findIndex(note => note.id === noteId);
-                        if (noteIndex !== -1) {
-                            notes.splice(noteIndex, 1);
-                            console.log(`Removed note from local array at index ${noteIndex}`);
-                        } else {
-                            console.warn('Note not found in local array');
-                        }
-                    } catch (error) {
-                        console.error('Error removing note from local array:', error);
-                    }
+                    // Convert AI extracted items to our todo format
+                    const aiTodos = data.action_items.map(item => ({
+                        id: `ai-${item.note_id}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                        taskName: item.task_name,
+                        dueDate: item.due_date,
+                        status: item.status,
+                        comments: `${item.context} (Priority: ${item.priority})`,
+                        noteId: item.note_id,
+                        noteName: item.note_title,
+                        isAI: true,
+                        priority: item.priority
+                    }));
                     
-                    try {
-                        // If this was the currently selected note, clear the display
-                        if (currentNote && currentNote.id === noteId) {
-                            console.log('Clearing display for currently selected note');
-                            
-                            // Reset text input BEFORE clearing the display
-                            const textInput = document.getElementById('markdownEditor');
-                            if (textInput) {
-                                textInput.value = '';
-                                textInput.placeholder = 'Select a note from the sidebar to start adding content...';
-                            }
-                            const saveBtn = document.getElementById('saveBtn');
-                            if (saveBtn) {
-                                saveBtn.disabled = true;
-                            }
-                            
-                            // Now clear the current note and display
-                            currentNote = null;
-                            const noteDisplay = document.getElementById('noteDisplay');
-                            if (noteDisplay) {
-                                noteDisplay.innerHTML = `
-                                    <div class="empty-state">
-                                        <div class="empty-icon">📝</div>
-                                        <h3>Welcome to FocusPad</h3>
-                                        <p>Select a note from the sidebar or create a new one to start writing. Use the AI Organize feature to structure your thoughts!</p>
-                                    </div>
-                                `;
-                            }
-                        }
-                    } catch (error) {
-                        console.error('Error clearing display:', error);
-                    }
+                    // Remove existing AI-extracted todos to avoid duplicates
+                    todos = todos.filter(todo => !todo.isAI);
                     
-                    try {
-                        // Update the notes list display
-                        console.log('Refreshing notes list...');
-                        renderNotesList();
-                    } catch (error) {
-                        console.error('Error rendering notes list:', error);
-                    }
+                    // Add new AI-extracted todos
+                    todos.push(...aiTodos);
+                    todos = sortTodos(todos);
                     
-                    console.log('✅ Note deleted successfully');
-                } else {
-                    console.error('Delete request failed with status:', response.status);
+                    // Update display
+                    renderTodoTable();
                     
-                    let errorMessage = 'Failed to delete note.';
-                    try {
-                        const errorText = await response.text();
-                        console.log('Error response text:', errorText);
-                        
-                        try {
-                            const errorJson = JSON.parse(errorText);
-                            if (errorJson.error) {
-                                errorMessage += ' ' + errorJson.error;
-                            }
-                        } catch (parseError) {
-                            console.log('Error response is not JSON:', parseError);
-                            errorMessage += ' ' + errorText;
-                        }
-                    } catch (textError) {
-                        console.error('Failed to read error response:', textError);
-                        errorMessage += ' Unknown server error.';
-                    }
-                    
-                    console.error('Final error message:', errorMessage);
-                    alert(errorMessage);
-                }
-            } catch (error) {
-                console.error('Network/unexpected error deleting note:', error);
-                alert('Network error deleting note. Please check your connection and try again.');
-            }
-        }
-
-        // Logout function
-        function logout() {
-            if (confirm('Are you sure you want to logout?')) {
-                window.location.href = '/logout';
-            }
-        }
-
-        // Test function - you can call this from browser console
-        window.testTextInput = function() {
-            const textInput = document.getElementById('markdownEditor');
-            console.log('Text input element:', textInput);
-            console.log('Disabled:', textInput.disabled);
-            console.log('Value:', textInput.value);
-            console.log('Placeholder:', textInput.placeholder);
-            textInput.focus();
-        };
-
-        // Handle special keydown events for categories
-        function handleEnterKey(event) {
-            if (event.key === 'Enter' && !event.shiftKey) {
-                event.preventDefault();
-                event.target.blur();
-            }
-        }
-
-        // Handle description field focus to clear placeholder
-        function handleDescriptionFocus(element) {
-            const originalValue = element.getAttribute('data-original');
-            const currentText = element.textContent.trim();
-            
-            // If it's showing placeholder text, clear it for editing
-            if (currentText === 'Click to add description...') {
-                element.textContent = '';
-                element.style.color = 'var(--text-secondary)';
-                element.style.fontStyle = 'normal';
-            }
-        }
-
-        // Generic function to save any field (title, attendees, date)
-        async function saveField(element, fieldType) {
-            const newValue = element.textContent ? element.textContent.trim() : element.value;
-            const originalValue = element.getAttribute('data-original');
-            
-            // Handle placeholder text for attendees/description - but allow empty values to be saved
-            if (fieldType === 'attendees') {
-                // Remove placeholder text if it's there
-                let valueToSave = newValue;
-                if (newValue === 'Click to add description...' || newValue === 'None specified') {
-                    valueToSave = '';
-                }
-                
-                // If no change from original value, don't save
-                if (valueToSave === originalValue) {
-                    return;
-                }
-                
-                // Continue with save process for empty values too
-            } else {
-                // For non-attendees fields, check for no change
-                if (newValue === originalValue || (newValue === 'None specified' && originalValue === '') || (newValue === 'Click to add description...' && originalValue === '')) {
-                    return;
-                }
-            }
-
-            // Show saving indicator
-            const originalHtml = element.innerHTML || element.value;
-            if (element.contentEditable) {
-                element.style.opacity = '0.7';
-                element.contentEditable = 'false';
-            } else {
-                element.style.opacity = '0.7';
-                element.disabled = true;
-            }
-
-            try {
-                let updateData = {};
-                
-                if (fieldType === 'title') {
-                    if (!newValue) {
-                        alert('Title cannot be empty');
-                        restoreElement(element, originalHtml);
-                        return;
-                    }
-                    updateData.title = newValue;
-                } else if (fieldType === 'date') {
-                    // Handle date field - expect ISO date format
-                    if (newValue) {
-                        updateData.created_at = newValue;
-                    }
-                } else if (fieldType === 'attendees') {
-                    // Allow empty descriptions - save as empty string or null
-                    let valueToSave = newValue;
-                    if (newValue === 'Click to add description...' || newValue === 'None specified') {
-                        valueToSave = '';
-                    }
-                    updateData.attendees = valueToSave || null;
-                }
-
-                const response = await fetch(`/api/notes/${currentNote.id}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${accessToken}`
-                    },
-                    body: JSON.stringify(updateData)
-                });
-
-                if (handleTokenExpiration(response)) return;
-
-                if (response.ok) {
-                    // Update local note object
-                    if (fieldType === 'title') {
-                        currentNote.title = newValue;
-                        loadNotes(); // Refresh sidebar
-                    } else if (fieldType === 'attendees') {
-                        let savedValue = newValue;
-                        if (newValue === 'Click to add description...' || newValue === 'None specified') {
-                            savedValue = '';
-                        }
-                        currentNote.attendees = savedValue || null;
-                        
-                        // Update element display after successful save
-                        if (savedValue) {
-                            // Has content - show normal styling
-                            element.style.color = 'var(--text-secondary)';
-                            element.style.fontStyle = 'normal';
-                            element.textContent = savedValue;
-                            element.setAttribute('data-original', savedValue);
-                        } else {
-                            // Empty content - show placeholder styling
-                            element.style.color = 'var(--text-light)';
-                            element.style.fontStyle = 'italic';
-                            element.textContent = 'Click to add description...';
-                            element.setAttribute('data-original', '');
-                        }
-                    } else if (fieldType === 'date') {
-                        currentNote.created_at = newValue;
-                    }
-                    
-                    // Restore element (skip for attendees as we handle it above)
-                    if (fieldType !== 'attendees') {
-                        restoreElement(element, newValue, true);
-                        element.setAttribute('data-original', newValue === 'None specified' ? '' : newValue);
+                    // Show success message
+                    if (data.items_found > 0) {
+                        alert(`AI found ${data.items_found} action items from ${data.total_notes_processed} notes!`);
                     } else {
-                        // Just restore the editing state
-                        element.style.opacity = '1';
-                        element.contentEditable = 'true';
+                        alert('No action items found. Try creating notes with tasks or commitments.');
                     }
                     
-                    console.log(`${fieldType} updated successfully`);
                 } else {
                     const errorData = await response.json().catch(() => ({}));
-                    alert('Failed to save: ' + (errorData.error || 'Unknown error'));
-                    restoreElement(element, originalHtml);
+                    alert('AI extraction failed: ' + (errorData.error || 'Unknown error'));
                 }
+                
             } catch (error) {
-                console.error('Error saving field:', error);
-                alert('Error saving. Please try again.');
-                restoreElement(element, originalHtml);
+                console.error('AI extraction error:', error);
+                alert('AI extraction failed. Please check your connection and try again.');
+            } finally {
+                // Restore button state
+                aiBtn.innerHTML = originalText;
+                aiBtn.disabled = false;
             }
         }
 
-        // Helper function to restore element state
-        function restoreElement(element, content, isSuccess = false) {
-            if (element.contentEditable && element.contentEditable !== 'inherit') {
-                element.innerHTML = isSuccess ? escapeHtml(content) : content;
-                element.style.opacity = '1';
-                element.contentEditable = 'true';
-            } else {
-                element.value = content;
-                element.style.opacity = '1';
-                element.disabled = false;
+        // Comment Editing Functions
+        let editingCommentElement = null;
+        let originalCommentText = '';
+
+        function startEditingComment(element) {
+            // If already editing another comment, save it first
+            if (editingCommentElement && editingCommentElement !== element) {
+                saveComment(editingCommentElement);
+            }
+
+            editingCommentElement = element;
+            originalCommentText = element.textContent;
+            
+            // Make it editable
+            element.contentEditable = true;
+            element.focus();
+            
+            // Select all text
+            const range = document.createRange();
+            range.selectNodeContents(element);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+        }
+
+        function handleCommentKeydown(event, element) {
+            if (event.key === 'Escape') {
+                event.preventDefault();
+                // Restore original text and exit edit mode
+                element.textContent = originalCommentText;
+                exitEditMode(element);
+            } else if (event.key === 'Enter') {
+                event.preventDefault();
+                // Save and exit edit mode
+                saveComment(element);
             }
         }
 
-        // Open date picker modal
-        function openDatePicker() {
-            const currentDate = currentNote.created_at ? 
-                currentNote.created_at.split('T')[0] : 
-                new Date().toISOString().split('T')[0];
-
-            const modalHtml = `
-                <div class="modal-overlay" id="dateModal" onclick="closeDateModal(event)">
-                    <div class="modal" onclick="event.stopPropagation()">
-                        <div class="modal-header">
-                            <div class="modal-title">
-                                📅 Set Note Date
-                                <div style="font-size: 0.75rem; font-weight: normal; color: var(--text-muted);">Choose the date for this note</div>
-                            </div>
-                            <button class="close-btn" onclick="closeDateModal()">&times;</button>
-                        </div>
-                        <div class="modal-body">
-                            <div class="form-group">
-                                <label class="form-label">Date</label>
-                                <input type="date" class="form-input" id="dateInput" value="${currentDate}">
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button class="btn-cancel" onclick="closeDateModal()">Cancel</button>
-                            <button class="btn-save" onclick="saveDateChange()">Save</button>
-                        </div>
-                    </div>
-                </div>
-            `;
-
-            document.body.insertAdjacentHTML('beforeend', modalHtml);
-            
-            // Show modal with animation
-            requestAnimationFrame(() => {
-                document.getElementById('dateModal').classList.add('show');
-                document.getElementById('dateInput').focus();
-            });
-        }
-
-        function closeDateModal(event) {
-            if (event && event.target !== event.currentTarget) return;
-            
-            const modal = document.getElementById('dateModal');
-            if (modal) {
-                modal.classList.remove('show');
-                setTimeout(() => {
-                    modal.remove();
-                }, 300);
+        function saveComment(element) {
+            if (!element.contentEditable || element.contentEditable === 'false') {
+                return; // Not in edit mode
             }
-        }
 
-        async function saveDateChange() {
-            const dateInput = document.getElementById('dateInput');
-            const newDate = dateInput.value;
+            const todoId = element.getAttribute('data-todo-id');
+            const newComment = element.textContent.trim();
             
-            if (!newDate) {
-                alert('Please select a date');
+            // Find the todo item
+            const todoIndex = todos.findIndex(todo => todo.id === todoId);
+            if (todoIndex === -1) {
+                console.error('Todo not found for comment update');
+                exitEditMode(element);
                 return;
             }
 
-            // Convert to ISO format
-            const isoDate = new Date(newDate + 'T00:00:00').toISOString();
+            const todo = todos[todoIndex];
             
-            try {
-                const response = await fetch(`/api/notes/${currentNote.id}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${accessToken}`
-                    },
-                    body: JSON.stringify({ created_at: isoDate })
+            // Show saving state
+            element.classList.add('saving');
+            
+            // Update the todo item
+            todo.comments = newComment || 'No comments';
+            
+            // Save to storage for all todos
+            saveTodosToStorage();
+            
+            // Simulate save delay for visual feedback
+            setTimeout(() => {
+                element.classList.remove('saving');
+                element.classList.add('saved');
+                setTimeout(() => {
+                    element.classList.remove('saved');
+                }, 1000);
+                exitEditMode(element);
+            }, 200);
+        }
+
+        function exitEditMode(element) {
+            element.contentEditable = false;
+            editingCommentElement = null;
+            originalCommentText = '';
+            
+            // Clear selection
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+        }
+
+        // Global click handler to save comments when clicking outside
+        document.addEventListener('click', function(event) {
+            if (editingCommentElement && 
+                !editingCommentElement.contains(event.target) && 
+                !event.target.closest('.todo-comments-editable')) {
+                saveComment(editingCommentElement);
+            }
+            
+            // Close status dropdown when clicking outside
+            if (editingStatusElement && 
+                !editingStatusElement.contains(event.target) && 
+                !event.target.closest('.todo-status-editable')) {
+                closeStatusEditing();
+            }
+        });
+
+        // General Field Editing Functions
+        let editingElement = null;
+        let originalText = '';
+        let editingDateElement = null;
+        let editingStatusElement = null;
+
+        function startEditingField(element, fieldType) {
+            // Close any open editing
+            closeAllEditing();
+
+            editingElement = element;
+            originalText = element.textContent;
+            
+            // Make it editable
+            element.contentEditable = true;
+            element.focus();
+            
+            // Select all text
+            const range = document.createRange();
+            range.selectNodeContents(element);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+        }
+
+        function startEditingDate(element) {
+            // Close any open editing
+            closeAllEditing();
+
+            editingDateElement = element;
+            const todoId = element.getAttribute('data-todo-id');
+            const todo = todos.find(t => t.id === todoId);
+            const currentDate = todo ? todo.dueDate || '' : '';
+            
+            // Replace content with date input
+            element.classList.add('editing');
+            element.innerHTML = `<input type="date" class="todo-due-date-input" value="${currentDate}" onblur="saveDateField(this)" onkeydown="handleDateKeydown(event, this)">`;
+            
+            // Focus the input
+            const input = element.querySelector('.todo-due-date-input');
+            input.focus();
+        }
+
+        function startEditingStatus(element) {
+            // Close any open editing
+            closeAllEditing();
+
+            editingStatusElement = element;
+            
+            // Get current status from todo object
+            const todoId = element.getAttribute('data-todo-id');
+            const todo = todos.find(t => t.id === todoId);
+            const status = todo ? todo.status : 'not-started';
+            
+            element.classList.add('editing');
+            
+            // Create dropdown
+            const dropdown = document.createElement('div');
+            dropdown.className = 'todo-status-dropdown show';
+            dropdown.innerHTML = `
+                <div class="todo-status-option not-started ${status === 'not-started' ? 'selected' : ''}" data-status="not-started">Not Started</div>
+                <div class="todo-status-option in-progress ${status === 'in-progress' ? 'selected' : ''}" data-status="in-progress">In Progress</div>
+                <div class="todo-status-option completed ${status === 'completed' ? 'selected' : ''}" data-status="completed">Completed</div>
+            `;
+            
+            // Add click handlers to the options
+            const options = dropdown.querySelectorAll('.todo-status-option');
+            options.forEach(option => {
+                option.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const selectedStatus = this.getAttribute('data-status');
+                    selectStatus(this, selectedStatus);
                 });
+            });
+            
+            element.appendChild(dropdown);
+        }
 
-                if (handleTokenExpiration(response)) return;
+        function selectStatus(optionElement, status) {
+            const statusElement = optionElement.closest('.todo-status-editable');
+            const todoId = statusElement.getAttribute('data-todo-id');
+            
+            // Update todo object
+            const todoIndex = todos.findIndex(todo => todo.id === todoId);
+            if (todoIndex !== -1) {
+                todos[todoIndex].status = status;
+                
+                // Save to storage for all todos
+                saveTodosToStorage();
+                
+                // Update UI inline instead of re-rendering
+                statusElement.className = `todo-status-editable todo-status ${status}`;
+                statusElement.textContent = status.replace('-', ' ');
+                
+                // Show saved feedback
+                showSavedFeedback(statusElement);
+            }
+            
+            closeAllEditing();
+        }
 
-                if (response.ok) {
-                    currentNote.created_at = isoDate;
-                    renderNoteDisplay(); // Refresh display to show new date
-                    closeDateModal();
-                } else {
-                    const errorData = await response.json().catch(() => ({}));
-                    alert('Failed to save date: ' + (errorData.error || 'Unknown error'));
-                }
-            } catch (error) {
-                console.error('Error saving date:', error);
-                alert('Error saving date. Please try again.');
+        function handleFieldKeydown(event, element, fieldType) {
+            if (event.key === 'Escape') {
+                event.preventDefault();
+                // Restore original text and exit edit mode
+                element.textContent = originalText;
+                exitFieldEditMode(element);
+            } else if (event.key === 'Enter') {
+                event.preventDefault();
+                // Save and exit edit mode
+                saveField(element, fieldType);
             }
         }
 
-        // Get icon for category
-        function getCategoryIcon(category) {
-            const icons = {
-                'General': '📝',
-                'Ideas': '💡',
-                'Tasks': '✅',
-                'Questions': '❓',
-                'Important': '⭐',
-                'Code': '💻',
-                'Research': '🔍',
-                'Meeting': '🤝',
-                'Personal': '👤'
-            };
-            return icons[category] || '📄';
+        function handleDateKeydown(event, input) {
+            if (event.key === 'Escape') {
+                event.preventDefault();
+                closeDateEditing();
+            } else if (event.key === 'Enter') {
+                event.preventDefault();
+                saveDateField(input);
+            }
+        }
+
+        function saveField(element, fieldType) {
+            if (!element.contentEditable || element.contentEditable === 'false') {
+                return; // Not in edit mode
+            }
+
+            const todoId = element.getAttribute('data-todo-id');
+            const newValue = element.textContent.trim();
+            
+            // Find the todo item
+            const todoIndex = todos.findIndex(todo => todo.id === todoId);
+            if (todoIndex === -1) {
+                console.error('Todo not found for field update');
+                exitFieldEditMode(element);
+                return;
+            }
+
+            const todo = todos[todoIndex];
+            
+            // Validate required fields
+            if (fieldType === 'taskName' && !newValue) {
+                alert('Task name cannot be empty');
+                element.textContent = originalText;
+                exitFieldEditMode(element);
+                return;
+            }
+            
+            // Show saving state
+            element.classList.add('saving');
+            
+            // Update the todo item
+            if (fieldType === 'taskName') {
+                todo.taskName = newValue;
+            }
+            
+            // Save to storage for all todos (not just manual ones)
+            saveTodosToStorage();
+            
+            // Simulate save delay for visual feedback
+            setTimeout(() => {
+                element.classList.remove('saving');
+                showSavedFeedback(element);
+                exitFieldEditMode(element);
+            }, 200);
+        }
+
+        function saveDateField(input) {
+            const newDate = input.value;
+            const element = editingDateElement;
+            const todoId = element.getAttribute('data-todo-id');
+            
+            // Find the todo item
+            const todoIndex = todos.findIndex(todo => todo.id === todoId);
+            if (todoIndex === -1) {
+                console.error('Todo not found for date update');
+                closeDateEditing();
+                return;
+            }
+
+            const todo = todos[todoIndex];
+            
+            // Show saving state
+            element.classList.add('saving');
+            
+            // Update the todo item
+            todo.dueDate = newDate || null;
+            
+            // Save to storage for all todos
+            saveTodosToStorage();
+            
+            // Simulate save delay for visual feedback
+            setTimeout(() => {
+                element.classList.remove('saving');
+                showSavedFeedback(element);
+                
+                // Update display
+                renderTodoTable();
+            }, 200);
+        }
+
+        function showSavedFeedback(element) {
+            element.classList.add('saved');
+            setTimeout(() => {
+                element.classList.remove('saved');
+            }, 1000);
+        }
+
+        function exitFieldEditMode(element) {
+            element.contentEditable = false;
+            editingElement = null;
+            originalText = '';
+            
+            // Clear selection
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+        }
+
+        function closeDateEditing() {
+            if (editingDateElement) {
+                editingDateElement.classList.remove('editing');
+                editingDateElement = null;
+                // Don't re-render table, just restore the display
+            }
+        }
+
+        function closeStatusEditing() {
+            if (editingStatusElement) {
+                // Remove dropdown
+                const dropdown = editingStatusElement.querySelector('.todo-status-dropdown');
+                if (dropdown) {
+                    dropdown.remove();
+                }
+                editingStatusElement.classList.remove('editing');
+                editingStatusElement = null;
+            }
+        }
+
+        function closeAllEditing() {
+            // Close comment editing
+            if (editingCommentElement) {
+                exitEditMode(editingCommentElement);
+            }
+            
+            // Close field editing
+            if (editingElement) {
+                exitFieldEditMode(editingElement);
+            }
+            
+            // Close date editing  
+            if (editingDateElement) {
+                closeDateEditing();
+            }
+            
+            // Close status editing
+            if (editingStatusElement) {
+                closeStatusEditing();
+            }
+        }
+
+        // Enhanced global click handler
+        document.addEventListener('click', function(event) {
+            // Handle comment editing
+            if (editingCommentElement && 
+                !editingCommentElement.contains(event.target) && 
+                !event.target.closest('.todo-comments-editable')) {
+                saveComment(editingCommentElement);
+            }
+            
+            // Handle other field editing
+            if (editingElement && 
+                !editingElement.contains(event.target) && 
+                !event.target.closest('.todo-task-editable')) {
+                const fieldType = editingElement.getAttribute('data-field');
+                saveField(editingElement, fieldType);
+            }
+            
+            // Handle date editing
+            if (editingDateElement && 
+                !editingDateElement.contains(event.target) && 
+                !event.target.closest('.todo-due-date-editable')) {
+                const input = editingDateElement.querySelector('.todo-due-date-input');
+                if (input) {
+                    saveDateField(input);
+                }
+            }
+            
+            // Handle status editing
+            if (editingStatusElement && 
+                !editingStatusElement.contains(event.target) && 
+                !event.target.closest('.todo-status-editable')) {
+                closeStatusEditing();
+            }
+        });
+
+        // Universal save function for all todos
+        function saveTodosToStorage() {
+            // Save all todos (both manual and extracted) to localStorage
+            localStorage.setItem('focuspad-all-todos', JSON.stringify(todos));
+            
+            // Also maintain the manual todos for backward compatibility
+            const manualTodos = todos.filter(todo => todo.isManual);
+            localStorage.setItem('focuspad-manual-todos', JSON.stringify(manualTodos));
+        }
+
+        function loadTodosFromStorage() {
+            // First try to load all todos
+            const allTodosStored = localStorage.getItem('focuspad-all-todos');
+            if (allTodosStored) {
+                try {
+                    const allTodos = JSON.parse(allTodosStored);
+                    // Replace todos array with stored todos
+                    todos = allTodos;
+                    todos = sortTodos(todos);
+                    return;
+                } catch (error) {
+                    console.error('Error loading all todos:', error);
+                }
+            }
+            
+            // Fallback to loading only manual todos
+            loadManualTodosFromStorage();
         }
 
         // Search functionality
@@ -3939,7 +4460,7 @@ Content auto-saves when you switch to preview mode."></textarea>
                 return `
                     <div class="note-item search-result" onclick="selectNote(${note.id})" data-note-id="${note.id}">
                         <div class="note-header-row">
-                            <div class="note-title">${escapeHtml(note.title || 'Untitled Note')}</div>
+                            <div class="note-title">${escapeHtml(note.title || getFirstLineAsTitle(note))}</div>
                             <div class="note-actions">
                                 <button class="delete-btn" onclick="deleteNote(${note.id}, event)" title="Delete note">🗑️</button>
                             </div>
@@ -3991,1348 +4512,6 @@ Content auto-saves when you switch to preview mode."></textarea>
             renderNotesList();
         }
 
-        // PDF Export Function
-        async function downloadNoteAsPDF() {
-            console.log('PDF download function called');
-            
-            // Check if libraries are loaded with multiple fallbacks
-            let jsPDF = null;
-            
-            if (typeof window.jspdf !== 'undefined' && window.jspdf.jsPDF) {
-                jsPDF = window.jspdf.jsPDF;
-                console.log('Found jsPDF via window.jspdf.jsPDF');
-            } else if (typeof window.jsPDF !== 'undefined') {
-                jsPDF = window.jsPDF;
-                console.log('Found jsPDF via window.jsPDF');
-            } else if (typeof jsPDF !== 'undefined') {
-                // Sometimes it's available globally
-                console.log('Found jsPDF globally');
-            } else {
-                console.error('jsPDF library not found in any expected location');
-                console.log('Available on window:', Object.keys(window).filter(key => key.toLowerCase().includes('pdf')));
-                alert('PDF library not loaded. Please refresh the page and try again.\n\nIf the problem persists, there may be a network issue preventing the library from loading.');
-                return;
-            }
-            
-            if (typeof html2canvas === 'undefined') {
-                console.error('html2canvas library not loaded');
-                alert('Canvas library not loaded. Please refresh the page and try again.');
-                return;
-            }
-            
-            const noteContentElement = document.getElementById('noteContentForPdf');
-            
-            
-            if (!noteContentElement) {
-                console.error('noteContentForPdf element not found');
-                alert('Could not find note content to export.');
-                return;
-            }
-            
-            if (!currentNote) {
-                alert('No note selected to export.');
-                return;
-            }
-
-            const noteTitle = currentNote.title || 'FocusPad_Note';
-            const safeNoteTitle = noteTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-            
-            console.log('Starting PDF generation for:', noteTitle);
-
-            // Update button state
-            const pdfButton = document.querySelector('.markdown-control-btn[onclick*="downloadNoteAsPDF"]');
-            const originalButtonText = pdfButton ? pdfButton.innerHTML : '';
-            if (pdfButton) {
-                pdfButton.innerHTML = '⬇️ Generating...';
-                pdfButton.disabled = true;
-            }
-
-            try {
-                console.log('Hiding action elements...');
-                // Hide action buttons and interactive elements
-                const actionElements = noteContentElement.querySelectorAll('.category-actions-inline, .item-actions, .note-actions-bar');
-                const clickableElements = noteContentElement.querySelectorAll('.clickable span');
-                
-                actionElements.forEach(el => {
-                    el.style.setProperty('visibility', 'hidden', 'important');
-                });
-                clickableElements.forEach(el => {
-                    if (el.style.color && el.style.color.includes('--text-muted')) {
-                        el.style.setProperty('visibility', 'hidden', 'important');
-                    }
-                });
-
-                // Temporarily disable contenteditable
-                const editableFields = noteContentElement.querySelectorAll('[contenteditable="true"]');
-                editableFields.forEach(el => el.setAttribute('contenteditable', 'false'));
-
-                console.log('Capturing content with html2canvas...');
-                
-                const canvas = await html2canvas(noteContentElement, {
-                    scale: 2,
-                    useCORS: true,
-                    logging: true, // Enable logging for debugging
-                    backgroundColor: '#ffffff',
-                    width: noteContentElement.scrollWidth,
-                    height: noteContentElement.scrollHeight,
-                    onclone: (clonedDoc) => {
-                        console.log('html2canvas onclone called');
-                        // Ensure good styling for PDF
-                        const clonedElement = clonedDoc.getElementById('noteContentForPdf');
-                        if (clonedElement) {
-                            clonedElement.style.background = '#ffffff';
-                            clonedElement.style.color = '#000000';
-                        }
-                    }
-                });
-                
-                console.log('Canvas created:', canvas.width + 'x' + canvas.height);
-                
-                // Restore visibility and editability
-                actionElements.forEach(el => el.style.visibility = 'visible');
-                clickableElements.forEach(el => el.style.visibility = 'visible');
-                editableFields.forEach(el => el.setAttribute('contenteditable', 'true'));
-
-                console.log('Creating PDF document...');
-                
-                const pdf = new jsPDF({
-                    orientation: 'portrait',
-                    unit: 'pt',
-                    format: 'a4'
-                });
-
-                const pdfWidth = pdf.internal.pageSize.getWidth();
-                const pdfHeight = pdf.internal.pageSize.getHeight();
-                const margin = 40;
-                
-                // Calculate scaling to fit page
-                const availableWidth = pdfWidth - (2 * margin);
-                const availableHeight = pdfHeight - (2 * margin);
-                
-                const imgAspectRatio = canvas.width / canvas.height;
-                let imgWidth = availableWidth;
-                let imgHeight = availableWidth / imgAspectRatio;
-                
-                // If image is too tall, scale to fit height
-                if (imgHeight > availableHeight) {
-                    imgHeight = availableHeight;
-                    imgWidth = availableHeight * imgAspectRatio;
-                }
-                
-                // Center the image
-                const x = (pdfWidth - imgWidth) / 2;
-                const y = (pdfHeight - imgHeight) / 2;
-                
-                // Convert canvas to image data
-                const imgData = canvas.toDataURL('image/png');
-                console.log('Image data created, adding to PDF...');
-                
-                // Add image to PDF
-                pdf.addImage(imgData, 'PNG', x, y, imgWidth, imgHeight);
-                
-                console.log('Saving PDF as:', safeNoteTitle + '.pdf');
-                
-                // Save the PDF
-                pdf.save(safeNoteTitle + '.pdf');
-                
-                console.log('PDF generation completed successfully');
-
-            } catch (error) {
-                console.error('Error generating PDF:', error);
-                
-                // Fallback: Create a text-based PDF if html2canvas fails
-                console.log('Attempting fallback text-based PDF...');
-                try {
-                    const pdf = new jsPDF({
-                        orientation: 'portrait',
-                        unit: 'pt',
-                        format: 'a4'
-                    });
-                    
-                    let yPosition = 50;
-                    const lineHeight = 20;
-                    const margin = 40;
-                    const pageWidth = pdf.internal.pageSize.getWidth();
-                    const maxWidth = pageWidth - (2 * margin);
-                    
-                    // Add title
-                    pdf.setFontSize(18);
-                    pdf.text(noteTitle, margin, yPosition);
-                    yPosition += lineHeight * 2;
-                    
-                    // Add date
-                    pdf.setFontSize(12);
-                    if (currentNote.created_at) {
-                        const dateStr = new Date(currentNote.created_at).toLocaleDateString();
-                        pdf.text('Date: ' + dateStr, margin, yPosition);
-                        yPosition += lineHeight;
-                    }
-                    
-                    // Add attendees if present
-                    if (currentNote.attendees) {
-                        pdf.text('Attendees: ' + currentNote.attendees, margin, yPosition);
-                        yPosition += lineHeight;
-                    }
-                    
-                    yPosition += lineHeight; // Extra space
-                    
-                    // Add raw content if available
-                    if (currentNote.raw_content) {
-                        pdf.setFontSize(14);
-                        pdf.text('Content:', margin, yPosition);
-                        yPosition += lineHeight;
-                        
-                        pdf.setFontSize(11);
-                        const lines = pdf.splitTextToSize(currentNote.raw_content, maxWidth);
-                        for (let i = 0; i < lines.length; i++) {
-                            if (yPosition > pdf.internal.pageSize.getHeight() - 50) {
-                                pdf.addPage();
-                                yPosition = 50;
-                            }
-                            pdf.text(lines[i], margin, yPosition);
-                            yPosition += lineHeight;
-                        }
-                    }
-                    
-                    // Add categorized content
-                    if (currentNote.content && typeof currentNote.content === 'object') {
-                        for (const [category, categoryData] of Object.entries(currentNote.content)) {
-                            let items = categoryData;
-                            if (categoryData && typeof categoryData === 'object' && categoryData.items) {
-                                items = categoryData.items;
-                            }
-                            
-                            if (Array.isArray(items) && items.length > 0) {
-                                // Add category heading
-                                if (yPosition > pdf.internal.pageSize.getHeight() - 100) {
-                                    pdf.addPage();
-                                    yPosition = 50;
-                                }
-                                
-                                pdf.setFontSize(14);
-                                pdf.text(category, margin, yPosition);
-                                yPosition += lineHeight;
-                                
-                                // Add items
-                                pdf.setFontSize(11);
-                                for (const item of items) {
-                                    let text = '';
-                                    if (typeof item === 'string') {
-                                        text = item;
-                                    } else if (item && typeof item === 'object') {
-                                        text = item.text || item.content || JSON.stringify(item);
-                                    }
-                                    
-                                    if (text) {
-                                        if (yPosition > pdf.internal.pageSize.getHeight() - 50) {
-                                            pdf.addPage();
-                                            yPosition = 50;
-                                        }
-                                        const itemLines = pdf.splitTextToSize('• ' + text, maxWidth);
-                                        for (let i = 0; i < itemLines.length; i++) {
-                                            pdf.text(itemLines[i], margin, yPosition);
-                                            yPosition += lineHeight;
-                                        }
-                                    }
-                                }
-                                
-                                yPosition += lineHeight / 2; // Extra space after category
-                            }
-                        }
-                    }
-                    
-                    pdf.save(safeNoteTitle + '_text.pdf');
-                    console.log('Fallback text-based PDF generated successfully');
-                    alert('PDF generated successfully (text-only fallback due to rendering issue).');
-                    
-                } catch (fallbackError) {
-                    console.error('Fallback PDF generation also failed:', fallbackError);
-                    alert('Error generating PDF: ' + error.message + '\nFallback also failed: ' + fallbackError.message + '\nCheck the browser console for more details.');
-                }
-            } finally {
-                // Restore button state
-                if (pdfButton) {
-                    pdfButton.innerHTML = originalButtonText;
-                    pdfButton.disabled = false;
-                }
-                
-                // Ensure elements are restored even if there was an error
-                const allActionElements = noteContentElement.querySelectorAll('.category-actions-inline, .item-actions, .note-actions-bar, .clickable span');
-                allActionElements.forEach(el => el.style.visibility = 'visible');
-                
-                const allEditableFields = noteContentElement.querySelectorAll('[contenteditable="false"]');
-                allEditableFields.forEach(el => el.setAttribute('contenteditable', 'true'));
-                
-                console.log('PDF generation cleanup completed');
-            }
-        }
-
-        // Test function to verify libraries are loaded (you can call this from browser console)
-        window.testPDFLibraries = function() {
-            console.log('=== PDF Libraries Test ===');
-            console.log('html2canvas available:', typeof html2canvas !== 'undefined');
-            console.log('window.jspdf available:', typeof window.jspdf !== 'undefined');
-            console.log('window.jsPDF available:', typeof window.jsPDF !== 'undefined');
-            
-            // Test which jsPDF reference works
-            let jsPDF = null;
-            if (typeof window.jspdf !== 'undefined' && window.jspdf.jsPDF) {
-                jsPDF = window.jspdf.jsPDF;
-                console.log('✅ jsPDF accessible via window.jspdf.jsPDF');
-            } else if (typeof window.jsPDF !== 'undefined') {
-                jsPDF = window.jsPDF;
-                console.log('✅ jsPDF accessible via window.jsPDF');
-            } else {
-                console.log('❌ jsPDF not accessible');
-                console.log('Available window properties containing "pdf":', 
-                    Object.keys(window).filter(key => key.toLowerCase().includes('pdf')));
-            }
-            
-            if (jsPDF) {
-                try {
-                    console.log('jsPDF version:', jsPDF.version || 'unknown');
-                    return true;
-                } catch (e) {
-                    console.log('Error accessing jsPDF:', e);
-                    return false;
-                }
-            }
-            return false;
-        };
-
-        // Simple test function to create a basic PDF (call from browser console)
-        window.testBasicPDF = function() {
-            try {
-                let jsPDF = null;
-                if (typeof window.jspdf !== 'undefined' && window.jspdf.jsPDF) {
-                    jsPDF = window.jspdf.jsPDF;
-                } else if (typeof window.jsPDF !== 'undefined') {
-                    jsPDF = window.jsPDF;
-                } else {
-                    console.error('jsPDF not available');
-                    return false;
-                }
-                
-                const pdf = new jsPDF();
-                pdf.text('Hello, this is a test PDF from FocusPad!', 20, 20);
-                pdf.text('Current time: ' + new Date().toLocaleString(), 20, 40);
-                if (currentNote) {
-                    pdf.text('Current note: ' + (currentNote.title || 'Untitled'), 20, 60);
-                }
-                pdf.save('focuspad_test.pdf');
-                console.log('Basic PDF test successful!');
-                return true;
-            } catch (error) {
-                console.error('Basic PDF test failed:', error);
-                return false;
-            }
-        };
-
-        // Function to test if button click is working
-        window.testButtonClick = function() {
-            console.log('Button click test - this function was called successfully');
-            alert('Button click is working! The downloadNoteAsPDF function should be called when you click the PDF button.');
-        };
-
-        // Toggle content section expand/collapse
-        function toggleContentSection(element) {
-            element.classList.toggle('expanded');
-        }
-
-        // Logout function
-        function logout() {
-            if (confirm('Are you sure you want to logout?')) {
-                window.location.href = '/logout';
-            }
-        }
-
-        // Toggle profile dropdown
-        function toggleProfileDropdown() {
-            const dropdown = document.getElementById('profileDropdown');
-            dropdown.classList.toggle('show');
-        }
-
-        // Close dropdown when clicking outside
-        document.addEventListener('click', function(event) {
-            const profileContainer = document.querySelector('.profile-container');
-            const dropdown = document.getElementById('profileDropdown');
-            
-            if (dropdown && !profileContainer.contains(event.target)) {
-                dropdown.classList.remove('show');
-            }
-        });
-
-        // Markdown Editor Functions
-        let isMarkdownEditMode = false;
-        let markdownContent = '';
-        let contentBackup = null; // Add backup mechanism
-
-        // Convert categorized content to markdown
-        function categoriesToMarkdown(categorizedContent) {
-            console.log('=== MARKDOWN GENERATION DEBUG ===');
-            console.log('Input categorized content:', categorizedContent);
-            
-            let markdown = '';
-            
-            if (!categorizedContent || Object.keys(categorizedContent).length === 0) {
-                const defaultMarkdown = '# Welcome to your note!\n\nStart typing here... You can use markdown syntax like:\n\n- **Bold text**\n- *Italic text*\n- `Code snippets`\n- ## Subheadings\n- ### Smaller headings\n\n> Blockquotes for important notes\n\nClick the "Edit" button above to switch to markdown editing mode.';
-                console.log('No content - returning default markdown');
-                return defaultMarkdown;
-            }
-
-            // Sort categories by preferred order
-            const categoryOrder = ['Key Points', 'Action Items', 'Ideas', 'References'];
-            const sortedEntries = Object.entries(categorizedContent).sort(([categoryA], [categoryB]) => {
-                const indexA = categoryOrder.indexOf(categoryA);
-                const indexB = categoryOrder.indexOf(categoryB);
-                
-                if (indexA !== -1 && indexB !== -1) return indexA - indexB;
-                if (indexA !== -1 && indexB === -1) return -1;
-                if (indexA === -1 && indexB !== -1) return 1;
-                return categoryA.localeCompare(categoryB);
-            });
-
-            console.log('Sorted categories:', sortedEntries.map(([cat]) => cat));
-
-            for (const [category, categoryData] of sortedEntries) {
-                let items = categoryData;
-                
-                // Handle API structure - check for multiple nesting levels
-                if (categoryData && typeof categoryData === 'object') {
-                    if (categoryData.items) {
-                        items = categoryData.items;
-                        // Check for additional nesting level (categoryData.items.items)
-                        if (items && typeof items === 'object' && items.items && Array.isArray(items.items)) {
-                            items = items.items;
-                            console.log(`Found double-nested items for "${category}":`, items);
-                        }
-                    }
-                }
-
-                if (!Array.isArray(items)) {
-                    console.warn(`Category "${category}" items is not an array after processing:`, items);
-                    items = [];
-                }
-
-                if (items.length > 0) {
-                    markdown += `# ${category}\n\n`;
-                    console.log(`Adding category: "${category}" with ${items.length} items`);
-                    
-                    for (const item of items) {
-                        let text = '';
-                        if (typeof item === 'string') {
-                            text = item;
-                        } else if (item && typeof item === 'object') {
-                            text = item.text || item.content || JSON.stringify(item);
-                        }
-                        
-                        if (text.trim()) {
-                            markdown += `- ${text.trim()}\n`;
-                            console.log(`Added item: "${text.trim()}"`);
-                        }
-                    }
-                    
-                    markdown += '\n';
-                } else {
-                    console.log(`Skipping empty category: "${category}"`);
-                }
-            }
-            
-            const finalMarkdown = markdown.trim();
-            console.log('Generated markdown:', finalMarkdown);
-            return finalMarkdown;
-        }
-
-        // Convert markdown back to categorized content
-        function markdownToCategories(markdown) {
-            console.log('=== MARKDOWN PARSING DEBUG ===');
-            console.log('Input markdown:', markdown);
-            
-            const lines = markdown.split('\n');
-            const categorizedContent = {};
-            let currentCategory = null;
-            
-            console.log('Total lines to parse:', lines.length);
-            
-            for (let i = 0; i < lines.length; i++) {
-                const line = lines[i].trim();
-                console.log(`Line ${i}: "${line}"`);
-                
-                // Check for H1 headings (categories)
-                if (line.startsWith('# ') && line.length > 2) {
-                    currentCategory = line.substring(2).trim();
-                    console.log(`Found category: "${currentCategory}"`);
-                    
-                    if (!categorizedContent[currentCategory]) {
-                        categorizedContent[currentCategory] = { items: [] };
-                    }
-                } else if (line.startsWith('- ') && currentCategory && line.length > 2) {
-                    // List items under current category
-                    const itemText = line.substring(2).trim();
-                    if (itemText) {
-                        console.log(`Adding item to "${currentCategory}": "${itemText}"`);
-                        categorizedContent[currentCategory].items.push(itemText);
-                    }
-                } else if (line.startsWith('* ') && currentCategory && line.length > 2) {
-                    // Also handle * bullets
-                    const itemText = line.substring(2).trim();
-                    if (itemText) {
-                        console.log(`Adding item (asterisk) to "${currentCategory}": "${itemText}"`);
-                        categorizedContent[currentCategory].items.push(itemText);
-                    }
-                } else if (line.length > 0) {
-                    console.log(`Ignored line: "${line}" (currentCategory: ${currentCategory})`);
-                }
-            }
-            
-            console.log('Final categorized content:', categorizedContent);
-            console.log('Categories found:', Object.keys(categorizedContent));
-            
-            // Ensure we have at least some content if the original note had content
-            if (Object.keys(categorizedContent).length === 0 && markdown.trim().length > 0) {
-                console.warn('⚠️ No categories parsed but markdown exists - creating fallback');
-                // Create a fallback category to prevent data loss
-                categorizedContent['Notes'] = { 
-                    items: [markdown.trim().replace(/\n+/g, ' ')] 
-                };
-            }
-            
-            return categorizedContent;
-        }
-
-        // Toggle between view and edit mode
-        function toggleMarkdownMode() {
-            const container = document.getElementById('markdownContainer');
-            const modeLabel = document.getElementById('markdownModeLabel');
-            const modeToggle = document.getElementById('markdownModeToggle');
-            const viewDiv = document.getElementById('markdownView');
-            const editTextarea = document.getElementById('markdownEditor');
-            
-            if (!container) return;
-            
-            isMarkdownEditMode = !isMarkdownEditMode;
-            
-            if (isMarkdownEditMode) {
-                // Create backup before entering edit mode
-                contentBackup = {
-                    content: JSON.parse(JSON.stringify(currentNote.content || {})),
-                    markdown: markdownContent
-                };
-                console.log('Created content backup:', contentBackup);
-                
-                // Switch to edit mode
-                container.classList.add('edit-mode');
-                modeLabel.textContent = 'Markdown Editor (Auto-saves on exit)';
-                modeToggle.textContent = 'Preview';
-                editTextarea.focus();
-                
-                // Auto-resize textarea
-                autoResizeTextarea(editTextarea);
-                
-                console.log('Switched to edit mode');
-            } else {
-                // Switch to view mode - save changes first
-                console.log('Switching to view mode, saving changes...');
-                
-                container.classList.remove('edit-mode');
-                modeLabel.textContent = 'Notes';
-                modeToggle.textContent = 'Edit';
-                
-                // Update the markdown content and re-render
-                updateMarkdownFromEditor();
-                
-                // Auto-save when switching to view mode
-                saveMarkdownContent();
-            }
-        }
-
-        // Add restore function for emergencies
-        function restoreFromBackup() {
-            if (contentBackup && currentNote) {
-                console.log('Restoring from backup:', contentBackup);
-                currentNote.content = contentBackup.content;
-                markdownContent = contentBackup.markdown;
-                
-                // Re-render
-                const markdownEditor = document.getElementById('markdownEditor');
-                const markdownView = document.getElementById('markdownView');
-                
-                if (markdownEditor) {
-                    markdownEditor.value = markdownContent;
-                }
-                
-                if (markdownView) {
-                    if (markdownContent.trim()) {
-                        markdownView.innerHTML = marked.parse(markdownContent);
-                    } else {
-                        markdownView.innerHTML = '<div class="markdown-empty">Click "Edit" to start writing your note in markdown...</div>';
-                    }
-                }
-                
-                alert('Content restored from backup!');
-                return true;
-            }
-            return false;
-        }
-
-        // Make restore function available globally for emergency use
-        window.restoreFromBackup = restoreFromBackup;
-
-        // Update markdown content from editor
-        function updateMarkdownFromEditor() {
-            const editTextarea = document.getElementById('markdownEditor');
-            const viewDiv = document.getElementById('markdownView');
-            
-            if (!editTextarea || !viewDiv) return;
-            
-            markdownContent = editTextarea.value;
-            
-            if (markdownContent.trim()) {
-                // Use marked.js to render markdown
-                viewDiv.innerHTML = marked.parse(markdownContent);
-            } else {
-                viewDiv.innerHTML = '<div class="markdown-empty">Click "Edit" to start writing your note in markdown...</div>';
-            }
-        }
-
-        // Auto-resize textarea
-        function autoResizeTextarea(textarea) {
-            textarea.style.height = 'auto';
-            textarea.style.height = Math.max(300, textarea.scrollHeight) + 'px';
-        }
-
-        // Initialize markdown editor
-        function initializeMarkdownEditor() {
-            const editTextarea = document.getElementById('markdownEditor');
-            if (editTextarea) {
-                // Auto-resize on input
-                editTextarea.addEventListener('input', function() {
-                    autoResizeTextarea(this);
-                });
-                
-                // Auto-save on blur (when user clicks outside)
-                editTextarea.addEventListener('blur', function() {
-                    // Small delay to allow for other click events to process
-                    setTimeout(() => {
-                        if (isMarkdownEditMode) {
-                            console.log('Auto-saving on blur...');
-                            toggleMarkdownMode(); // This will save and switch to view mode
-                        }
-                    }, 150);
-                });
-                
-                // Save on Ctrl/Cmd + S (still useful for manual saves)
-                editTextarea.addEventListener('keydown', function(e) {
-                    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-                        e.preventDefault();
-                        toggleMarkdownMode(); // Save and switch to view mode
-                    }
-                    
-                    // Save and exit edit mode on ESC key
-                    if (e.key === 'Escape') {
-                        e.preventDefault();
-                        console.log('ESC key pressed - auto-saving and switching to view mode...');
-                        toggleMarkdownMode(); // Save and switch to view mode
-                    }
-                });
-            }
-        }
-
-        // Save markdown content - SIMPLIFIED VERSION
-        async function saveMarkdownContent() {
-            console.log('=== MARKDOWN SAVE STARTING ===');
-            
-            if (!currentNote) {
-                console.error('No current note - cannot save');
-                return false;
-            }
-            
-            const editTextarea = document.getElementById('markdownEditor');
-            if (!editTextarea) {
-                console.error('No markdown editor found');
-                return false;
-            }
-            
-            const markdown = editTextarea.value;
-            console.log('Markdown to save:', markdown);
-            
-            // Show saving state on toggle button
-            const modeToggle = document.getElementById('markdownModeToggle');
-            const originalToggleText = modeToggle?.textContent;
-            
-            if (modeToggle) {
-                modeToggle.textContent = 'Saving...';
-                modeToggle.disabled = true;
-            }
-            
-            try {
-                console.log('Attempting to save markdown to API...');
-                
-                const response = await fetch(`/api/notes/${currentNote.id}/markdown`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${accessToken}`
-                    },
-                    body: JSON.stringify({
-                        markdown_content: markdown
-                    })
-                });
-                
-                console.log('API Response status:', response.status);
-                
-                if (handleTokenExpiration(response)) {
-                    console.log('Token expired, redirecting...');
-                    return false;
-                }
-                
-                const responseText = await response.text();
-                console.log('API Response text:', responseText);
-                
-                if (!response.ok) {
-                    throw new Error(`API Error ${response.status}: ${responseText}`);
-                }
-                
-                // Try to parse response as JSON
-                let responseData;
-                try {
-                    responseData = JSON.parse(responseText);
-                    console.log('API Response data:', responseData);
-                } catch (e) {
-                    console.log('Response is not JSON, treating as success');
-                    responseData = { success: true };
-                }
-                
-                // Update local note object
-                console.log('Updating local note object...');
-                currentNote.markdown_content = markdown;
-                markdownContent = markdown;
-                
-                // Update the view
-                updateMarkdownFromEditor();
-                
-                // Refresh notes list
-                console.log('Refreshing notes list...');
-                await loadNotes();
-                
-                console.log('✅ Save completed successfully');
-                
-                // Show success feedback briefly
-                if (modeToggle) {
-                    modeToggle.textContent = 'Saved!';
-                    modeToggle.style.background = '#10b981';
-                    modeToggle.style.color = 'white';
-                }
-                
-                setTimeout(() => {
-                    if (modeToggle) {
-                        modeToggle.textContent = originalToggleText;
-                        modeToggle.style.background = '';
-                        modeToggle.style.color = '';
-                        modeToggle.disabled = false;
-                    }
-                }, 2000);
-                
-                return true;
-                
-            } catch (error) {
-                console.error('❌ Save failed:', error);
-                
-                // Restore button state
-                if (modeToggle) {
-                    modeToggle.textContent = originalToggleText;
-                    modeToggle.disabled = false;
-                }
-                
-                alert(`Save failed: ${error.message}\n\nYour content is still in the editor. Try again or check network connection.`);
-                return false;
-            }
-        }
-
-        // Emergency debugging and save functions
-        window.debugCurrentNote = function() {
-            console.log('=== CURRENT NOTE DEBUG ===');
-            console.log('currentNote:', currentNote);
-            console.log('currentNote.content:', currentNote?.content);
-            console.log('markdownContent:', markdownContent);
-            
-            const editor = document.getElementById('markdownEditor');
-            if (editor) {
-                console.log('Editor value:', editor.value);
-            }
-            
-            return {
-                currentNote: currentNote,
-                markdownContent: markdownContent,
-                editorValue: editor?.value
-            };
-        };
-
-        // Emergency save function with full logging
-        window.emergencySave = async function() {
-            console.log('=== EMERGENCY SAVE ===');
-            
-            if (!currentNote) {
-                alert('No current note selected!');
-                return false;
-            }
-            
-            const editor = document.getElementById('markdownEditor');
-            if (!editor) {
-                alert('No editor found!');
-                return false;
-            }
-            
-            const markdown = editor.value;
-            console.log('Markdown to save:', markdown);
-            
-            // Try the simple text save first
-            try {
-                console.log('Trying simple content save...');
-                const response = await fetch(`/api/notes/${currentNote.id}/content`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${accessToken}`
-                    },
-                    body: JSON.stringify({ text: markdown })
-                });
-                
-                console.log('Simple save response:', response.status);
-                const responseText = await response.text();
-                console.log('Simple save response body:', responseText);
-                
-                if (response.ok) {
-                    alert('Emergency save successful via text method!');
-                    return true;
-                }
-            } catch (error) {
-                console.error('Simple save failed:', error);
-            }
-            
-            // Try direct content update
-            try {
-                console.log('Trying direct content update...');
-                const categorizedContent = markdownToCategories(markdown);
-                console.log('Parsed content for direct update:', categorizedContent);
-                
-                const response = await fetch(`/api/notes/${currentNote.id}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${accessToken}`
-                    },
-                    body: JSON.stringify({
-                        content: JSON.stringify(categorizedContent)
-                    })
-                });
-                
-                console.log('Direct update response:', response.status);
-                const responseText = await response.text();
-                console.log('Direct update response body:', responseText);
-                
-                if (response.ok) {
-                    alert('Emergency save successful via direct method!');
-                    return true;
-                } else {
-                    alert('Emergency save failed. Check console for details.');
-                    return false;
-                }
-            } catch (error) {
-                console.error('Direct save failed:', error);
-                alert('Emergency save failed with error: ' + error.message);
-                return false;
-            }
-        };
-
-        // Make functions available globally
-        window.debugCurrentNote = debugCurrentNote;
-        window.emergencySave = emergencySave;
-
-        // Convert legacy JSON content to markdown format
-        function convertContentToMarkdown(content) {
-            if (!content || typeof content !== 'object') {
-                return '';
-            }
-            
-            let markdown = '';
-            
-            // Define preferred order for categories
-            const categoryOrder = ['Key Points', 'Action Items', 'Decisions', 'Notes', 'Ideas', 'References'];
-            
-            // Get categories in preferred order
-            const sortedCategories = Object.keys(content).sort((a, b) => {
-                const indexA = categoryOrder.indexOf(a);
-                const indexB = categoryOrder.indexOf(b);
-                
-                if (indexA !== -1 && indexB !== -1) return indexA - indexB;
-                if (indexA !== -1 && indexB === -1) return -1;
-                if (indexA === -1 && indexB !== -1) return 1;
-                return a.localeCompare(b);
-            });
-            
-            for (const categoryName of sortedCategories) {
-                const categoryData = content[categoryName];
-                let items = [];
-                
-                // Handle different data structures
-                if (Array.isArray(categoryData)) {
-                    items = categoryData;
-                } else if (categoryData && typeof categoryData === 'object') {
-                    if (categoryData.items) {
-                        items = categoryData.items;
-                        // Handle double nesting
-                        if (items && typeof items === 'object' && items.items && Array.isArray(items.items)) {
-                            items = items.items;
-                        }
-                    }
-                }
-                
-                // Convert to markdown
-                if (Array.isArray(items) && items.length > 0) {
-                    markdown += `# ${categoryName}\n\n`;
-                    
-                    for (const item of items) {
-                        let text = '';
-                        if (typeof item === 'string') {
-                            text = item;
-                        } else if (item && typeof item === 'object') {
-                            text = item.text || item.content || '';
-                        }
-                        
-                        if (text.trim()) {
-                            markdown += `- ${text.trim()}\n`;
-                        }
-                    }
-                    
-                    markdown += '\n';
-                }
-            }
-            
-            return markdown.trim();
-        }
-
-        function restartTutorial() {
-            localStorage.removeItem('focuspad-tutorial-completed');
-            showTutorial();
-        }
-
-        // Manual tutorial restart function for testing
-        function restartTutorial() {
-            localStorage.removeItem('focuspad-tutorial-completed');
-            showTutorial();
-        }
-
-        // Markdown Help Modal Functions
-        function showMarkdownHelp() {
-            const modal = document.getElementById('markdownHelpModal');
-            modal.classList.add('show');
-            
-            // Prevent body scroll when modal is open
-            document.body.style.overflow = 'hidden';
-        }
-
-        function closeMarkdownHelp(event) {
-            if (event && event.target !== event.currentTarget) return;
-            
-            const modal = document.getElementById('markdownHelpModal');
-            modal.classList.remove('show');
-            
-            // Restore body scroll
-            document.body.style.overflow = '';
-        }
-
-        // Close modal with Escape key
-        document.addEventListener('keydown', function(event) {
-            if (event.key === 'Escape') {
-                const helpModal = document.getElementById('markdownHelpModal');
-                if (helpModal && helpModal.classList.contains('show')) {
-                    closeMarkdownHelp();
-                }
-            }
-        });
-
-        // Toggle raw content visibility
-        function toggleRawContent() {
-            const rawContentSection = document.getElementById('rawContentSection');
-            const toggleButton = document.getElementById('rawContentToggle');
-            
-            if (rawContentSection && toggleButton) {
-                const isVisible = rawContentSection.style.display !== 'none';
-                
-                if (isVisible) {
-                    rawContentSection.style.display = 'none';
-                    toggleButton.classList.remove('active');
-                    toggleButton.title = 'Show raw content';
-                } else {
-                    rawContentSection.style.display = 'block';
-                    toggleButton.classList.add('active');
-                    toggleButton.title = 'Hide raw content';
-                }
-            }
-        }
-
-        // Toggle sidebar visibility
-        function toggleSidebar() {
-            const sidebar = document.querySelector('.sidebar');
-            const mainContent = document.querySelector('.main-content');
-            const toggleButton = document.getElementById('sidebarToggle');
-            
-            if (sidebar && mainContent && toggleButton) {
-                const isHidden = sidebar.classList.contains('hidden');
-                
-                if (isHidden) {
-                    // Show sidebar
-                    sidebar.classList.remove('hidden');
-                    mainContent.classList.remove('expanded');
-                    toggleButton.innerHTML = '◀';
-                    toggleButton.classList.remove('collapsed');
-                    toggleButton.title = 'Hide sidebar';
-                } else {
-                    // Hide sidebar
-                    sidebar.classList.add('hidden');
-                    mainContent.classList.add('expanded');
-                    toggleButton.innerHTML = '▶';
-                    toggleButton.classList.add('collapsed');
-                    toggleButton.title = 'Show sidebar';
-                }
-            }
-        }
-
-        // AI Organization Function
-        async function aiSummarizeContent() {
-            console.log('AI Organize function called');
-            
-            if (!currentNote) {
-                alert('Please select a note first.');
-                return;
-            }
-            
-            // Check if access token is available
-            if (!accessToken || accessToken === 'None' || accessToken === '') {
-                console.error('No access token available for AI organization');
-                alert('Authentication required. Please log in again.');
-                window.location.href = '/login';
-                return;
-            }
-            
-            // Get current markdown content
-            const markdownEditor = document.getElementById('markdownEditor');
-            const currentContent = isMarkdownEditMode ? markdownEditor.value : markdownContent;
-            
-            if (!currentContent || currentContent.trim().length === 0) {
-                alert('Please add some content to your note before organizing.');
-                return;
-            }
-            
-            // Update button state
-            const aiButton = document.querySelector('.ai-summarize-btn');
-            const originalButtonText = aiButton ? aiButton.innerHTML : '';
-            if (aiButton) {
-                aiButton.innerHTML = '🤖 Organizing...';
-                aiButton.disabled = true;
-            }
-            
-            try {
-                console.log('Sending content to AI for organization...');
-                console.log('Content length:', currentContent.length);
-                console.log('Using access token:', accessToken ? 'Available' : 'Missing');
-                
-                const response = await fetch(`/api/notes/${currentNote.id}/ai-summarize`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${accessToken}`
-                    },
-                    body: JSON.stringify({
-                        content: currentContent
-                    })
-                });
-                
-                console.log('AI Organize response status:', response.status);
-                
-                if (handleTokenExpiration(response)) return;
-                
-                if (response.ok) {
-                    const responseData = await response.json();
-                    console.log('AI Organize response:', responseData);
-                    
-                    // Update the markdown content with AI-organized content
-                    const organizedContent = responseData.summarized_content || responseData.content;
-                    
-                    if (organizedContent) {
-                        // Update local content
-                        markdownContent = organizedContent;
-                        currentNote.markdown_content = organizedContent;
-                        
-                        // Update editor if in edit mode
-                        if (markdownEditor) {
-                            markdownEditor.value = organizedContent;
-                        }
-                        
-                        // Update view
-                        updateMarkdownFromEditor();
-                        
-                        // Refresh notes list
-                        await loadNotes();
-                        
-                        // Show success feedback
-                        if (aiButton) {
-                            aiButton.innerHTML = '✅ Organized!';
-                            aiButton.style.background = 'linear-gradient(135deg, #10b981, #059669)';
-                        }
-                        
-                        setTimeout(() => {
-                            if (aiButton) {
-                                aiButton.innerHTML = originalButtonText;
-                                aiButton.style.background = '';
-                                aiButton.disabled = false;
-                            }
-                        }, 3000);
-                        
-                        console.log('Content organized successfully');
-                    } else {
-                        throw new Error('No organized content received from AI service');
-                    }
-                } else {
-                    const errorData = await response.json().catch(() => ({}));
-                    const errorMessage = errorData.error || `API Error: ${response.status}`;
-                    
-                    console.error('AI Organization failed:', errorMessage);
-                    
-                    // Provide specific error messages based on status code
-                    if (response.status === 503) {
-                        alert('AI service is currently unavailable. Please check your OpenAI API key configuration or try again later.');
-                    } else if (response.status === 400) {
-                        alert('Invalid content provided for organization. Please check your note content.');
-                    } else if (response.status === 404) {
-                        alert('Note not found. Please refresh the page and try again.');
-                    } else if (response.status === 500) {
-                        alert('AI organization failed due to a server error. Please try again or contact support if the issue persists.');
-                    } else {
-                        alert(`AI Organization failed: ${errorMessage}`);
-                    }
-                    
-                    throw new Error(errorMessage);
-                }
-            } catch (error) {
-                console.error('AI Organization failed:', error);
-                
-                // Show user-friendly error message
-                if (error.message.includes('Failed to fetch')) {
-                    alert('Network error: Unable to connect to the AI service. Please check your internet connection.');
-                } else if (error.message.includes('AI service is not available')) {
-                    alert('AI service is currently unavailable. Please check the OpenAI API key configuration.');
-                } else {
-                    alert('AI Organization failed. Please try again or contact support if the issue persists.');
-                }
-            } finally {
-                // Reset button state
-                if (aiButton) {
-                    aiButton.innerHTML = originalButtonText;
-                    aiButton.disabled = false;
-                    aiButton.style.background = '';
-                }
-            }
-        }
-    </script>
-
-    <!-- Welcome Banner for returning users -->
-    <div class="welcome-banner" id="welcomeBanner">
-        <div class="welcome-banner-icon">👋</div>
-        <div class="welcome-banner-content">
-            <div class="welcome-banner-title">Welcome back to FocusPad!</div>
-            <div class="welcome-banner-text">Need a refresher? Click here to see the tutorial again.</div>
-        </div>
-        <button class="welcome-banner-close" onclick="hideWelcomeBanner()">&times;</button>
-    </div>
-
-    <!-- Tutorial Overlay -->
-    <div class="tutorial-overlay" id="tutorialOverlay">
-        <div class="tutorial-step" id="tutorialStep">
-            <button class="tutorial-skip" onclick="skipTutorial()" title="Skip tutorial">&times;</button>
-            
-            <div class="tutorial-step-header">
-                <div class="tutorial-step-number" id="stepNumber">1</div>
-                <div class="tutorial-step-title" id="stepTitle">Welcome to FocusPad!</div>
-                <div class="tutorial-step-description" id="stepDescription">
-                    Let's get you started with AI-powered note organization in just 4 quick steps.
-                </div>
-            </div>
-
-            <div class="tutorial-step-visual" id="stepVisual">
-                <!-- Dynamic content will be inserted here -->
-            </div>
-
-            <div class="tutorial-step-actions">
-                <button class="tutorial-btn tutorial-btn-secondary" id="prevBtn" onclick="previousStep()" style="display: none;">
-                    Previous
-                </button>
-                <button class="tutorial-btn tutorial-btn-primary" id="nextBtn" onclick="nextStep()">
-                    Get Started
-                </button>
-            </div>
-
-            <div class="tutorial-progress">
-                <div class="tutorial-progress-dot active"></div>
-                <div class="tutorial-progress-dot"></div>
-                <div class="tutorial-progress-dot"></div>
-                <div class="tutorial-progress-dot"></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Markdown Help Modal -->
-    <div class="modal-overlay" id="markdownHelpModal" onclick="closeMarkdownHelp(event)">
-        <div class="modal markdown-help-modal" onclick="event.stopPropagation()">
-            <div class="modal-header">
-                <div class="modal-title">
-                    📖 Markdown Syntax Guide
-                    <div style="font-size: 0.75rem; font-weight: normal; color: var(--text-muted);">Quick reference for formatting your notes</div>
-                </div>
-                <button class="close-btn" onclick="closeMarkdownHelp()">&times;</button>
-            </div>
-            <div class="markdown-help-content">
-                <!-- Headers Section -->
-                <div class="markdown-help-section">
-                    <h3>📝 Headers</h3>
-                    <div class="markdown-example">
-                        <div class="markdown-example-code"># Main Heading
-## Sub Heading  
-### Small Heading</div>
-                        <div class="markdown-example-result">
-                            <h1>Main Heading</h1>
-                            <h2>Sub Heading</h2>
-                            <h3>Small Heading</h3>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Text Formatting Section -->
-                <div class="markdown-help-section">
-                    <h3>✨ Text Formatting</h3>
-                    <div class="markdown-example">
-                        <div class="markdown-example-code">**Bold text**
-*Italic text*
-`Code text`
-~~Strikethrough~~</div>
-                        <div class="markdown-example-result">
-                            <p><strong>Bold text</strong></p>
-                            <p><em>Italic text</em></p>
-                            <p><code>Code text</code></p>
-                            <p><del>Strikethrough</del></p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Lists Section -->
-                <div class="markdown-help-section">
-                    <h3>📋 Lists</h3>
-                    <div class="markdown-example">
-                        <div class="markdown-example-code">- Bullet point 1
-- Bullet point 2
-  - Nested point
-
-1. Numbered item 1
-2. Numbered item 2
-3. Numbered item 3</div>
-                        <div class="markdown-example-result">
-                            <ul>
-                                <li>Bullet point 1</li>
-                                <li>Bullet point 2
-                                    <ul><li>Nested point</li></ul>
-                                </li>
-                            </ul>
-                            <ol>
-                                <li>Numbered item 1</li>
-                                <li>Numbered item 2</li>
-                                <li>Numbered item 3</li>
-                            </ol>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Links and Images Section -->
-                <div class="markdown-help-section">
-                    <h3>🔗 Links & Quotes</h3>
-                    <div class="markdown-example">
-                        <div class="markdown-example-code">[Link text](https://example.com)
-
-> This is a quote
-> Multiple lines work too</div>
-                        <div class="markdown-example-result">
-                            <p><a href="https://example.com">Link text</a></p>
-                            <blockquote>
-                                This is a quote<br>
-                                Multiple lines work too
-                            </blockquote>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Code Blocks Section -->
-                <div class="markdown-help-section">
-                    <h3>💻 Code Blocks</h3>
-                    <div class="markdown-example">
-                        <div class="markdown-example-code">```
-function hello() {
-    console.log("Hello World!");
-}
-```</div>
-                        <div class="markdown-example-result">
-                            <pre><code>function hello() {
-    console.log("Hello World!");
-}</code></pre>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Quick Reference Cheatsheet -->
-                <div class="markdown-help-section">
-                    <h3>🚀 Quick Reference</h3>
-                    <div class="markdown-cheatsheet">
-                        <div class="markdown-cheatsheet-item">
-                            <span class="markdown-cheatsheet-syntax"># ## ###</span>
-                            <span class="markdown-cheatsheet-desc">Headers</span>
-                        </div>
-                        <div class="markdown-cheatsheet-item">
-                            <span class="markdown-cheatsheet-syntax">**text**</span>
-                            <span class="markdown-cheatsheet-desc">Bold</span>
-                        </div>
-                        <div class="markdown-cheatsheet-item">
-                            <span class="markdown-cheatsheet-syntax">*text*</span>
-                            <span class="markdown-cheatsheet-desc">Italic</span>
-                        </div>
-                        <div class="markdown-cheatsheet-item">
-                            <span class="markdown-cheatsheet-syntax">`code`</span>
-                            <span class="markdown-cheatsheet-desc">Inline code</span>
-                        </div>
-                        <div class="markdown-cheatsheet-item">
-                            <span class="markdown-cheatsheet-syntax">- item</span>
-                            <span class="markdown-cheatsheet-desc">Bullet list</span>
-                        </div>
-                        <div class="markdown-cheatsheet-item">
-                            <span class="markdown-cheatsheet-syntax">1. item</span>
-                            <span class="markdown-cheatsheet-desc">Numbered list</span>
-                        </div>
-                        <div class="markdown-cheatsheet-item">
-                            <span class="markdown-cheatsheet-syntax">[link](url)</span>
-                            <span class="markdown-cheatsheet-desc">Link</span>
-                        </div>
-                        <div class="markdown-cheatsheet-item">
-                            <span class="markdown-cheatsheet-syntax">> quote</span>
-                            <span class="markdown-cheatsheet-desc">Quote</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn-save" onclick="closeMarkdownHelp()">Got it!</button>
-            </div>
-        </div>
-    </div>
-
-    <script>
         // Tutorial System
         let currentTutorialStep = 0;
         let userCreatedDate = null;
@@ -5564,5 +4743,17 @@ function hello() {
             showTutorial();
         }
     </script>
+
+    <!-- Welcome Banner for returning users -->
+    <div class="welcome-banner" id="welcomeBanner">
+        <div class="welcome-banner-icon">👋</div>
+        <div class="welcome-banner-content">
+            <div class="welcome-banner-title">Welcome back to FocusPad!</div>
+            <div class="welcome-banner-text">Need a refresher? Click here to see the tutorial again.</div>
+        </div>
+        <button class="welcome-banner-close" onclick="hideWelcomeBanner()">&times;</button>
+    </div>
+
+    <!-- Tutorial Overlay -->
 </body>
 </html>

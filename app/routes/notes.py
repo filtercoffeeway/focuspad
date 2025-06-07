@@ -803,4 +803,49 @@ Please return a well-organized markdown document that makes the content easy to 
         
     except Exception as e:
         current_app.logger.error(f"AI summarize note error: {str(e)}")
-        return jsonify({'error': 'Failed to summarize note'}), 500 
+        return jsonify({'error': 'Failed to summarize note'}), 500
+
+@notes_bp.route('/extract-action-items', methods=['POST'])
+@jwt_required()
+def extract_action_items():
+    """Use AI to extract action items from all notes."""
+    try:
+        current_user_id = get_jwt_identity()
+        
+        # Get all notes for the user
+        notes = Note.query.filter_by(user_id=current_user_id).all()
+        
+        if not notes:
+            return jsonify({'action_items': []})
+        
+        action_items = []
+        
+        for note in notes:
+            try:
+                # Decrypt note data
+                note.decrypt_sensitive_data(current_user_id)
+                
+                # Get content for analysis
+                content = note.markdown_content or note.raw_content or ''
+                if not content.strip():
+                    continue
+                
+                # Use AI to extract action items
+                extracted_items = ai_service.extract_action_items(content, note.title, note.id)
+                
+                if extracted_items:
+                    action_items.extend(extracted_items)
+                    
+            except Exception as e:
+                current_app.logger.error(f"Error processing note {note.id} for action items: {e}")
+                continue
+        
+        return jsonify({
+            'action_items': action_items,
+            'total_notes_processed': len(notes),
+            'items_found': len(action_items)
+        })
+        
+    except Exception as e:
+        current_app.logger.error(f"Extract action items error: {str(e)}")
+        return jsonify({'error': 'Failed to extract action items'}), 500 
