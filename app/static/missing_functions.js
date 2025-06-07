@@ -507,4 +507,439 @@ function renderCategoryItems(items, category) {
     }).join('');
 
     return `<div class="category-list">${itemsHtml}</div>`;
+}
+
+// Delete note function
+async function deleteNote(noteId, event) {
+    // Prevent the click event from bubbling up to selectNote
+    event.stopPropagation();
+    
+    console.log('Deleting note with ID:', noteId);
+    
+    if (!noteId || noteId === 'undefined') {
+        console.error('Invalid note ID:', noteId);
+        alert('Invalid note ID. Please try refreshing the page.');
+        return;
+    }
+    
+    // Find the note to get its title for confirmation - with error handling
+    let noteTitle = 'this note';
+    try {
+        const noteToDelete = notes.find(note => note.id === noteId);
+        if (noteToDelete) {
+            // Use the stored title or first line, with fallback
+            noteTitle = noteToDelete.title || getFirstLineAsTitle(noteToDelete) || `Note ${noteId}`;
+        }
+    } catch (error) {
+        console.warn('Error getting note title for deletion:', error);
+        noteTitle = `Note ${noteId}`;
+    }
+    
+    // Confirm deletion
+    if (!confirm(`Are you sure you want to delete "${noteTitle}"? This action cannot be undone.`)) {
+        return;
+    }
+    
+    try {
+        console.log('Sending delete request...');
+        const response = await fetch(`/api/notes/${noteId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${accessToken}`
+            }
+        });
+        
+        console.log('Delete note response status:', response.status);
+        console.log('Response ok:', response.ok);
+        
+        if (handleTokenExpiration(response)) {
+            console.log('Token expiration handled, returning...');
+            return;
+        }
+        
+        if (response.ok) {
+            console.log('Delete response was ok, processing...');
+            
+            try {
+                // Remove note from local array
+                const noteIndex = notes.findIndex(note => note.id === noteId);
+                if (noteIndex !== -1) {
+                    notes.splice(noteIndex, 1);
+                    console.log(`Removed note from local array at index ${noteIndex}`);
+                } else {
+                    console.warn('Note not found in local array');
+                }
+            } catch (error) {
+                console.error('Error removing note from local array:', error);
+            }
+            
+            try {
+                // Clear the display if this was the current note
+                if (currentNote && currentNote.id === noteId) {
+                    currentNote = null;
+                    renderNoteDisplay();
+                    console.log('Cleared current note display');
+                }
+            } catch (error) {
+                console.error('Error clearing current note display:', error);
+            }
+            
+            try {
+                // Update the notes list display
+                console.log('Refreshing notes list...');
+                renderNotesList();
+            } catch (error) {
+                console.error('Error rendering notes list:', error);
+            }
+            
+            console.log('✅ Note deleted successfully');
+        } else {
+            console.error('Delete request failed with status:', response.status);
+            
+            let errorMessage = 'Failed to delete note.';
+            try {
+                const errorText = await response.text();
+                console.log('Error response text:', errorText);
+                
+                try {
+                    const errorJson = JSON.parse(errorText);
+                    if (errorJson.error) {
+                        errorMessage += ' ' + errorJson.error;
+                    }
+                } catch (parseError) {
+                    console.log('Error response is not JSON:', parseError);
+                    errorMessage += ' ' + errorText;
+                }
+            } catch (textError) {
+                console.error('Failed to read error response:', textError);
+                errorMessage += ' Unknown server error.';
+            }
+            
+            console.error('Final error message:', errorMessage);
+            alert(errorMessage);
+        }
+    } catch (error) {
+        console.error('Network/unexpected error deleting note:', error);
+        alert('Network error deleting note. Please check your connection and try again.');
+    }
+}
+
+// Delete todo function
+function deleteTodo(todoId) {
+    console.log('Deleting todo with ID:', todoId);
+    
+    if (!todoId) {
+        console.error('Invalid todo ID:', todoId);
+        alert('Invalid todo ID. Please try refreshing the page.');
+        return;
+    }
+    
+    // Find the todo to get its name for confirmation
+    let todoName = 'this task';
+    try {
+        const todoToDelete = todos.find(todo => todo.id === todoId);
+        if (todoToDelete) {
+            todoName = todoToDelete.taskName || 'this task';
+        }
+    } catch (error) {
+        console.warn('Error getting todo name for deletion:', error);
+        todoName = 'this task';
+    }
+    
+    // Confirm deletion
+    if (!confirm(`Are you sure you want to delete "${todoName}"? This action cannot be undone.`)) {
+        return;
+    }
+    
+    try {
+        // Remove todo from local array
+        const todoIndex = todos.findIndex(todo => todo.id === todoId);
+        if (todoIndex !== -1) {
+            todos.splice(todoIndex, 1);
+            console.log(`Removed todo from local array at index ${todoIndex}`);
+            
+            // Save updated todos to localStorage
+            saveTodosToStorage();
+            
+            // Re-render the todo table
+            renderTodoTable();
+            
+            console.log('✅ Todo deleted successfully');
+        } else {
+            console.warn('Todo not found in local array');
+            alert('Todo not found. Please try refreshing the page.');
+        }
+    } catch (error) {
+        console.error('Error deleting todo:', error);
+        alert('Error deleting todo. Please try again.');
+    }
+}
+
+// Helper function to get first line as title (should already exist but adding for safety)
+function getFirstLineAsTitle(note) {
+    // First try markdown_content as it's the primary content
+    if (note.markdown_content && note.markdown_content.trim()) {
+        let text = note.markdown_content.trim();
+        // Remove markdown formatting
+        text = text.replace(/#+\s+/g, '');  // Remove headers
+        text = text.replace(/\*\*([^*]+)\*\*/g, '$1');  // Remove bold
+        text = text.replace(/\*([^*]+)\*/g, '$1');  // Remove italic
+        text = text.replace(/`([^`]+)`/g, '$1');  // Remove code
+        text = text.replace(/^[\-\*]\s+/gm, '');  // Remove bullet points
+        text = text.replace(/^\>\s+/gm, '');  // Remove blockquotes
+        
+        // Get the first line
+        const firstLine = text.split('\n')[0].trim();
+        if (firstLine) {
+            return firstLine.length > 50 ? firstLine.substring(0, 50) + '...' : firstLine;
+        }
+    }
+    
+    // Fallback to raw_content if no markdown content
+    if (note.raw_content && note.raw_content.trim()) {
+        const firstLine = note.raw_content.trim().split('\n')[0];
+        return firstLine.length > 50 ? firstLine.substring(0, 50) + '...' : firstLine;
+    }
+    
+    // Final fallback
+    return note.title || 'Untitled Note';
+}
+
+// Helper function to save todos to localStorage
+function saveTodosToStorage() {
+    try {
+        localStorage.setItem('focuspad_todos', JSON.stringify(todos));
+    } catch (error) {
+        console.error('Error saving todos to localStorage:', error);
+    }
+}
+
+// Helper function to load todos from localStorage
+function loadTodosFromStorage() {
+    try {
+        const storedTodos = localStorage.getItem('focuspad_todos');
+        if (storedTodos) {
+            todos = JSON.parse(storedTodos);
+        }
+    } catch (error) {
+        console.error('Error loading todos from localStorage:', error);
+        todos = [];
+    }
+}
+
+// Function to handle token expiration and redirect to login
+function handleTokenExpiration(response) {
+    if (response.status === 401) {
+        // Clone the response to avoid consuming the original stream
+        const clonedResponse = response.clone();
+        
+        // Check if the error message indicates token expiration
+        clonedResponse.json().then(data => {
+            if (data.msg && data.msg.includes('expired')) {
+                console.log('Token has expired, redirecting to login...');
+                alert('Your session has expired. Please log in again.');
+                window.location.href = '/';
+            }
+        }).catch(() => {
+            // If we can't parse the response, just redirect anyway for 401
+            console.log('401 error detected, redirecting to login...');
+            alert('Your session has expired. Please log in again.');
+            window.location.href = '/';
+        });
+        return true; // Token expired
+    }
+    return false; // Token still valid
+}
+
+// Render notes list in sidebar
+function renderNotesList() {
+    const notesList = document.getElementById('notesList');
+    
+    if (notes.length === 0) {
+        notesList.innerHTML = '<div style="padding: 20px; color: #999; text-align: center;">No notes yet.<br>Create your first note!</div>';
+        return;
+    }
+
+    // Sort by updated_at (most recent first)
+    const sortedNotes = [...notes].sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
+
+    notesList.innerHTML = sortedNotes.map(note => `
+        <div class="note-item" onclick="selectNote(${note.id})" data-note-id="${note.id}">
+            <div class="note-header-row">
+                <div class="note-title">${escapeHtml(getFirstLineAsTitle(note))}</div>
+                <div class="note-actions">
+                    <button class="delete-btn" onclick="deleteNote(${note.id}, event)" title="Delete note">🗑️</button>
+                </div>
+            </div>
+            <div class="note-preview">${escapeHtml(getPreviewText(note))}</div>
+            <div class="note-date">${formatDate(note.updated_at)}</div>
+        </div>
+    `).join('');
+}
+
+// Get preview text from note content
+function getPreviewText(note) {
+    // First try markdown_content
+    if (note.markdown_content && note.markdown_content.trim()) {
+        let text = note.markdown_content.trim();
+        // Remove markdown formatting
+        text = text.replace(/#+\s+/g, '');  // Remove headers
+        text = text.replace(/\*\*([^*]+)\*\*/g, '$1');  // Remove bold
+        text = text.replace(/\*([^*]+)\*/g, '$1');  // Remove italic
+        text = text.replace(/`([^`]+)`/g, '$1');  // Remove code
+        text = text.replace(/^[\-\*]\s+/gm, '');  // Remove bullet points
+        text = text.replace(/^\>\s+/gm, '');  // Remove blockquotes
+        
+        // Get first few lines, skip the first line if it's already used as title
+        const lines = text.split('\n').filter(line => line.trim());
+        const preview = lines.slice(1).join(' ').trim();
+        return preview.length > 100 ? preview.substring(0, 100) + '...' : preview;
+    }
+    
+    // Fallback to raw_content
+    if (note.raw_content && note.raw_content.trim()) {
+        const lines = note.raw_content.trim().split('\n').filter(line => line.trim());
+        const preview = lines.slice(1).join(' ').trim();
+        return preview.length > 100 ? preview.substring(0, 100) + '...' : preview;
+    }
+    
+    return 'No content';
+}
+
+// Format date for display
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffTime = Math.abs(now - date);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 1) {
+        return 'Today';
+    } else if (diffDays === 2) {
+        return 'Yesterday';
+    } else if (diffDays <= 7) {
+        return `${diffDays - 1} days ago`;
+    } else {
+        return date.toLocaleDateString();
+    }
+}
+
+// Select note function
+function selectNote(noteId) {
+    const note = notes.find(n => n.id === noteId);
+    if (note) {
+        currentNote = note;
+        renderNoteDisplay();
+        
+        // Update active state in sidebar
+        document.querySelectorAll('.note-item').forEach(item => {
+            item.classList.remove('active');
+        });
+        
+        const activeItem = document.querySelector(`[data-note-id="${noteId}"]`);
+        if (activeItem) {
+            activeItem.classList.add('active');
+        }
+    }
+}
+
+// Render todo table
+function renderTodoTable() {
+    const container = document.getElementById('todoTableContainer');
+    if (!container) return; // Exit if container doesn't exist
+    
+    const filteredTodos = showCompleted ? todos : todos.filter(todo => todo.status !== 'completed');
+    
+    if (filteredTodos.length === 0) {
+        container.innerHTML = `
+            <div class="empty-todo-state">
+                <div class="empty-todo-icon">📋</div>
+                <h3>${todos.length > 0 ? 'All Tasks Completed!' : 'No Tasks Yet'}</h3>
+                <p>${todos.length > 0 ? 
+                    'Great job! All your tasks are completed.<br>Toggle "Show completed" to see them.' : 
+                    'Create notes with to-do items and they will automatically appear here.<br>Use formats like:<br>• "TODO: Task description"<br>• "[ ] Task to complete"<br>• "- [ ] Another task format"<br><br>Or click "Add Task" to create tasks manually.'
+                }</p>
+            </div>
+        `;
+        return;
+    }
+    
+    const now = new Date();
+    const todayStr = now.toISOString().split('T')[0];
+    const tomorrowStr = new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    
+    container.innerHTML = `
+        <table class="todo-table">
+            <thead>
+                <tr>
+                    <th>Task Name</th>
+                    <th>Due Date</th>
+                    <th>Status</th>
+                    <th>Comments</th>
+                    <th style="width: 60px;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${filteredTodos.map(todo => {
+                    let dueDateClass = '';
+                    let dueDateText = todo.dueDate || '-';
+                    
+                    if (todo.dueDate) {
+                        // Format date without timezone conversion
+                        const dateStr = todo.dueDate;
+                        dueDateText = new Date(dateStr + 'T00:00:00').toLocaleDateString();
+                        
+                        if (todo.dueDate < todayStr) {
+                            dueDateClass = 'overdue';
+                        } else if (todo.dueDate === todayStr || todo.dueDate === tomorrowStr) {
+                            dueDateClass = 'due-soon';
+                        }
+                    }
+                    
+                    const clickHandler = todo.isManual ? '' : 
+                        (todo.noteId ? `onclick="handleTodoRowClick(event, '${todo.noteId}')"` : '');
+                    const cursorStyle = (todo.isManual || !todo.noteId) ? '' : 'style="cursor: pointer;"';
+                    
+                    return `
+                        <tr ${clickHandler} ${cursorStyle}>
+                            <td class="todo-task-name">
+                                <div class="todo-task-editable" 
+                                     data-todo-id="${todo.id}"
+                                     data-field="taskName"
+                                     onclick="event.stopPropagation(); startEditingField(this, 'taskName')"
+                                     onblur="saveField(this, 'taskName')"
+                                     onkeydown="handleFieldKeydown(event, this, 'taskName')"
+                                     title="Click to edit task name">${escapeHtml(todo.taskName)}</div>
+                            </td>
+                            <td class="todo-due-date ${dueDateClass}">
+                                <div class="todo-due-date-editable" 
+                                     data-todo-id="${todo.id}"
+                                     data-field="dueDate"
+                                     onclick="event.stopPropagation(); startEditingDate(this)"
+                                     title="Click to edit due date">${dueDateText}</div>
+                            </td>
+                            <td>
+                                <div class="todo-status-editable todo-status ${todo.status}" 
+                                     data-todo-id="${todo.id}"
+                                     data-field="status"
+                                     onclick="event.stopPropagation(); startEditingStatus(this)"
+                                     title="Click to change status">${todo.status.replace('-', ' ')}</div>
+                            </td>
+                            <td class="todo-comments">
+                                <div class="todo-comments-editable" 
+                                     data-todo-id="${todo.id}"
+                                     onclick="event.stopPropagation(); startEditingComment(this)"
+                                     onblur="saveComment(this)"
+                                     onkeydown="handleCommentKeydown(event, this)"
+                                     title="Click to edit comments">${escapeHtml(todo.comments || '')}</div>
+                            </td>
+                            <td class="todo-actions">
+                                <button class="delete-todo-btn" onclick="event.stopPropagation(); deleteTodo('${todo.id}')" title="Delete task">🗑️</button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('')}
+            </tbody>
+        </table>
+    `;
 } 
