@@ -856,8 +856,8 @@ async function deleteNote(noteId, event) {
     try {
         const noteToDelete = notes.find(note => note.id === noteId);
         if (noteToDelete) {
-            // Use the stored title or first line, with fallback
-            noteTitle = noteToDelete.title || getFirstLineAsTitle(noteToDelete) || `Note ${noteId}`;
+            // Use only the first line as title, don't use the stored title field
+            noteTitle = getFirstLineAsTitle(noteToDelete) || `Note ${noteId}`;
         }
     } catch (error) {
         console.warn('Error getting note title for deletion:', error);
