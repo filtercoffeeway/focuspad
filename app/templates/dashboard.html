@@ -4866,6 +4866,33 @@
                 dropdown.classList.remove('show');
             }
         });
+
+        // Toggle sidebar visibility
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            const mainContent = document.querySelector('.main-content');
+            const toggleButton = document.getElementById('sidebarToggle');
+            
+            if (sidebar && mainContent && toggleButton) {
+                const isHidden = sidebar.classList.contains('hidden');
+                
+                if (isHidden) {
+                    // Show sidebar
+                    sidebar.classList.remove('hidden');
+                    mainContent.classList.remove('expanded');
+                    toggleButton.innerHTML = '◀';
+                    toggleButton.classList.remove('collapsed');
+                    toggleButton.title = 'Hide sidebar';
+                } else {
+                    // Hide sidebar
+                    sidebar.classList.add('hidden');
+                    mainContent.classList.add('expanded');
+                    toggleButton.innerHTML = '▶';
+                    toggleButton.classList.add('collapsed');
+                    toggleButton.title = 'Show sidebar';
+                }
+            }
+        }
     </script>
 
     <!-- Welcome Banner for returning users -->
