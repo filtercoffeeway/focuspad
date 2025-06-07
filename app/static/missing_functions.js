@@ -403,51 +403,380 @@ function showMarkdownHelp() {
     alert('Markdown Help:\n\n# Heading 1\n## Heading 2\n### Heading 3\n\n**Bold text**\n*Italic text*\n`Code`\n\n- Bullet point\n1. Numbered list\n\n> Quote\n\n[Link](url)');
 }
 
-// AI Summarize function (placeholder)
+// AI Summarize function (updated with correct implementation)
 async function aiSummarizeNote() {
-    const btn = document.querySelector('.ai-summarize-btn');
-    const originalText = btn.innerHTML;
+    console.log('AI Organize function called');
     
-    btn.innerHTML = '🤖 Organizing...';
-    btn.disabled = true;
+    if (!currentNote) {
+        alert('Please select a note first.');
+        return;
+    }
+    
+    // Check if access token is available
+    if (!accessToken || accessToken === 'None' || accessToken === '') {
+        console.error('No access token available for AI organization');
+        alert('Authentication required. Please log in again.');
+        window.location.href = '/login';
+        return;
+    }
+    
+    // Get current markdown content
+    const markdownEditor = document.getElementById('markdownEditor');
+    const currentContent = markdownEditor ? markdownEditor.value : (currentNote.markdown_content || '');
+    
+    if (!currentContent || currentContent.trim().length === 0) {
+        alert('Please add some content to your note before organizing.');
+        return;
+    }
+    
+    // Update button state
+    const aiButton = document.querySelector('.markdown-help-btn[onclick*="aiSummarizeNote"]');
+    const originalButtonText = aiButton ? aiButton.innerHTML : '';
+    if (aiButton) {
+        aiButton.innerHTML = '🤖 Organizing...';
+        aiButton.disabled = true;
+    }
     
     try {
-        const response = await fetch(`/api/notes/${currentNote.id}/summarize`, {
+        console.log('Sending content to AI for organization...');
+        console.log('Content length:', currentContent.length);
+        console.log('Using access token:', accessToken ? 'Available' : 'Missing');
+        
+        const response = await fetch(`/api/notes/${currentNote.id}/ai-summarize`, {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${accessToken}`,
-                'Content-Type': 'application/json'
-            }
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${accessToken}`
+            },
+            body: JSON.stringify({
+                content: currentContent
+            })
         });
+        
+        console.log('AI Organize response status:', response.status);
         
         if (handleTokenExpiration(response)) return;
         
         if (response.ok) {
-            const data = await response.json();
-            if (data.organized_content) {
-                currentNote.markdown_content = data.organized_content;
-                renderNoteDisplay();
-                loadNotes();
-                alert('Note organized successfully!');
+            const responseData = await response.json();
+            console.log('AI Organize response:', responseData);
+            
+            // Update the markdown content with AI-organized content
+            const organizedContent = responseData.summarized_content || responseData.content;
+            
+            if (organizedContent) {
+                // Update local content
+                currentNote.markdown_content = organizedContent;
+                
+                // Update editor if in edit mode
+                if (markdownEditor) {
+                    markdownEditor.value = organizedContent;
+                }
+                
+                // Update view
+                const view = document.getElementById('markdownView');
+                if (view) {
+                    view.innerHTML = renderMarkdown(organizedContent);
+                }
+                
+                // Refresh notes list
+                await loadNotes();
+                
+                // Show success feedback
+                if (aiButton) {
+                    aiButton.innerHTML = '✅ Organized!';
+                    aiButton.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+                }
+                
+                setTimeout(() => {
+                    if (aiButton) {
+                        aiButton.innerHTML = originalButtonText;
+                        aiButton.style.background = '';
+                        aiButton.disabled = false;
+                    }
+                }, 3000);
+                
+                console.log('Content organized successfully');
             } else {
-                alert('AI organization completed, but no changes were made.');
+                throw new Error('No organized content received from AI service');
             }
         } else {
             const errorData = await response.json().catch(() => ({}));
-            alert('AI organization failed: ' + (errorData.error || 'Unknown error'));
+            const errorMessage = errorData.error || `API Error: ${response.status}`;
+            
+            console.error('AI Organization failed:', errorMessage);
+            
+            // Provide specific error messages based on status code
+            if (response.status === 503) {
+                alert('AI service is currently unavailable. Please check your OpenAI API key configuration or try again later.');
+            } else if (response.status === 400) {
+                alert('Invalid content provided for organization. Please check your note content.');
+            } else if (response.status === 404) {
+                alert('Note not found. Please refresh the page and try again.');
+            } else if (response.status === 500) {
+                alert('AI organization failed due to a server error. Please try again or contact support if the issue persists.');
+            } else {
+                alert(`AI Organization failed: ${errorMessage}`);
+            }
+            
+            throw new Error(errorMessage);
         }
     } catch (error) {
-        console.error('AI summarize error:', error);
-        alert('AI organization failed. Please check your connection.');
+        console.error('AI Organization error:', error);
+        alert('AI organization failed. Please check your connection and try again.');
     } finally {
-        btn.innerHTML = originalText;
-        btn.disabled = false;
+        // Restore button state
+        if (aiButton) {
+            aiButton.innerHTML = originalButtonText;
+            aiButton.disabled = false;
+        }
     }
 }
 
-// Export to PDF function (placeholder)
-function exportNoteToPDF() {
-    alert('PDF export feature coming soon!');
+// Export to PDF function (updated with full implementation)
+async function exportNoteToPDF() {
+    console.log('PDF download function called');
+    
+    // Check if libraries are loaded with multiple fallbacks
+    let jsPDF = null;
+    
+    if (typeof window.jspdf !== 'undefined' && window.jspdf.jsPDF) {
+        jsPDF = window.jspdf.jsPDF;
+        console.log('Found jsPDF via window.jspdf.jsPDF');
+    } else if (typeof window.jsPDF !== 'undefined') {
+        jsPDF = window.jsPDF;
+        console.log('Found jsPDF via window.jsPDF');
+    } else if (typeof jsPDF !== 'undefined') {
+        // Sometimes it's available globally
+        console.log('Found jsPDF globally');
+    } else {
+        console.error('jsPDF library not found in any expected location');
+        console.log('Available on window:', Object.keys(window).filter(key => key.toLowerCase().includes('pdf')));
+        alert('PDF library not loaded. Please refresh the page and try again.\n\nIf the problem persists, there may be a network issue preventing the library from loading.');
+        return;
+    }
+    
+    if (typeof html2canvas === 'undefined') {
+        console.error('html2canvas library not loaded');
+        alert('Canvas library not loaded. Please refresh the page and try again.');
+        return;
+    }
+    
+    const noteContentElement = document.getElementById('noteDisplay') || document.getElementById('noteContentForPdf');
+    
+    if (!noteContentElement) {
+        console.error('noteContentForPdf element not found');
+        alert('Could not find note content to export.');
+        return;
+    }
+    
+    if (!currentNote) {
+        alert('No note selected to export.');
+        return;
+    }
+
+    const noteTitle = getFirstLineAsTitle(currentNote) || 'FocusPad_Note';
+    const safeNoteTitle = noteTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+    
+    console.log('Starting PDF generation for:', noteTitle);
+
+    // Update button state
+    const pdfButton = document.querySelector('.markdown-help-btn[onclick*="exportNoteToPDF"]');
+    const originalButtonText = pdfButton ? pdfButton.innerHTML : '';
+    if (pdfButton) {
+        pdfButton.innerHTML = '📄 Generating...';
+        pdfButton.disabled = true;
+    }
+
+    try {
+        console.log('Hiding action elements...');
+        // Hide action buttons and interactive elements
+        const actionElements = noteContentElement.querySelectorAll('.category-actions-inline, .item-actions, .note-actions-bar, .markdown-controls, .note-actions');
+        const clickableElements = noteContentElement.querySelectorAll('.clickable span');
+        
+        actionElements.forEach(el => {
+            el.style.setProperty('visibility', 'hidden', 'important');
+        });
+        clickableElements.forEach(el => {
+            if (el.style.color && el.style.color.includes('--text-muted')) {
+                el.style.setProperty('visibility', 'hidden', 'important');
+            }
+        });
+
+        // Temporarily disable contenteditable
+        const editableFields = noteContentElement.querySelectorAll('[contenteditable="true"]');
+        editableFields.forEach(el => el.setAttribute('contenteditable', 'false'));
+
+        console.log('Capturing content with html2canvas...');
+        
+        const canvas = await html2canvas(noteContentElement, {
+            scale: 2,
+            useCORS: true,
+            logging: true, // Enable logging for debugging
+            backgroundColor: '#ffffff',
+            width: noteContentElement.scrollWidth,
+            height: noteContentElement.scrollHeight,
+            onclone: (clonedDoc) => {
+                console.log('html2canvas onclone called');
+                // Ensure good styling for PDF
+                const clonedElement = clonedDoc.getElementById('noteDisplay') || clonedDoc.getElementById('noteContentForPdf');
+                if (clonedElement) {
+                    clonedElement.style.background = '#ffffff';
+                    clonedElement.style.color = '#000000';
+                }
+            }
+        });
+        
+        console.log('Canvas created:', canvas.width + 'x' + canvas.height);
+        
+        // Restore visibility and editability
+        actionElements.forEach(el => el.style.visibility = 'visible');
+        clickableElements.forEach(el => el.style.visibility = 'visible');
+        editableFields.forEach(el => el.setAttribute('contenteditable', 'true'));
+
+        console.log('Creating PDF document...');
+        
+        const pdf = new jsPDF({
+            orientation: 'portrait',
+            unit: 'pt',
+            format: 'a4'
+        });
+
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+        const margin = 40;
+        
+        // Calculate scaling to fit page
+        const availableWidth = pdfWidth - (2 * margin);
+        const availableHeight = pdfHeight - (2 * margin);
+        
+        const imgAspectRatio = canvas.width / canvas.height;
+        let imgWidth = availableWidth;
+        let imgHeight = availableWidth / imgAspectRatio;
+        
+        // If image is too tall, scale to fit height
+        if (imgHeight > availableHeight) {
+            imgHeight = availableHeight;
+            imgWidth = availableHeight * imgAspectRatio;
+        }
+        
+        // Center the image
+        const x = (pdfWidth - imgWidth) / 2;
+        const y = (pdfHeight - imgHeight) / 2;
+        
+        // Convert canvas to image data
+        const imgData = canvas.toDataURL('image/png');
+        console.log('Image data created, adding to PDF...');
+        
+        // Add image to PDF
+        pdf.addImage(imgData, 'PNG', x, y, imgWidth, imgHeight);
+        
+        console.log('Saving PDF as:', safeNoteTitle + '.pdf');
+        
+        // Save the PDF
+        pdf.save(safeNoteTitle + '.pdf');
+        
+        console.log('PDF generation completed successfully');
+
+    } catch (error) {
+        console.error('Error generating PDF:', error);
+        
+        // Fallback: Create a text-based PDF if html2canvas fails
+        console.log('Attempting fallback text-based PDF...');
+        try {
+            const pdf = new jsPDF({
+                orientation: 'portrait',
+                unit: 'pt',
+                format: 'a4'
+            });
+            
+            let yPosition = 50;
+            const lineHeight = 20;
+            const margin = 40;
+            const pageWidth = pdf.internal.pageSize.getWidth();
+            const maxWidth = pageWidth - (2 * margin);
+            
+            // Add title
+            pdf.setFontSize(18);
+            pdf.text(noteTitle, margin, yPosition);
+            yPosition += lineHeight * 2;
+            
+            // Add date
+            pdf.setFontSize(12);
+            if (currentNote.created_at) {
+                const dateStr = new Date(currentNote.created_at).toLocaleDateString();
+                pdf.text('Date: ' + dateStr, margin, yPosition);
+                yPosition += lineHeight;
+            }
+            
+            // Add attendees if present
+            if (currentNote.attendees) {
+                pdf.text('Attendees: ' + currentNote.attendees, margin, yPosition);
+                yPosition += lineHeight;
+            }
+            
+            yPosition += lineHeight; // Extra space
+            
+            // Add markdown content if available
+            if (currentNote.markdown_content) {
+                pdf.setFontSize(14);
+                pdf.text('Content:', margin, yPosition);
+                yPosition += lineHeight;
+                
+                pdf.setFontSize(11);
+                const lines = pdf.splitTextToSize(currentNote.markdown_content, maxWidth);
+                for (let i = 0; i < lines.length; i++) {
+                    if (yPosition > pdf.internal.pageSize.getHeight() - 50) {
+                        pdf.addPage();
+                        yPosition = 50;
+                    }
+                    pdf.text(lines[i], margin, yPosition);
+                    yPosition += lineHeight;
+                }
+            }
+            
+            // Add raw content if available and no markdown content
+            if (!currentNote.markdown_content && currentNote.raw_content) {
+                pdf.setFontSize(14);
+                pdf.text('Content:', margin, yPosition);
+                yPosition += lineHeight;
+                
+                pdf.setFontSize(11);
+                const lines = pdf.splitTextToSize(currentNote.raw_content, maxWidth);
+                for (let i = 0; i < lines.length; i++) {
+                    if (yPosition > pdf.internal.pageSize.getHeight() - 50) {
+                        pdf.addPage();
+                        yPosition = 50;
+                    }
+                    pdf.text(lines[i], margin, yPosition);
+                    yPosition += lineHeight;
+                }
+            }
+            
+            pdf.save(safeNoteTitle + '_text.pdf');
+            console.log('Fallback text-based PDF generated successfully');
+            alert('PDF generated successfully (text-only fallback due to rendering issue).');
+            
+        } catch (fallbackError) {
+            console.error('Fallback PDF generation also failed:', fallbackError);
+            alert('Error generating PDF: ' + error.message + '\nFallback also failed: ' + fallbackError.message + '\nCheck the browser console for more details.');
+        }
+    } finally {
+        // Restore button state
+        if (pdfButton) {
+            pdfButton.innerHTML = originalButtonText;
+            pdfButton.disabled = false;
+        }
+        
+        // Ensure elements are restored even if there was an error
+        const allActionElements = noteContentElement.querySelectorAll('.category-actions-inline, .item-actions, .note-actions-bar, .clickable span, .markdown-controls, .note-actions');
+        allActionElements.forEach(el => el.style.visibility = 'visible');
+        
+        const allEditableFields = noteContentElement.querySelectorAll('[contenteditable="false"]');
+        allEditableFields.forEach(el => el.setAttribute('contenteditable', 'true'));
+        
+        console.log('PDF generation cleanup completed');
+    }
 }
 
 // Legacy categorized content renderer
@@ -942,4 +1271,44 @@ function renderTodoTable() {
             </tbody>
         </table>
     `;
+}
+
+// Load notes from API
+async function loadNotes() {
+    console.log('Loading notes...');
+    try {
+        const response = await fetch('/api/notes/', {
+            headers: {
+                'Authorization': `Bearer ${accessToken}`
+            }
+        });
+        
+        console.log('Notes response status:', response.status);
+        
+        if (handleTokenExpiration(response)) return Promise.reject(new Error('Token expired'));
+        
+        if (response.ok) {
+            const data = await response.json();
+            notes = data.notes || [];
+            console.log('Loaded notes:', notes.length);
+            renderNotesList();
+            return Promise.resolve();
+        } else {
+            console.error('Failed to load notes, status:', response.status);
+            const errorText = await response.text();
+            console.error('Error response:', errorText);
+            const notesList = document.getElementById('notesList');
+            if (notesList) {
+                notesList.innerHTML = '<div style="padding: 20px; color: #999;">Failed to load notes. Try refreshing the page.</div>';
+            }
+            return Promise.reject(new Error('Failed to load notes'));
+        }
+    } catch (error) {
+        console.error('Error loading notes:', error);
+        const notesList = document.getElementById('notesList');
+        if (notesList) {
+            notesList.innerHTML = '<div style="padding: 20px; color: #999;">Error loading notes. Check your connection.</div>';
+        }
+        return Promise.reject(error);
+    }
 } 
