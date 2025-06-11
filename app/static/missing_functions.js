@@ -1,5 +1,8 @@
 // Missing functions for dashboard.html
 
+// Note: Global editing variables (editingStatusElement, editingCommentElement, etc.) 
+// are already declared in the HTML file to avoid duplicate declarations
+
 // Create new note function
 async function createNewNote() {
     console.log('Creating new note...');
@@ -481,6 +484,9 @@ async function aiSummarizeNote() {
                 
                 // Refresh notes list
                 await loadNotes();
+                
+                // Extract action items from this specific note only
+                await extractActionItemsFromCurrentNote();
                 
                 // Show success feedback
                 if (aiButton) {
@@ -1319,4 +1325,317 @@ async function loadNotes() {
         }
         return Promise.reject(error);
     }
-} 
+}
+
+// Extract action items from the current note only
+async function extractActionItemsFromCurrentNote() {
+    if (!currentNote) {
+        console.warn('No current note selected for action item extraction');
+        return;
+    }
+
+    try {
+        console.log('Extracting action items from current note:', currentNote.id);
+        
+        const response = await fetch('/api/notes/extract-action-items', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                note_id: currentNote.id
+            })
+        });
+
+        if (handleTokenExpiration(response)) return;
+
+        if (response.ok) {
+            const data = await response.json();
+            
+            if (data.action_items && data.action_items.length > 0) {
+                // Convert AI extracted items to our todo format
+                const aiTodos = data.action_items.map(item => ({
+                    id: `ai-${item.note_id}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                    taskName: item.task_name,
+                    dueDate: item.due_date,
+                    status: item.status,
+                    comments: `${item.context} (Priority: ${item.priority})`,
+                    noteId: item.note_id,
+                    noteName: item.note_title,
+                    isAI: true,
+                    priority: item.priority
+                }));
+                
+                // Remove existing AI-extracted todos from this specific note to avoid duplicates
+                if (typeof todos !== 'undefined' && Array.isArray(todos)) {
+                    todos = todos.filter(todo => !(todo.isAI && todo.noteId === currentNote.id));
+                    
+                    // Add new AI-extracted todos
+                    todos.push(...aiTodos);
+                    
+                    // Sort todos and save to storage
+                    if (typeof sortTodos === 'function') {
+                        todos = sortTodos(todos);
+                    }
+                    if (typeof saveTodosToStorage === 'function') {
+                        saveTodosToStorage();
+                    }
+                    
+                    // Update display if todo table is visible
+                    if (typeof renderTodoTable === 'function' && document.getElementById('todoTableContainer')) {
+                        renderTodoTable();
+                    }
+                }
+                
+                console.log(`✅ Extracted ${data.items_found} action items from current note`);
+            } else {
+                console.log('No action items found in current note');
+            }
+        } else {
+            const errorData = await response.json().catch(() => ({}));
+            console.error('Failed to extract action items:', errorData.error || 'Unknown error');
+        }
+        
+    } catch (error) {
+        console.error('Error extracting action items from current note:', error);
+    }
+}
+
+// Extract action items from markdown content
+function extractActionItemsFromMarkdown(markdownContent) {
+    const actionItems = [];
+    const actionItemPattern = /- \[ \] (.*)/g;
+    let match;
+    
+    while ((match = actionItemPattern.exec(markdownContent)) !== null) {
+        const actionItem = match[1].trim();
+        if (actionItem) {
+            actionItems.push(actionItem);
+        }
+    }
+    
+    return actionItems;
+}
+
+// Save action items to server
+async function saveActionItemsToServer(actionItems) {
+    if (!currentNote || !currentNote.id) {
+        console.warn('No current note or no note ID to save action items');
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/notes/${currentNote.id}/action-items`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${accessToken}`
+            },
+            body: JSON.stringify({
+                actionItems: actionItems
+            })
+        });
+
+        if (handleTokenExpiration(response)) return;
+
+        if (response.ok) {
+            console.log('Action items saved successfully');
+        } else {
+            console.error('Failed to save action items');
+        }
+    } catch (error) {
+        console.error('Error saving action items:', error);
+        alert('Error saving action items. Please check the browser console for more details.');
+    }
+}
+
+// Clear all todos function
+function clearAllTodos() {
+    if (!confirm('Are you sure you want to clear all tasks? This action cannot be undone.')) {
+        return;
+    }
+    
+    try {
+        // Clear the todos array
+        todos = [];
+        
+        // Save empty array to storage
+        saveTodosToStorage();
+        
+        // Set the cleared flag
+        localStorage.setItem('focuspad-todos-cleared', 'true');
+        
+        // Re-render the todo table
+        renderTodoTable();
+        
+        console.log('✅ All todos cleared successfully');
+    } catch (error) {
+        console.error('Error clearing todos:', error);
+        alert('Error clearing todos. Please try again.');
+    }
+}
+
+function startEditingStatus(element) {
+    console.log('startEditingStatus called', element);
+    
+    // Close any open editing
+    closeAllEditing();
+
+    editingStatusElement = element;
+    
+    // Get current status from todo object
+    const todoId = element.getAttribute('data-todo-id');
+    const todo = todos.find(t => t.id === todoId);
+    const status = todo ? todo.status : 'not-started';
+    
+    console.log('Current status:', status, 'Todo ID:', todoId);
+    
+    element.classList.add('editing');
+    
+    // Get element position for fixed positioning
+    const rect = element.getBoundingClientRect();
+    
+    console.log('Element position:', rect);
+    
+    // Create dropdown
+    const dropdown = document.createElement('div');
+    dropdown.className = 'todo-status-dropdown show';
+    
+    // Position the dropdown using fixed positioning
+    dropdown.style.top = (rect.bottom + 4) + 'px';
+    dropdown.style.left = rect.left + 'px';
+    
+    dropdown.innerHTML = `
+        <div class="todo-status-option not-started ${status === 'not-started' ? 'selected' : ''}" data-status="not-started">Not Started</div>
+        <div class="todo-status-option in-progress ${status === 'in-progress' ? 'selected' : ''}" data-status="in-progress">In Progress</div>
+        <div class="todo-status-option completed ${status === 'completed' ? 'selected' : ''}" data-status="completed">Completed</div>
+    `;
+    
+    // Add click handlers to the options
+    const options = dropdown.querySelectorAll('.todo-status-option');
+    console.log('Adding click handlers to', options.length, 'options');
+    
+    options.forEach(option => {
+        option.addEventListener('click', function(e) {
+            console.log('Option clicked:', this.getAttribute('data-status'));
+            e.stopPropagation();
+            const selectedStatus = this.getAttribute('data-status');
+            selectStatus(this, selectedStatus);
+        });
+    });
+    
+    // Append to body instead of element for fixed positioning
+    document.body.appendChild(dropdown);
+    console.log('Dropdown appended to body');
+    
+    // Add class to container to handle overflow if needed
+    const container = document.querySelector('.todo-table-container');
+    if (container) {
+        container.classList.add('dropdown-open');
+    }
+}
+
+function closeStatusEditing() {
+    if (editingStatusElement) {
+        // Remove dropdown from body (since we're now appending to body)
+        const dropdown = document.querySelector('.todo-status-dropdown');
+        if (dropdown) {
+            dropdown.remove();
+        }
+        editingStatusElement.classList.remove('editing');
+        editingStatusElement = null;
+        
+        // Remove overflow class from container
+        const container = document.querySelector('.todo-table-container');
+        if (container) {
+            container.classList.remove('dropdown-open');
+        }
+    }
+}
+
+function selectStatus(optionElement, status) {
+    console.log('selectStatus called with status:', status);
+    
+    // Since dropdown is now in body, we need to get the editing element directly
+    if (!editingStatusElement) {
+        console.error('No editing status element found');
+        return;
+    }
+    
+    const todoId = editingStatusElement.getAttribute('data-todo-id');
+    console.log('Updating todo with ID:', todoId, 'to status:', status);
+    
+    // Update todo object
+    const todoIndex = todos.findIndex(todo => todo.id === todoId);
+    if (todoIndex !== -1) {
+        console.log('Found todo at index:', todoIndex);
+        todos[todoIndex].status = status;
+        
+        // Save to storage for all todos
+        saveTodosToStorage();
+        
+        // Update UI inline instead of re-rendering
+        editingStatusElement.className = `todo-status-editable todo-status ${status}`;
+        editingStatusElement.textContent = status.replace('-', ' ');
+        
+        console.log('Updated UI element with new status');
+        
+        // Show saved feedback
+        showSavedFeedback(editingStatusElement);
+    } else {
+        console.error('Todo not found with ID:', todoId);
+    }
+    
+    closeStatusEditing();
+}
+
+function showSavedFeedback(element) {
+    element.classList.add('saved');
+    setTimeout(() => {
+        element.classList.remove('saved');
+    }, 1000);
+}
+
+function closeAllEditing() {
+    // Close comment editing
+    if (typeof editingCommentElement !== 'undefined' && editingCommentElement) {
+        if (typeof exitEditMode === 'function') {
+            exitEditMode(editingCommentElement);
+        }
+    }
+    
+    // Close field editing
+    if (typeof editingElement !== 'undefined' && editingElement) {
+        if (typeof exitFieldEditMode === 'function') {
+            exitFieldEditMode(editingElement);
+        }
+    }
+    
+    // Close date editing  
+    if (typeof editingDateElement !== 'undefined' && editingDateElement) {
+        if (typeof closeDateEditing === 'function') {
+            closeDateEditing();
+        }
+    }
+    
+    // Close status editing
+    if (typeof editingStatusElement !== 'undefined' && editingStatusElement) {
+        closeStatusEditing();
+    }
+}
+
+// Enhanced global click handler for external JS file functions
+document.addEventListener('click', function(event) {
+    // Handle status editing with fixed positioning
+    if (editingStatusElement) {
+        const dropdown = document.querySelector('.todo-status-dropdown');
+        const clickedInDropdown = dropdown && dropdown.contains(event.target);
+        const clickedOnEditingElement = editingStatusElement.contains(event.target);
+        
+        // Only close if clicking outside both the dropdown and the editing element
+        if (!clickedInDropdown && !clickedOnEditingElement) {
+            closeStatusEditing();
+        }
+    }
+}, true); // Use capture phase to ensure we get the event first 

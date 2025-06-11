@@ -2545,6 +2545,12 @@
             flex: 1;
             overflow: auto;
             padding: 20px;
+            position: relative; /* Add relative positioning for dropdown context */
+        }
+
+        /* When dropdown is open, ensure it's not clipped */
+        .todo-table-container.dropdown-open {
+            overflow: visible;
         }
 
         .todo-table {
@@ -2554,6 +2560,7 @@
             border-radius: 8px;
             overflow: hidden;
             box-shadow: 0 1px 3px var(--shadow);
+            position: relative; /* Ensure proper stacking context */
         }
 
         .todo-table th {
@@ -2933,15 +2940,12 @@
         }
 
         .todo-status-dropdown {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            margin-top: 4px;
-            background: #ffffff;
+            position: fixed; /* Change from absolute to fixed to escape container clipping */
+            background: var(--bg-secondary); /* Use theme color instead of hardcoded white */
             border: 1px solid var(--border-color);
             border-radius: 8px;
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-            z-index: 10000;
+            z-index: 99999; /* Increase z-index significantly */
             min-width: 140px;
             opacity: 0;
             visibility: hidden;
@@ -2966,14 +2970,14 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
             transition: background 0.2s ease;
-            background: #ffffff;
+            background: var(--bg-secondary); /* Use theme color */
             border: none;
             position: relative;
-            z-index: 10001;
+            z-index: 99999;
         }
 
         .todo-status-option:hover {
-            background: #f3f4f6;
+            background: var(--hover-bg); /* Use theme hover color */
         }
 
         .todo-status-option:first-child {
@@ -3020,17 +3024,63 @@
         }
 
         [data-theme="dark"] .todo-status-dropdown {
-            background: #1f2937;
-            border-color: #374151;
+            background: var(--bg-secondary); /* This will automatically use dark theme color */
+            border-color: var(--border-color);
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
         }
 
         [data-theme="dark"] .todo-status-option {
-            background: #1f2937;
+            background: var(--bg-secondary); /* This will automatically use dark theme color */
         }
 
         [data-theme="dark"] .todo-status-option:hover {
-            background: #374151;
+            background: var(--hover-bg); /* This will automatically use dark theme hover color */
+        }
+
+        .add-todo-btn:hover {
+            background: #0284c7;
+            transform: translateY(-1px);
+        }
+
+        .clear-all-btn {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .clear-all-btn:hover {
+            background: #dc2626;
+            transform: translateY(-1px);
+        }
+
+        .re-extract-btn {
+            background: var(--accent-border);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 12px;
+        }
+
+        .re-extract-btn:hover {
+            background: #0284c7;
+            transform: translateY(-1px);
         }
     </style>
 </head>
@@ -3158,7 +3208,7 @@
                                 <div class="empty-todo-state">
                                     <div class="empty-todo-icon">📋</div>
                                     <h3>No Tasks Yet</h3>
-                                    <p>Create notes with to-do items and they will automatically appear here.<br>Use formats like:<br>• "TODO: Task description"<br>• "[ ] Task to complete"<br>• "- [ ] Another task format"</p>
+                                    <p>No tasks yet. Click "Add Task" to create tasks manually.</p>
                                 </div>
                             </div>
                         </div>
@@ -3331,19 +3381,10 @@
         }
 
         function extractAndLoadTodos() {
-            // First load any saved todos from storage
+            // Only load saved todos from storage - no automatic extraction from notes
             loadTodosFromStorage();
             
-            // Then extract new todos from notes and merge them
-            const extractedTodos = extractTodosFromNotes();
-            
-            // Merge extracted todos with existing todos, avoiding duplicates
-            extractedTodos.forEach(extractedTodo => {
-                if (!todos.find(existing => existing.id === extractedTodo.id)) {
-                    todos.push(extractedTodo);
-                }
-            });
-            
+            // Sort and render todos
             todos = sortTodos(todos);
             renderTodoTable();
         }
@@ -3359,7 +3400,7 @@
                         <h3>${todos.length > 0 ? 'All Tasks Completed!' : 'No Tasks Yet'}</h3>
                         <p>${todos.length > 0 ? 
                             'Great job! All your tasks are completed.<br>Toggle "Show completed" to see them.' : 
-                            'Create notes with to-do items and they will automatically appear here.<br>Use formats like:<br>• "TODO: Task description"<br>• "[ ] Task to complete"<br>• "- [ ] Another task format"<br><br>Or click "Add Task" to create tasks manually.'
+                            'No tasks yet. Click "Add Task" to create tasks manually.'
                         }</p>
                     </div>
                 `;
@@ -4067,40 +4108,10 @@
             input.focus();
         }
 
-        function startEditingStatus(element) {
-            // Close any open editing
-            closeAllEditing();
-
-            editingStatusElement = element;
-            
-            // Get current status from todo object
-            const todoId = element.getAttribute('data-todo-id');
-            const todo = todos.find(t => t.id === todoId);
-            const status = todo ? todo.status : 'not-started';
-            
-            element.classList.add('editing');
-            
-            // Create dropdown
-            const dropdown = document.createElement('div');
-            dropdown.className = 'todo-status-dropdown show';
-            dropdown.innerHTML = `
-                <div class="todo-status-option not-started ${status === 'not-started' ? 'selected' : ''}" data-status="not-started">Not Started</div>
-                <div class="todo-status-option in-progress ${status === 'in-progress' ? 'selected' : ''}" data-status="in-progress">In Progress</div>
-                <div class="todo-status-option completed ${status === 'completed' ? 'selected' : ''}" data-status="completed">Completed</div>
-            `;
-            
-            // Add click handlers to the options
-            const options = dropdown.querySelectorAll('.todo-status-option');
-            options.forEach(option => {
-                option.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    const selectedStatus = this.getAttribute('data-status');
-                    selectStatus(this, selectedStatus);
-                });
-            });
-            
-            element.appendChild(dropdown);
-        }
+        // function startEditingStatus(element) {
+        //     // This function is now implemented in missing_functions.js with fixed positioning
+        //     // to solve dropdown visibility issues when there's only one todo item
+        // }
 
         function selectStatus(optionElement, status) {
             const statusElement = optionElement.closest('.todo-status-editable');
@@ -4329,6 +4340,13 @@
             // Also maintain the manual todos for backward compatibility
             const manualTodos = todos.filter(todo => todo.isManual);
             localStorage.setItem('focuspad-manual-todos', JSON.stringify(manualTodos));
+            
+            // If todos array is empty, set the cleared flag
+            if (todos.length === 0) {
+                localStorage.setItem('focuspad-todos-cleared', 'true');
+            } else {
+                localStorage.removeItem('focuspad-todos-cleared');
+            }
         }
 
         function loadTodosFromStorage() {
@@ -4922,6 +4940,21 @@
                 }
             }
         });
+
+        // Function to reset the cleared flag (for when user wants to re-extract)
+        function resetTodosCleared() {
+            localStorage.removeItem('focuspad-todos-cleared');
+            console.log('Todos cleared flag reset');
+        }
+        
+        // Function to re-extract todos from notes after clearing
+        function reExtractTodos() {
+            if (confirm('This will scan all your notes and add any found tasks to your todo list. Continue?')) {
+                resetTodosCleared();
+                extractAndLoadTodos();
+                console.log('Re-extracted todos from all notes');
+            }
+        }
     </script>
 
     <!-- Welcome Banner for returning users -->

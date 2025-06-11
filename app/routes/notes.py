@@ -788,12 +788,27 @@ Please return a well-organized markdown document with corrected grammar and spel
 @notes_bp.route('/extract-action-items', methods=['POST'])
 @jwt_required()
 def extract_action_items():
-    """Use AI to extract action items from all notes."""
+    """Use AI to extract action items from notes. Optionally accepts note_id to extract from specific note only."""
     try:
         current_user_id = get_jwt_identity()
         
-        # Get all notes for the user
-        notes = Note.query.filter_by(user_id=current_user_id).all()
+        # Check if AI service is available
+        if not ai_service.is_available():
+            return jsonify({'error': 'AI service is not available. Please check your OpenAI API key configuration.'}), 503
+        
+        # Check if specific note_id is provided in request
+        data = request.get_json() or {}
+        specific_note_id = data.get('note_id')
+        
+        if specific_note_id:
+            # Extract action items from specific note only
+            note = Note.query.filter_by(id=specific_note_id, user_id=current_user_id).first()
+            if not note:
+                return jsonify({'error': 'Note not found'}), 404
+            notes = [note]
+        else:
+            # Get all notes for the user (existing behavior)
+            notes = Note.query.filter_by(user_id=current_user_id).all()
         
         if not notes:
             return jsonify({'action_items': []})
