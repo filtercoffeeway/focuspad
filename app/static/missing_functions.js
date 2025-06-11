@@ -590,11 +590,11 @@ async function aiSummarizeNote() {
     }
 }
 
-// Export to PDF function (updated with full implementation)
+// Export to PDF function (updated with proper markdown-to-PDF conversion)
 async function exportNoteToPDF() {
     console.log('PDF download function called');
     
-    // Check if libraries are loaded with multiple fallbacks
+    // Check if jsPDF library is loaded
     let jsPDF = null;
     
     if (typeof window.jspdf !== 'undefined' && window.jspdf.jsPDF) {
@@ -604,26 +604,10 @@ async function exportNoteToPDF() {
         jsPDF = window.jsPDF;
         console.log('Found jsPDF via window.jsPDF');
     } else if (typeof jsPDF !== 'undefined') {
-        // Sometimes it's available globally
         console.log('Found jsPDF globally');
     } else {
-        console.error('jsPDF library not found in any expected location');
-        console.log('Available on window:', Object.keys(window).filter(key => key.toLowerCase().includes('pdf')));
-        alert('PDF library not loaded. Please refresh the page and try again.\n\nIf the problem persists, there may be a network issue preventing the library from loading.');
-        return;
-    }
-    
-    if (typeof html2canvas === 'undefined') {
-        console.error('html2canvas library not loaded');
-        alert('Canvas library not loaded. Please refresh the page and try again.');
-        return;
-    }
-    
-    const noteContentElement = document.getElementById('noteDisplay') || document.getElementById('noteContentForPdf');
-    
-    if (!noteContentElement) {
-        console.error('noteContentForPdf element not found');
-        alert('Could not find note content to export.');
+        console.error('jsPDF library not found');
+        alert('PDF library not loaded. Please refresh the page and try again.');
         return;
     }
     
@@ -646,191 +630,266 @@ async function exportNoteToPDF() {
     }
 
     try {
-        console.log('Hiding action elements...');
-        // Hide action buttons and interactive elements
-        const actionElements = noteContentElement.querySelectorAll('.category-actions-inline, .item-actions, .note-actions-bar, .markdown-controls, .note-actions');
-        const clickableElements = noteContentElement.querySelectorAll('.clickable span');
-        
-        actionElements.forEach(el => {
-            el.style.setProperty('visibility', 'hidden', 'important');
-        });
-        clickableElements.forEach(el => {
-            if (el.style.color && el.style.color.includes('--text-muted')) {
-                el.style.setProperty('visibility', 'hidden', 'important');
-            }
-        });
-
-        // Temporarily disable contenteditable
-        const editableFields = noteContentElement.querySelectorAll('[contenteditable="true"]');
-        editableFields.forEach(el => el.setAttribute('contenteditable', 'false'));
-
-        console.log('Capturing content with html2canvas...');
-        
-        const canvas = await html2canvas(noteContentElement, {
-            scale: 2,
-            useCORS: true,
-            logging: true, // Enable logging for debugging
-            backgroundColor: '#ffffff',
-            width: noteContentElement.scrollWidth,
-            height: noteContentElement.scrollHeight,
-            onclone: (clonedDoc) => {
-                console.log('html2canvas onclone called');
-                // Ensure good styling for PDF
-                const clonedElement = clonedDoc.getElementById('noteDisplay') || clonedDoc.getElementById('noteContentForPdf');
-                if (clonedElement) {
-                    clonedElement.style.background = '#ffffff';
-                    clonedElement.style.color = '#000000';
-                }
-            }
-        });
-        
-        console.log('Canvas created:', canvas.width + 'x' + canvas.height);
-        
-        // Restore visibility and editability
-        actionElements.forEach(el => el.style.visibility = 'visible');
-        clickableElements.forEach(el => el.style.visibility = 'visible');
-        editableFields.forEach(el => el.setAttribute('contenteditable', 'true'));
-
-        console.log('Creating PDF document...');
-        
+        // Create PDF document
         const pdf = new jsPDF({
             orientation: 'portrait',
             unit: 'pt',
             format: 'a4'
         });
 
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = pdf.internal.pageSize.getHeight();
-        const margin = 40;
-        
-        // Calculate scaling to fit page
-        const availableWidth = pdfWidth - (2 * margin);
-        const availableHeight = pdfHeight - (2 * margin);
-        
-        const imgAspectRatio = canvas.width / canvas.height;
-        let imgWidth = availableWidth;
-        let imgHeight = availableWidth / imgAspectRatio;
-        
-        // If image is too tall, scale to fit height
-        if (imgHeight > availableHeight) {
-            imgHeight = availableHeight;
-            imgWidth = availableHeight * imgAspectRatio;
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+        const margin = 50;
+        const maxWidth = pageWidth - (2 * margin);
+        const maxHeight = pageHeight - (2 * margin);
+        let yPosition = margin;
+
+        // Function to add a new page if needed
+        function checkPageBreak(requiredHeight = 20) {
+            if (yPosition + requiredHeight > pageHeight - margin) {
+                pdf.addPage();
+                yPosition = margin;
+                return true;
+            }
+            return false;
         }
+
+        // Function to add text with word wrapping and pagination
+        function addTextToPDF(text, fontSize = 11, fontStyle = 'normal', lineHeight = 16) {
+            pdf.setFontSize(fontSize);
+            pdf.setFont('helvetica', fontStyle);
+            
+            const lines = pdf.splitTextToSize(text, maxWidth);
+            
+            for (let i = 0; i < lines.length; i++) {
+                checkPageBreak(lineHeight);
+                pdf.text(lines[i], margin, yPosition);
+                yPosition += lineHeight;
+            }
+            
+            return yPosition;
+        }
+
+        // Add title
+        addTextToPDF(noteTitle, 20, 'bold', 28);
+        yPosition += 10;
+
+        // Add metadata
+        if (currentNote.created_at) {
+            const dateStr = new Date(currentNote.created_at).toLocaleDateString();
+            addTextToPDF('Date: ' + dateStr, 10, 'normal', 14);
+        }
+
+        if (currentNote.updated_at && currentNote.updated_at !== currentNote.created_at) {
+            const updatedStr = new Date(currentNote.updated_at).toLocaleDateString();
+            addTextToPDF('Last Updated: ' + updatedStr, 10, 'normal', 14);
+        }
+
+        if (currentNote.attendees) {
+            addTextToPDF('Attendees: ' + currentNote.attendees, 10, 'normal', 14);
+        }
+
+        yPosition += 20; // Extra space before content
+
+        // Get the content to export
+        let contentToExport = '';
         
-        // Center the image
-        const x = (pdfWidth - imgWidth) / 2;
-        const y = (pdfHeight - imgHeight) / 2;
-        
-        // Convert canvas to image data
-        const imgData = canvas.toDataURL('image/png');
-        console.log('Image data created, adding to PDF...');
-        
-        // Add image to PDF
-        pdf.addImage(imgData, 'PNG', x, y, imgWidth, imgHeight);
-        
+        if (currentNote.markdown_content && currentNote.markdown_content.trim()) {
+            contentToExport = currentNote.markdown_content.trim();
+        } else if (currentNote.raw_content && currentNote.raw_content.trim()) {
+            contentToExport = currentNote.raw_content.trim();
+        } else {
+            contentToExport = 'No content available.';
+        }
+
+        // Parse and render markdown content
+        function parseAndRenderMarkdown(content) {
+            const lines = content.split('\n');
+            let isCodeBlock = false;
+            let codeBlockContent = '';
+            let listLevel = 0;
+            
+            for (let i = 0; i < lines.length; i++) {
+                let line = lines[i];
+                
+                // Handle code blocks
+                if (line.trim().startsWith('```')) {
+                    if (isCodeBlock) {
+                        // End of code block
+                        if (codeBlockContent.trim()) {
+                            checkPageBreak(20);
+                            yPosition += 5;
+                            // Add code block background (light gray)
+                            pdf.setFillColor(245, 245, 245);
+                            const codeHeight = codeBlockContent.split('\n').length * 12 + 10;
+                            pdf.rect(margin - 5, yPosition - 5, maxWidth + 10, codeHeight, 'F');
+                            
+                            // Reset to normal style before adding code
+                            pdf.setFontSize(9);
+                            pdf.setFont('helvetica', 'normal');
+                            const codeLines = pdf.splitTextToSize(codeBlockContent.trim(), maxWidth);
+                            for (let j = 0; j < codeLines.length; j++) {
+                                checkPageBreak(12);
+                                pdf.text(codeLines[j], margin, yPosition);
+                                yPosition += 12;
+                            }
+                            yPosition += 5;
+                        }
+                        isCodeBlock = false;
+                        codeBlockContent = '';
+                    } else {
+                        // Start of code block
+                        isCodeBlock = true;
+                        codeBlockContent = '';
+                    }
+                    continue;
+                }
+                
+                if (isCodeBlock) {
+                    codeBlockContent += line + '\n';
+                    continue;
+                }
+                
+                // Handle headers
+                if (line.match(/^#{1,6}\s/)) {
+                    const headerLevel = line.match(/^#+/)[0].length;
+                    const headerText = line.replace(/^#+\s*/, '');
+                    
+                    checkPageBreak(25);
+                    yPosition += (headerLevel === 1) ? 15 : 10;
+                    
+                    const fontSize = headerLevel === 1 ? 18 : headerLevel === 2 ? 16 : 14;
+                    addTextToPDF(headerText, fontSize, 'bold', fontSize + 5);
+                    yPosition += 5;
+                    continue;
+                }
+                
+                // Handle bullet points
+                if (line.match(/^\s*[-*+]\s/)) {
+                    const indent = (line.length - line.trimLeft().length) / 2;
+                    const bulletText = line.replace(/^\s*[-*+]\s/, '');
+                    
+                    checkPageBreak(16);
+                    const indentSpace = margin + (indent * 20);
+                    
+                    // Reset font style for bullet and text
+                    pdf.setFontSize(11);
+                    pdf.setFont('helvetica', 'normal');
+                    pdf.text('•', indentSpace, yPosition);
+                    
+                    const bulletLines = pdf.splitTextToSize(bulletText, maxWidth - (indent * 20) - 15);
+                    for (let j = 0; j < bulletLines.length; j++) {
+                        if (j > 0) checkPageBreak(14);
+                        pdf.text(bulletLines[j], indentSpace + 15, yPosition);
+                        if (j < bulletLines.length - 1) yPosition += 14;
+                    }
+                    yPosition += 16;
+                    continue;
+                }
+                
+                // Handle numbered lists
+                if (line.match(/^\s*\d+\.\s/)) {
+                    const listMatch = line.match(/^\s*(\d+)\.\s(.*)$/);
+                    if (listMatch) {
+                        const indent = (line.length - line.trimLeft().length) / 2;
+                        const number = listMatch[1];
+                        const listText = listMatch[2];
+                        
+                        checkPageBreak(16);
+                        const indentSpace = margin + (indent * 20);
+                        
+                        // Reset font style for number and text
+                        pdf.setFontSize(11);
+                        pdf.setFont('helvetica', 'normal');
+                        pdf.text(number + '.', indentSpace, yPosition);
+                        
+                        const listLines = pdf.splitTextToSize(listText, maxWidth - (indent * 20) - 25);
+                        for (let j = 0; j < listLines.length; j++) {
+                            if (j > 0) checkPageBreak(14);
+                            pdf.text(listLines[j], indentSpace + 25, yPosition);
+                            if (j < listLines.length - 1) yPosition += 14;
+                        }
+                        yPosition += 16;
+                        continue;
+                    }
+                }
+                
+                // Handle blockquotes
+                if (line.match(/^\s*>\s/)) {
+                    const quoteText = line.replace(/^\s*>\s*/, '');
+                    checkPageBreak(16);
+                    
+                    // Add vertical line for blockquote
+                    pdf.setLineWidth(2);
+                    pdf.setDrawColor(180, 180, 180);
+                    pdf.line(margin, yPosition - 5, margin, yPosition + 10);
+                    
+                    // Set italic style for blockquote
+                    pdf.setFontSize(11);
+                    pdf.setFont('helvetica', 'italic');
+                    const quoteLines = pdf.splitTextToSize(quoteText, maxWidth - 20);
+                    for (let j = 0; j < quoteLines.length; j++) {
+                        if (j > 0) checkPageBreak(14);
+                        pdf.text(quoteLines[j], margin + 15, yPosition);
+                        if (j < quoteLines.length - 1) yPosition += 14;
+                    }
+                    yPosition += 16;
+                    // Reset font style back to normal after blockquote
+                    pdf.setFont('helvetica', 'normal');
+                    continue;
+                }
+                
+                // Handle inline code
+                if (line.includes('`')) {
+                    line = line.replace(/`([^`]+)`/g, (match, code) => {
+                        return code; // For now, just remove the backticks
+                    });
+                }
+                
+                // Handle bold and italic text (basic) - just remove formatting for now
+                line = line.replace(/\*\*([^*]+)\*\*/g, '$1'); // Remove ** for bold
+                line = line.replace(/\*([^*]+)\*/g, '$1'); // Remove * for italic
+                
+                // Handle empty lines
+                if (line.trim() === '') {
+                    yPosition += 8;
+                    continue;
+                }
+                
+                // Regular paragraph text - ensure normal font style
+                if (line.trim()) {
+                    // Always reset to normal style for regular text
+                    addTextToPDF(line.trim(), 11, 'normal', 16);
+                }
+            }
+        }
+
+        // Process the content
+        parseAndRenderMarkdown(contentToExport);
+
+        // Add footer with page numbers
+        const totalPages = pdf.internal.getNumberOfPages();
+        for (let i = 1; i <= totalPages; i++) {
+            pdf.setPage(i);
+            pdf.setFontSize(8);
+            pdf.setFont('helvetica', 'normal');
+            pdf.text(`Page ${i} of ${totalPages}`, pageWidth - margin - 50, pageHeight - 20);
+        }
+
         console.log('Saving PDF as:', safeNoteTitle + '.pdf');
-        
-        // Save the PDF
         pdf.save(safeNoteTitle + '.pdf');
         
         console.log('PDF generation completed successfully');
 
     } catch (error) {
         console.error('Error generating PDF:', error);
-        
-        // Fallback: Create a text-based PDF if html2canvas fails
-        console.log('Attempting fallback text-based PDF...');
-        try {
-            const pdf = new jsPDF({
-                orientation: 'portrait',
-                unit: 'pt',
-                format: 'a4'
-            });
-            
-            let yPosition = 50;
-            const lineHeight = 20;
-            const margin = 40;
-            const pageWidth = pdf.internal.pageSize.getWidth();
-            const maxWidth = pageWidth - (2 * margin);
-            
-            // Add title
-            pdf.setFontSize(18);
-            pdf.text(noteTitle, margin, yPosition);
-            yPosition += lineHeight * 2;
-            
-            // Add date
-            pdf.setFontSize(12);
-            if (currentNote.created_at) {
-                const dateStr = new Date(currentNote.created_at).toLocaleDateString();
-                pdf.text('Date: ' + dateStr, margin, yPosition);
-                yPosition += lineHeight;
-            }
-            
-            // Add attendees if present
-            if (currentNote.attendees) {
-                pdf.text('Attendees: ' + currentNote.attendees, margin, yPosition);
-                yPosition += lineHeight;
-            }
-            
-            yPosition += lineHeight; // Extra space
-            
-            // Add markdown content if available
-            if (currentNote.markdown_content) {
-                pdf.setFontSize(14);
-                pdf.text('Content:', margin, yPosition);
-                yPosition += lineHeight;
-                
-                pdf.setFontSize(11);
-                const lines = pdf.splitTextToSize(currentNote.markdown_content, maxWidth);
-                for (let i = 0; i < lines.length; i++) {
-                    if (yPosition > pdf.internal.pageSize.getHeight() - 50) {
-                        pdf.addPage();
-                        yPosition = 50;
-                    }
-                    pdf.text(lines[i], margin, yPosition);
-                    yPosition += lineHeight;
-                }
-            }
-            
-            // Add raw content if available and no markdown content
-            if (!currentNote.markdown_content && currentNote.raw_content) {
-                pdf.setFontSize(14);
-                pdf.text('Content:', margin, yPosition);
-                yPosition += lineHeight;
-                
-                pdf.setFontSize(11);
-                const lines = pdf.splitTextToSize(currentNote.raw_content, maxWidth);
-                for (let i = 0; i < lines.length; i++) {
-                    if (yPosition > pdf.internal.pageSize.getHeight() - 50) {
-                        pdf.addPage();
-                        yPosition = 50;
-                    }
-                    pdf.text(lines[i], margin, yPosition);
-                    yPosition += lineHeight;
-                }
-            }
-            
-            pdf.save(safeNoteTitle + '_text.pdf');
-            console.log('Fallback text-based PDF generated successfully');
-            alert('PDF generated successfully (text-only fallback due to rendering issue).');
-            
-        } catch (fallbackError) {
-            console.error('Fallback PDF generation also failed:', fallbackError);
-            alert('Error generating PDF: ' + error.message + '\nFallback also failed: ' + fallbackError.message + '\nCheck the browser console for more details.');
-        }
+        alert('Error generating PDF: ' + error.message + '\nCheck the browser console for more details.');
     } finally {
         // Restore button state
         if (pdfButton) {
             pdfButton.innerHTML = originalButtonText;
             pdfButton.disabled = false;
         }
-        
-        // Ensure elements are restored even if there was an error
-        const allActionElements = noteContentElement.querySelectorAll('.category-actions-inline, .item-actions, .note-actions-bar, .clickable span, .markdown-controls, .note-actions');
-        allActionElements.forEach(el => el.style.visibility = 'visible');
-        
-        const allEditableFields = noteContentElement.querySelectorAll('[contenteditable="false"]');
-        allEditableFields.forEach(el => el.setAttribute('contenteditable', 'true'));
         
         console.log('PDF generation cleanup completed');
     }
