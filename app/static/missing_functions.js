@@ -1477,8 +1477,6 @@ function clearAllTodos() {
 }
 
 function startEditingStatus(element) {
-    console.log('startEditingStatus called', element);
-    
     // Close any open editing
     closeAllEditing();
 
@@ -1489,14 +1487,10 @@ function startEditingStatus(element) {
     const todo = todos.find(t => t.id === todoId);
     const status = todo ? todo.status : 'not-started';
     
-    console.log('Current status:', status, 'Todo ID:', todoId);
-    
     element.classList.add('editing');
     
     // Get element position for fixed positioning
     const rect = element.getBoundingClientRect();
-    
-    console.log('Element position:', rect);
     
     // Create dropdown
     const dropdown = document.createElement('div');
@@ -1514,11 +1508,10 @@ function startEditingStatus(element) {
     
     // Add click handlers to the options
     const options = dropdown.querySelectorAll('.todo-status-option');
-    console.log('Adding click handlers to', options.length, 'options');
     
     options.forEach(option => {
         option.addEventListener('click', function(e) {
-            console.log('Option clicked:', this.getAttribute('data-status'));
+            e.preventDefault();
             e.stopPropagation();
             const selectedStatus = this.getAttribute('data-status');
             selectStatus(this, selectedStatus);
@@ -1527,7 +1520,9 @@ function startEditingStatus(element) {
     
     // Append to body instead of element for fixed positioning
     document.body.appendChild(dropdown);
-    console.log('Dropdown appended to body');
+    
+    // Force a reflow to ensure the dropdown is properly rendered
+    dropdown.offsetHeight;
     
     // Add class to container to handle overflow if needed
     const container = document.querySelector('.todo-table-container');

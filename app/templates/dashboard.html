@@ -4114,26 +4114,39 @@
         // }
 
         function selectStatus(optionElement, status) {
-            const statusElement = optionElement.closest('.todo-status-editable');
-            const todoId = statusElement.getAttribute('data-todo-id');
+            console.log('HTML selectStatus called with status:', status);
+            
+            // Since dropdown is now in body, we need to get the editing element directly
+            if (!editingStatusElement) {
+                console.error('No editing status element found');
+                return;
+            }
+            
+            const todoId = editingStatusElement.getAttribute('data-todo-id');
+            console.log('Updating todo with ID:', todoId, 'to status:', status);
             
             // Update todo object
             const todoIndex = todos.findIndex(todo => todo.id === todoId);
             if (todoIndex !== -1) {
+                console.log('Found todo at index:', todoIndex);
                 todos[todoIndex].status = status;
                 
                 // Save to storage for all todos
                 saveTodosToStorage();
                 
                 // Update UI inline instead of re-rendering
-                statusElement.className = `todo-status-editable todo-status ${status}`;
-                statusElement.textContent = status.replace('-', ' ');
+                editingStatusElement.className = `todo-status-editable todo-status ${status}`;
+                editingStatusElement.textContent = status.replace('-', ' ');
+                
+                console.log('Updated UI element with new status');
                 
                 // Show saved feedback
-                showSavedFeedback(statusElement);
+                showSavedFeedback(editingStatusElement);
+            } else {
+                console.error('Todo not found with ID:', todoId);
             }
             
-            closeAllEditing();
+            closeStatusEditing();
         }
 
         function handleFieldKeydown(event, element, fieldType) {
@@ -4265,13 +4278,19 @@
 
         function closeStatusEditing() {
             if (editingStatusElement) {
-                // Remove dropdown
-                const dropdown = editingStatusElement.querySelector('.todo-status-dropdown');
+                // Remove dropdown from body (since we're now appending to body)
+                const dropdown = document.querySelector('.todo-status-dropdown');
                 if (dropdown) {
                     dropdown.remove();
                 }
                 editingStatusElement.classList.remove('editing');
                 editingStatusElement = null;
+                
+                // Remove overflow class from container
+                const container = document.querySelector('.todo-table-container');
+                if (container) {
+                    container.classList.remove('dropdown-open');
+                }
             }
         }
 
@@ -4327,7 +4346,8 @@
             // Handle status editing
             if (editingStatusElement && 
                 !editingStatusElement.contains(event.target) && 
-                !event.target.closest('.todo-status-editable')) {
+                !event.target.closest('.todo-status-editable') &&
+                !event.target.closest('.todo-status-dropdown')) {
                 closeStatusEditing();
             }
         });
