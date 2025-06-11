@@ -312,12 +312,63 @@ function autoSaveMarkdown() {
     }
     
     const content = editor.value;
+    const originalContent = currentNote ? currentNote.markdown_content : '';
     
-    // Save to server
-    saveNoteContent(content);
+    // Always update local content and UI
+    if (currentNote) {
+        currentNote.markdown_content = content;
+    }
+    
+    // Update the display immediately
+    const view = document.getElementById('markdownView');
+    if (view) {
+        view.innerHTML = renderMarkdown(content);
+    }
+    
+    // Always exit edit mode
+    container.classList.remove('edit-mode');
+    
+    // Only save to server if content has actually changed from what was originally loaded
+    if (originalContent !== content) {
+        saveNoteContentToServer(content);
+    }
 }
 
-// Save note content to server
+// Save note content to server only (separated from UI logic)
+async function saveNoteContentToServer(content) {
+    if (!currentNote || !currentNote.id) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/notes/${currentNote.id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${accessToken}`
+            },
+            body: JSON.stringify({
+                markdown_content: content
+            })
+        });
+
+        if (handleTokenExpiration(response)) return;
+
+        if (response.ok) {
+            // Refresh sidebar to show updated timestamp
+            loadNotes();
+            console.log('Note content saved successfully');
+        } else {
+            console.error('Failed to save note content');
+            // Don't show alert for auto-save failures, just log them
+        }
+    } catch (error) {
+        console.error('Error saving note content:', error);
+        // Don't show alert for auto-save failures, just log them
+    }
+}
+
+// Save note content to server (original function for backward compatibility)
 async function saveNoteContent(content) {
     if (!currentNote || !currentNote.id) {
         return;
