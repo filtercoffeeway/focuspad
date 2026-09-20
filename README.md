@@ -73,7 +73,7 @@ Perfect for development with debugging tools, hot reload, and database managemen
 
 ```bash
 # 1. Clone repository
-git clone https://github.com/yourusername/focuspad.git
+git clone https://github.com/filtercoffeeway/focuspad.git
 cd focuspad
 
 # 2. Setup environment
@@ -126,7 +126,7 @@ Optimized for production with security hardening, performance tuning, and monito
 ```bash
 # 1. Setup EC2 instance (Ubuntu 22.04 LTS)
 ssh -i your-key.pem ubuntu@your-ec2-ip
-git clone https://github.com/yourusername/focuspad.git /opt/focuspad
+git clone https://github.com/filtercoffeeway/focuspad.git /opt/focuspad
 cd /opt/focuspad
 
 # 2. Run instance setup
